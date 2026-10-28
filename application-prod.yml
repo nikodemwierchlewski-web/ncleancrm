@@ -1,0 +1,6 @@
+# Deployment is a separate future task. Requires HTTPS reverse proxy review.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

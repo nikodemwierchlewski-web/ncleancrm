@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ncLEAN CRM — kalendarz</title>
+  <style>
+    body {font:16px system-ui;margin:24px auto;max-width:1200px;padding:0 12px;color:#17212b}
+    header,nav {display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .calendar {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:24px}
+    article {border:1px solid #667;padding:12px;border-radius:8px}
+    select,button,input {font:inherit;max-width:100%;padding:8px;margin:4px 0}
+    select {width:100%} button {cursor:pointer} time {font-weight:bold}
+    @media(max-width:800px) {.calendar {grid-template-columns:1fr}.spacer,.weekday {display:none}}
+  </style>
+</head>
+<body>
+<header><h1>ncLEAN CRM</h1><form th:action="@{/logout}" method="post"><button>Wyloguj</button></form></header>
+<h2 th:text="${month}">Miesiąc</h2>
+<nav aria-label="Wybór miesiąca">
+  <a th:href="@{/calendar(month=${month.minusMonths(1)})}">Poprzedni</a>
+  <form th:action="@{/calendar}" method="get"><label>Miesiąc <input type="month" name="month" th:value="${month}" min="2000-01" max="2100-12" required></label><button>Pokaż</button></form>
+  <a th:href="@{/calendar(month=${month.plusMonths(1)})}">Następny</a>
+</nav>
+<p>Wybierz obszar i zapisz oznaczenie dnia. Kolor jest wskazówką organizacyjną i nie rezerwuje terminu.</p>
+<div class="calendar">
+  <strong class="weekday" th:each="name : ${ {'Pon','Wt','Śr','Czw','Pt','Sob','Ndz'} }" th:text="${name}"></strong>
+  <div class="spacer" th:if="${offset > 0}" th:each="i : ${#numbers.sequence(1,offset)}"></div>
+  <article th:each="day : ${days}" th:style="|background-color: ${day.color()}|">
+    <time th:datetime="${day.date()}" th:text="${day.date()}"></time>
+    <p th:text="${day.district()}"></p>
+    <form th:action="@{/calendar/district}" method="post">
+      <input type="hidden" name="date" th:value="${day.date()}">
+      <label>Obszar
+        <select name="districtId">
+          <option value="">Bez oznaczenia</option>
+          <option th:each="district : ${districts}" th:value="${district.id()}" th:text="${district.name()}" th:selected="${district.name() == day.district()}"></option>
+        </select>
+      </label>
+      <button>Zapisz</button>
+    </form>
+  </article>
+</div>
+</body></html>
