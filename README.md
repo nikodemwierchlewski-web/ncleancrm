@@ -1,6 +1,6 @@
 # ncLEAN CRM — osobny szkielet
 
-Status: kod startowy do dalszej pracy, bez wdrożenia. Po audycie przekazanego ZIP dopasowano Java 17 oraz JPA/Hibernate do technologii CMS. CMS ma Spring Boot 3.2.3; osobny CRM deklaruje 3.5.16 i wymaga weryfikacji buildu. Raport: ../AUDYT-NcleanCMS.md. Nie potwierdzono kompilacji ani działania: w środowisku brak poleceń Java/Maven i dostępu do bazy testowej.
+Status: kod startowy do dalszej pracy, bez wdrożenia. Projekt używa standardowej struktury Maven i Spring Boot. Po audycie przekazanego ZIP dopasowano Java 17 oraz JPA/Hibernate do technologii CMS. CMS ma Spring Boot 3.2.3; osobny CRM używa 3.5.16. Raport: [AUDYT-NcleanCMS.md](AUDYT-NcleanCMS.md).
 
 ## Co zawiera
 
@@ -14,18 +14,24 @@ Status: kod startowy do dalszej pracy, bez wdrożenia. Po audycie przekazanego Z
 
 ## Uruchomienie lokalne
 
-1. Zainstaluj JDK 17 i Maven 3.6.3+; sprawdź dostępność zadeklarowanego wydania Spring Boot przed pierwszym buildem.
+1. Zainstaluj JDK 17 i ustaw `JAVA_HOME`. Maven Wrapper (`mvnw` / `mvnw.cmd`) pobiera Maven 3.9.11 i sprawdza sumę SHA-256 dystrybucji; osobna instalacja Maven nie jest wymagana. Pierwsze uruchomienie wymaga dostępu do Maven Central.
 2. Utwórz NOWĄ pustą bazę PostgreSQL `nclean_crm` i osobnego użytkownika, którego uprawnienia obejmują tylko tę bazę. Nie podłączaj bazy strony.
-3. Ustaw zmienne procesu opisane w `.env.example`. Sam plik `.env` nie jest automatycznie wczytywany. Nie wstawiaj danych logowania w poleceniach zapisywanych w historii.
+3. Ustaw zmienne procesu opisane w [env.example](env.example). Sam plik `.env` nie jest automatycznie wczytywany. Nie wstawiaj danych logowania w poleceniach zapisywanych w historii.
 4. Wygeneruj lokalnie hash silnego hasła przez `BCryptPasswordEncoder(12).encode(...)`, np. w tymczasowym lokalnym narzędziu Java. Przekaż go jako `CRM_ADMIN_PASSWORD_HASH`; nie commituj hasha ani hasła.
-5. W katalogu projektu uruchom `mvn test`, następnie `mvn spring-boot:run`.
+5. W katalogu projektu uruchom `./mvnw clean verify`, następnie `./mvnw spring-boot:run`. W Windows użyj odpowiednio `.\mvnw.cmd clean verify` i `.\mvnw.cmd spring-boot:run`.
 6. Wejdź na http://127.0.0.1:8081. Migracja Flyway uruchomi się przy starcie i utworzy tabele w wskazanej bazie.
 
 Brak wymaganych zmiennych ma przerwać start. Flyway nie chroni przed wskazaniem złej bazy: bezpieczeństwo zapewnia osobna baza i konto bez dostępu do CMS.
 
+Sama kompilacja i testy MVC (`./mvnw clean verify`) nie wymagają PostgreSQL ani ustawienia zmiennych bazy. Testy sprawdzają dostęp, role, CSRF, renderowanie kalendarza i zapis oznaczenia dnia z zamockowanym serwisem. Nie wykonują połączeń z produkcyjną bazą nclean.pl.
+
+Weryfikacja na JDK 17 przez Maven Wrapper: `clean verify` zakończone sukcesem, 5 testów, 0 błędów i 0 pominiętych. Powstał wykonywalny JAR Spring Boot zawierający konfigurację, migrację V1 i szablon kalendarza.
+
 ## Struktura
 
 ```text
+pom.xml, mvnw, mvnw.cmd
+.mvn/wrapper/maven-wrapper.properties
 src/main/java/pl/nclean/crm/
   CrmApplication.java
   security/SecurityConfiguration.java
@@ -47,4 +53,4 @@ To modularny monolit. Rozwijaj pakiety `customer`, `job`, `catalog`, `chemical`,
 
 Brak CRUD klientów/zleceń/usług, edytora obszarów, audytu zmian i ochrony przed utratą równoczesnej edycji. Brak limitowania prób logowania, kont bazodanowych, odzyskiwania hasła, kopii zapasowych i testów integracyjnych PostgreSQL. Domyślnie dostęp tylko z localhost; profil prod ustawia Secure cookie, lecz nie stanowi kompletnej konfiguracji wdrożenia. Wymagane HTTPS, osobna domena/host i przegląd reverse proxy. Brak SMS, inteligentnych terminów, GPS i integracji z produkcją.
 
-Szczegółowy plan oraz gotowe zadania: `../PLAN-CRM.md`.
+Szczegółowy plan oraz gotowe zadania: [PLAN-CRM.md](PLAN-CRM.md).
