@@ -1,43 +1,57 @@
 <!doctype html>
-<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<html lang="pl" class="no-js" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ncLEAN CRM — kalendarz</title>
-  <style>
-    body {font:16px system-ui;margin:24px auto;max-width:1200px;padding:0 12px;color:#17212b}
-    header,nav {display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-    .calendar {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:24px}
-    article {border:1px solid #667;padding:12px;border-radius:8px}
-    select,button,input {font:inherit;max-width:100%;padding:8px;margin:4px 0}
-    select {width:100%} button {cursor:pointer} time {font-weight:bold}
-    @media(max-width:800px) {.calendar {grid-template-columns:1fr}.spacer,.weekday {display:none}}
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#208be3">
+  <title>Kalendarz · ncLEAN CRM</title>
+  <link rel="stylesheet" th:href="@{/css/crm.css}">
+  <script th:src="@{/js/calendar.js}" defer></script>
 </head>
 <body>
-<header><h1>ncLEAN CRM</h1><form th:action="@{/logout}" method="post"><button>Wyloguj</button></form></header>
-<h2 th:text="${month}">Miesiąc</h2>
-<nav aria-label="Wybór miesiąca">
-  <a th:href="@{/calendar(month=${month.minusMonths(1)})}">Poprzedni</a>
-  <form th:action="@{/calendar}" method="get"><label>Miesiąc <input type="month" name="month" th:value="${month}" min="2000-01" max="2100-12" required></label><button>Pokaż</button></form>
-  <a th:href="@{/calendar(month=${month.plusMonths(1)})}">Następny</a>
-</nav>
-<p>Wybierz obszar i zapisz oznaczenie dnia. Kolor jest wskazówką organizacyjną i nie rezerwuje terminu.</p>
-<div class="calendar">
-  <strong class="weekday" th:each="name : ${ {'Pon','Wt','Śr','Czw','Pt','Sob','Ndz'} }" th:text="${name}"></strong>
-  <div class="spacer" th:if="${offset > 0}" th:each="i : ${#numbers.sequence(1,offset)}"></div>
-  <article th:each="day : ${days}" th:style="|background-color: ${day.color()}|">
-    <time th:datetime="${day.date()}" th:text="${day.date()}"></time>
-    <p th:text="${day.district()}"></p>
-    <form th:action="@{/calendar/district}" method="post">
-      <input type="hidden" name="date" th:value="${day.date()}">
-      <label>Obszar
-        <select name="districtId">
-          <option value="">Bez oznaczenia</option>
-          <option th:each="district : ${districts}" th:value="${district.id()}" th:text="${district.name()}" th:selected="${district.name() == day.district()}"></option>
-        </select>
-      </label>
-      <button>Zapisz</button>
-    </form>
-  </article>
-</div>
+<a class="skip-link" href="#main">Przejdź do kalendarza</a>
+<header class="app-header">
+  <a class="brand" th:href="@{/calendar}" aria-label="ncLEAN CRM — kalendarz"><span>NCLEAN</span><b>CRM</b></a>
+  <nav class="app-nav" aria-label="Główna nawigacja"><a class="selected" th:href="@{/calendar}" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg>Kalendarz</a><a th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#areas"/></svg>Obszary pracy</a></nav>
+  <div class="account"><span>Panel właściciela</span><form th:action="@{/logout}" method="post"><button class="icon-button" aria-label="Wyloguj" title="Wyloguj"><svg aria-hidden="true"><use href="/icons.svg#logout"/></svg></button></form></div>
+</header>
+<main id="main" class="main">
+  <header class="page-heading"><div><p class="eyebrow">ORGANIZACJA PRACY</p><h1>Twój kalendarz</h1><p class="page-description">Zaplanuj dzielnice i obszary pracy na każdy dzień.</p></div><a class="button secondary" th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#settings"/></svg>Zarządzaj obszarami</a></header>
+  <div class="notice" role="status" th:if="${notice != null}" th:text="${notice}"></div>
+  <section class="planner" aria-labelledby="calendar-month-heading">
+    <header class="planner-toolbar">
+      <div class="month-navigation">
+        <a class="icon-button" th:if="${previousMonth != null}" th:href="@{/calendar(month=${previousMonth})}" aria-label="Poprzedni miesiąc"><svg aria-hidden="true"><use href="/icons.svg#chevron-left"/></svg></a>
+        <span class="icon-button disabled" th:if="${previousMonth == null}" aria-hidden="true"><svg><use href="/icons.svg#chevron-left"/></svg></span>
+        <h2 id="calendar-month-heading" th:text="${monthLabel}">Październik 2026</h2>
+        <a class="icon-button" th:if="${nextMonth != null}" th:href="@{/calendar(month=${nextMonth})}" aria-label="Następny miesiąc"><svg aria-hidden="true"><use href="/icons.svg#chevron-right"/></svg></a>
+        <span class="icon-button disabled" th:if="${nextMonth == null}" aria-hidden="true"><svg><use href="/icons.svg#chevron-right"/></svg></span>
+      </div>
+      <div class="period-controls"><a class="button subtle" th:href="@{/calendar(month=${#temporals.format(today, 'yyyy-MM')})} + '#day-' + ${today}">Dzisiaj</a><details class="month-picker"><summary class="button subtle"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg>Zmień miesiąc<svg class="small-icon" aria-hidden="true"><use href="/icons.svg#chevron-down"/></svg></summary><form th:action="@{/calendar}" method="get"><label for="calendar-month">Wyświetlany miesiąc</label><input id="calendar-month" type="month" name="month" th:value="${month}" min="2000-01" max="2100-12" required><button class="button primary">Pokaż miesiąc</button></form></details></div>
+    </header>
+    <div class="calendar-help"><svg aria-hidden="true"><use href="/icons.svg#info"/></svg><span>Kliknij dzień, aby wybrać jeden lub kilka obszarów.</span></div>
+    <div class="calendar-weekdays" aria-hidden="true"><span>Poniedziałek</span><span>Wtorek</span><span>Środa</span><span>Czwartek</span><span>Piątek</span><span>Sobota</span><span>Niedziela</span></div>
+    <div class="calendar-grid">
+      <div class="calendar-spacer" th:if="${offset > 0}" th:each="i : ${#numbers.sequence(1,offset)}" aria-hidden="true"></div>
+      <a class="calendar-day" th:each="day : ${days}" th:id="|day-${day.date()}|" th:href="@{/calendar(month=${month},day=${day.date()})} + '#area-editor'" th:classappend="|${day.date().equals(today) ? 'is-today' : ''} ${selectedDate != null and day.date().equals(selectedDate) ? 'is-selected' : ''} ${day.date().dayOfWeek.value >= 6 ? 'weekend' : ''}|" th:attr="data-calendar-day=${day.date()},data-date-label=${#temporals.format(day.date(),'EEEE, d MMMM yyyy',polishLocale)},aria-label=|${#temporals.format(day.date(),'EEEE, d MMMM yyyy',polishLocale)} — zmień obszary pracy|,aria-describedby=|day-areas-${day.date()}|,aria-current=${day.date().equals(today) ? 'date' : null}">
+        <span class="day-top"><span class="day-number" th:text="${day.date().dayOfMonth}">31</span><span class="day-weekday" th:text="${#temporals.format(day.date(),'EEEE',polishLocale)}">sobota</span><span class="today-badge" th:if="${day.date().equals(today)}">Dziś</span><svg class="day-edit" aria-hidden="true"><use href="/icons.svg#pencil"/></svg></span>
+        <span class="day-areas" th:id="|day-areas-${day.date()}|"><span class="area-chip" th:each="area : ${day.areas()}" th:classappend="${!area.active()} ? 'inactive'" th:attr="data-assigned-area-id=${area.id()}"><i class="area-dot" th:style="|background-color: ${area.color()}|" aria-hidden="true"></i><span th:text="${area.name()}">Krzyki</span><span class="inactive-label" th:if="${!area.active()}">nieaktywny</span></span><span class="unassigned" th:if="${day.areas().isEmpty()}">Bez oznaczenia</span></span>
+      </a>
+    </div>
+    <footer class="planner-footer"><span><i class="legend-today" aria-hidden="true"></i>Dzisiejszy dzień</span><p>Obszary porządkują plan pracy. Nie rezerwują terminów.</p></footer>
+  </section>
+</main>
+<dialog id="area-editor" class="area-dialog" th:attr="open=${dayEditorOpen ? 'open' : null}" aria-labelledby="area-editor-title" aria-describedby="area-editor-description">
+  <header class="dialog-heading"><div><p class="eyebrow">PLAN NA DZIEŃ</p><h2 id="area-editor-title">Obszary pracy</h2><time id="area-editor-date" th:datetime="${selectedDate}" th:text="${selectedDateLabel}"></time></div><a class="icon-button dialog-close" th:href="@{/calendar(month=${month})}" aria-label="Zamknij formularz"><svg aria-hidden="true"><use href="/icons.svg#close"/></svg></a></header>
+  <form id="day-area-form" th:action="@{/calendar/areas}" method="post"><input id="area-date" type="hidden" name="date" th:value="${selectedDate != null ? selectedDate : today}">
+    <div class="dialog-content"><p id="area-editor-description">Wybierz jeden lub kilka obszarów. Brak zaznaczeń usuwa oznaczenie tego dnia.</p>
+      <div class="form-errors" role="alert" tabindex="-1" th:if="${!#lists.isEmpty(dayErrors)}"><strong>Sprawdź wybór obszarów</strong><ul><li th:each="error : ${dayErrors}" th:text="${error}"></li></ul></div>
+      <fieldset class="area-options"><legend class="sr-only">Obszary przypisane do dnia</legend><label class="area-option" th:each="area : ${allDistricts}" th:attr="data-area-option=${area.id()},data-active=${area.active()},hidden=${!area.active() and !selectedAreaIds.contains(area.id()) ? 'hidden' : null}"><input type="checkbox" name="districtIds" th:value="${area.id()}" th:checked="${selectedAreaIds.contains(area.id())}"><i class="area-swatch" th:style="|background-color: ${area.color()}|" aria-hidden="true"></i><span class="area-option-label"><strong th:text="${area.name()}">Krzyki</strong><small th:if="${!area.active()}">Nieaktywny — możesz zachować lub odznaczyć</small></span></label></fieldset>
+      <p id="empty-area-options" class="empty-options" th:hidden="${!districts.isEmpty() or !selectedAreaIds.isEmpty()}">Brak aktywnych obszarów do wyboru. <a th:href="@{/settings/areas}">Dodaj lub aktywuj obszar</a>.</p>
+      <div class="selection-tools"><span id="selected-area-count" aria-live="polite"></span><button type="button" class="text-button js-only" id="clear-areas">Wyczyść wybór</button></div>
+      <a class="manage-link" th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#settings"/></svg>Dodaj lub edytuj obszary pracy<svg aria-hidden="true"><use href="/icons.svg#arrow-right"/></svg></a>
+    </div>
+    <footer class="dialog-footer"><a class="button secondary dialog-close" th:href="@{/calendar(month=${month})}">Anuluj</a><button class="button primary" id="save-areas"><svg aria-hidden="true"><use href="/icons.svg#check"/></svg>Zapisz obszary</button></footer>
+  </form>
+</dialog>
 </body></html>

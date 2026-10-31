@@ -15,7 +15,11 @@ public class DistrictEntity {
     private boolean active;
 
     protected DistrictEntity() {}
+    DistrictEntity(String name, String color) { this.name = name; this.color = color; this.active = true; }
+    void update(String name, String color) { this.name = name; this.color = color; }
+    void setActive(boolean active) { this.active = active; }
     public Long getId() { return id; }
     public String getName() { return name; }
     public String getColor() { return color; }
+    public boolean isActive() { return active; }
 }
