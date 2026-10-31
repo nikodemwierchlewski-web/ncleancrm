@@ -19,12 +19,14 @@ Po pojawieniu się komunikatu o uruchomieniu aplikacji wejdź na **http://127.0.
 
 ## Sprawdzenie zapisu po restarcie
 
-1. W kalendarzu wybierz dzielnicę przy konkretnym dniu i kliknij **Zapisz**. Nazwa oraz kolor powinny się zmienić.
-2. Wybierz inną dzielnicę i zapisz ponownie, aby zmienić oznaczenie. Wybranie **Bez oznaczenia** i zapis usuwa przypisanie tego dnia.
+1. W kalendarzu kliknij konkretny dzień. W panelu zaznacz kilka obszarów i kliknij **Zapisz**. Przy dniu powinny pojawić się ich nazwy i kolory.
+2. Otwórz ponownie ten dzień, zmień zaznaczenie i zapisz. Odznaczenie wszystkich obszarów i zapis usuwa przypisania tego dnia.
 3. Zapisz oznaczenie i zatrzymaj aplikację przez `Ctrl+C` w PowerShell.
 4. Ponownie uruchom `.\scripts\Start-Local.ps1`, zaloguj się i otwórz ten sam miesiąc. Oznaczenie powinno pozostać zapisane.
 
 Ponowne uruchamianie inicjalizatora nie jest potrzebne: odmawia on nadpisania istniejących sekretów. Hasła i dane bazy pozostają w lokalnym środowisku.
+
+Nazwy, kolory HEX i aktywność obszarów zmienisz na ekranie **Ustawienia → Obszary pracy**. Dezaktywacja zachowuje wcześniejsze przypisania. Krótki opis interfejsu: [KALENDARZ.md](KALENDARZ.md).
 
 ## Zatrzymywanie i testy
 

@@ -1,6 +1,8 @@
 # ncLEAN CRM — lokalny kalendarz
 
-Pierwsza wersja obsługuje logowanie właściciela, kalendarz miesiąca i kolorowe oznaczenie dzielnicy przy dniu. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
+Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn, a na telefonie wygodną listę dni. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
+
+Opis codziennej obsługi: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
 
@@ -36,7 +38,7 @@ Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruc
 - Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
 - Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
 - Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
-- Flyway uruchamia istniejącą migrację V1 przy pierwszym starcie. Tworzy `district`, `day_district` i pięć przykładowych obszarów. Hibernate tylko waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Flyway uruchamia migracje V1 i V2 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. Istniejąca baza V1 otrzymuje tylko migrację V2. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
 - Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
 
 Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.
@@ -44,13 +46,13 @@ Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa
 ## Testy
 
 ```sh
-./mvnw test          # 5 testów MVC, bez Dockera i połączenia z bazą
-./mvnw clean verify  # dodatkowo 5 testów integracyjnych, wymaga działającego Dockera
+./mvnw test          # testy MVC, bez Dockera i połączenia z bazą
+./mvnw clean verify  # dodatkowo testy integracyjne, wymaga działającego Dockera
 ```
 
 W Windows użyj `.\mvnw.cmd`. Testcontainers automatycznie tworzy oddzielny PostgreSQL z losowymi poświadczeniami. Testy nie korzystają z lokalnych sekretów ani zewnętrznych adresów bazy. Brak działającego Dockera powoduje niepowodzenie etapu integracyjnego, zamiast pomijania testów.
 
-Sprawdzane są: migracja V1 i dane początkowe, prawdziwe logowanie HTTP, renderowanie kalendarza, dodanie/zmiana/usunięcie przypisania dzielnicy, walidacja, CSRF oraz zachowanie zapisu po zamknięciu i ponownym uruchomieniu aplikacji z tą samą bazą. Wyniki XML znajdują się w `target/surefire-reports` i `target/failsafe-reports`.
+Sprawdzane są: migracja V1 → V2 z zachowaniem starego przypisania, prawdziwe logowanie HTTP, renderowanie kalendarza, zapis wielu obszarów, zmiana i usunięcie przypisań, ustawienia nazw i kolorów, dezaktywacja bez utraty historii, walidacja, role, CSRF i trwałość po restarcie aplikacji. Wyniki XML znajdują się w `target/surefire-reports` i `target/failsafe-reports`.
 
 ## Struktura
 
@@ -63,8 +65,10 @@ src/main/java/pl/nclean/crm/
   security/                logowanie i uprawnienia
 src/main/resources/
   application.yml, application-local.yml, application-prod.yml
-  db/migration/V1__calendar.sql
+  db/migration/V1__calendar.sql, V2__multiple_day_areas.sql
   templates/calendar/month.html
+  templates/settings/areas.html
+  static/css/, static/js/
 src/test/java/pl/nclean/crm/calendar/
   CalendarSecurityTest.java
   CalendarPostgresIT.java
@@ -72,6 +76,8 @@ src/test/java/pl/nclean/crm/calendar/
 
 ## Zakres
 
-Obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświetlana razem z kolorem. Zmiana oznaczenia dnia nie rezerwuje terminu. Nie ma jeszcze zleceń, kartoteki klientów, SMS, finansów, GPS ani inteligentnego dobierania terminów.
+Początkowe obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświetlana razem z kolorem. W ustawieniach można dodać własne obszary, edytować ich nazwy i kolory HEX oraz je dezaktywować. Dezaktywacja zachowuje istniejące przypisania; nieaktywny obszar można pozostawić przy danym dniu lub go odznaczyć, ale nie przypisywać do kolejnych dni. Zmiana nazwy lub koloru aktualizuje etykiety istniejących przypisań.
+
+Przypisanie obszarów nie rezerwuje terminu. Nie ma jeszcze zleceń, kartoteki klientów, SMS, finansów, GPS ani inteligentnego dobierania terminów.
 
 To lokalne środowisko deweloperskie. Publiczne wdrożenie, HTTPS, kopie zapasowe i konta użytkowników w bazie pozostają osobnymi zadaniami. Profil `prod` nie jest kompletną konfiguracją wdrożenia. Dokumenty historyczne: [audyt CMS](AUDYT-NcleanCMS.md) i [plan CRM](PLAN-CRM.md).
