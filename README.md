@@ -1,56 +1,77 @@
-# ncLEAN CRM — osobny szkielet
+# ncLEAN CRM — lokalny kalendarz
 
-Status: kod startowy do dalszej pracy, bez wdrożenia. Projekt używa standardowej struktury Maven i Spring Boot. Po audycie przekazanego ZIP dopasowano Java 17 oraz JPA/Hibernate do technologii CMS. CMS ma Spring Boot 3.2.3; osobny CRM używa 3.5.16. Raport: [AUDYT-NcleanCMS.md](AUDYT-NcleanCMS.md).
+Pierwsza wersja obsługuje logowanie właściciela, kalendarz miesiąca i kolorowe oznaczenie dzielnicy przy dniu. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
 
-## Co zawiera
+Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
 
-- Java 17, Maven, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security.
-- PostgreSQL i Spring Data JPA/Hibernate jak w CMS, migracja Flyway V1 oraz walidacja schematu. Wyłączone Open Session in View. Brak zależności Spring Data REST, więc repozytoria nie są automatycznie publikowane jako API.
-- Logowanie właściciela z loginem i hashem BCrypt przekazanymi przez środowisko; bez domyślnego hasła i rejestracji publicznej. Jedno konto w pamięci jest rozwiązaniem początkowym.
-- Widok miesiąca i trwały zapis jednego obszaru na dzień; zmiana i usuwanie oznaczenia, nazwa obok koloru, układ mobilny.
-- Pięć przykładowych obszarów operacyjnych. To nie deklaracja aktualnego podziału administracyjnego. Nazwy i kolory mają docelowo być edytowalne, również na poziomie osiedli.
-- CSRF włączone; formularze Thymeleaf używają `th:action`. Zapis i wylogowanie przez POST. Wszystkie funkcje wymagają roli OWNER.
-- Testy MVC dostępu anonimowego, roli, CSRF, renderowania i zapisu. Baza nie jest objęta tymi testami.
+## Windows — pierwsze uruchomienie
 
-## Uruchomienie lokalne
+Zainstaluj JDK 17, ustaw `JAVA_HOME` i uruchom Docker Desktop z kontenerami Linux oraz Compose v2. W PowerShell, w katalogu repozytorium:
 
-1. Zainstaluj JDK 17 i ustaw `JAVA_HOME`. Maven Wrapper (`mvnw` / `mvnw.cmd`) pobiera Maven 3.9.11 i sprawdza sumę SHA-256 dystrybucji; osobna instalacja Maven nie jest wymagana. Pierwsze uruchomienie wymaga dostępu do Maven Central.
-2. Utwórz NOWĄ pustą bazę PostgreSQL `nclean_crm` i osobnego użytkownika, którego uprawnienia obejmują tylko tę bazę. Nie podłączaj bazy strony.
-3. Ustaw zmienne procesu opisane w [env.example](env.example). Sam plik `.env` nie jest automatycznie wczytywany. Nie wstawiaj danych logowania w poleceniach zapisywanych w historii.
-4. Wygeneruj lokalnie hash silnego hasła przez `BCryptPasswordEncoder(12).encode(...)`, np. w tymczasowym lokalnym narzędziu Java. Przekaż go jako `CRM_ADMIN_PASSWORD_HASH`; nie commituj hasha ani hasła.
-5. W katalogu projektu uruchom `./mvnw clean verify`, następnie `./mvnw spring-boot:run`. W Windows użyj odpowiednio `.\mvnw.cmd clean verify` i `.\mvnw.cmd spring-boot:run`.
-6. Wejdź na http://127.0.0.1:8081. Migracja Flyway uruchomi się przy starcie i utworzy tabele w wskazanej bazie.
+```powershell
+.\scripts\Initialize-Local.ps1
+.\scripts\Start-Local.ps1
+```
 
-Brak wymaganych zmiennych ma przerwać start. Flyway nie chroni przed wskazaniem złej bazy: bezpieczeństwo zapewnia osobna baza i konto bez dostępu do CMS.
+Inicjalizator poprosi o własne hasło konta `local-owner`, wygeneruje hasła bazy i zapisze konfigurację tylko w ignorowanym katalogu `.local/`. Jawne hasło właściciela nie jest zapisywane; aplikacja otrzymuje hash BCrypt. Pliki nie są nadpisywane przy kolejnym uruchomieniu.
 
-Sama kompilacja i testy MVC (`./mvnw clean verify`) nie wymagają PostgreSQL ani ustawienia zmiennych bazy. Testy sprawdzają dostęp, role, CSRF, renderowanie kalendarza i zapis oznaczenia dnia z zamockowanym serwisem. Nie wykonują połączeń z produkcyjną bazą nclean.pl.
+Po starcie otwórz http://127.0.0.1:8081 i zaloguj się. Pełna instrukcja, sprawdzenie zapisu po restarcie i rozwiązywanie problemów: [docs/WINDOWS.md](docs/WINDOWS.md). Skrypty PowerShell wymagają osobnej weryfikacji na rzeczywistym Windows; w tym środowisku sprawdzono inicjalizator Java, Compose i aplikację na Linux.
 
-Weryfikacja na JDK 17 przez Maven Wrapper: `clean verify` zakończone sukcesem, 5 testów, 0 błędów i 0 pominiętych. Powstał wykonywalny JAR Spring Boot zawierający konfigurację, migrację V1 i szablon kalendarza.
+## Linux/macOS — pierwsze uruchomienie
+
+Wymagane są JDK 17, ustawione `JAVA_HOME`, Docker i Compose v2. Z katalogu repozytorium, w interaktywnym terminalu:
+
+```sh
+./mvnw dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=.local/runtime-classpath.txt
+"${JAVA_HOME}/bin/java" -cp "$(cat .local/runtime-classpath.txt)" scripts/InitializeLocal.java
+docker compose up -d --wait
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local '-Dspring-boot.run.arguments=--spring.datasource.url=jdbc:postgresql://127.0.0.1:55433/nclean_crm --spring.flyway.url=jdbc:postgresql://127.0.0.1:55433/nclean_crm'
+```
+
+Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruchomieniach wystarczą dwa ostatnie polecenia.
+
+## Lokalna baza i konfiguracja
+
+- Compose uruchamia PostgreSQL wyłącznie pod `127.0.0.1:55433`, z nazwanym wolumenem `ncleancrm-local_postgres-data`.
+- Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
+- Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
+- Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
+- Flyway uruchamia istniejącą migrację V1 przy pierwszym starcie. Tworzy `district`, `day_district` i pięć przykładowych obszarów. Hibernate tylko waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
+
+Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.
+
+## Testy
+
+```sh
+./mvnw test          # 5 testów MVC, bez Dockera i połączenia z bazą
+./mvnw clean verify  # dodatkowo 5 testów integracyjnych, wymaga działającego Dockera
+```
+
+W Windows użyj `.\mvnw.cmd`. Testcontainers automatycznie tworzy oddzielny PostgreSQL z losowymi poświadczeniami. Testy nie korzystają z lokalnych sekretów ani zewnętrznych adresów bazy. Brak działającego Dockera powoduje niepowodzenie etapu integracyjnego, zamiast pomijania testów.
+
+Sprawdzane są: migracja V1 i dane początkowe, prawdziwe logowanie HTTP, renderowanie kalendarza, dodanie/zmiana/usunięcie przypisania dzielnicy, walidacja, CSRF oraz zachowanie zapisu po zamknięciu i ponownym uruchomieniu aplikacji z tą samą bazą. Wyniki XML znajdują się w `target/surefire-reports` i `target/failsafe-reports`.
 
 ## Struktura
 
 ```text
-pom.xml, mvnw, mvnw.cmd
-.mvn/wrapper/maven-wrapper.properties
+compose.yaml, pom.xml, mvnw, mvnw.cmd
+docker/postgres/           inicjalizacja lokalnej bazy i konta aplikacji
+scripts/                   inicjalizator sekretów i skrypty Windows
 src/main/java/pl/nclean/crm/
-  CrmApplication.java
-  security/SecurityConfiguration.java
-  calendar/CalendarController.java
-  calendar/CalendarService.java
-  calendar/DistrictEntity.java, DayDistrictEntity.java
-  calendar/DistrictRepository.java, DayDistrictRepository.java
+  calendar/                kontroler, serwis, encje i repozytoria
+  security/                logowanie i uprawnienia
 src/main/resources/
-  application.yml
-  application-prod.yml
+  application.yml, application-local.yml, application-prod.yml
   db/migration/V1__calendar.sql
   templates/calendar/month.html
-src/test/java/pl/nclean/crm/calendar/CalendarSecurityTest.java
+src/test/java/pl/nclean/crm/calendar/
+  CalendarSecurityTest.java
+  CalendarPostgresIT.java
 ```
 
-To modularny monolit. Rozwijaj pakiety `customer`, `job`, `catalog`, `chemical`, `expense`, `report`, później `message` i `consent`. Kontrolery przyjmują formularze, serwisy realizują transakcje, dostęp do danych należy wydzielać do repozytoriów wraz ze wzrostem modułów.
+## Zakres
 
-## Ograniczenia przed wykorzystaniem z rzeczywistymi danymi
+Obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświetlana razem z kolorem. Zmiana oznaczenia dnia nie rezerwuje terminu. Nie ma jeszcze zleceń, kartoteki klientów, SMS, finansów, GPS ani inteligentnego dobierania terminów.
 
-Brak CRUD klientów/zleceń/usług, edytora obszarów, audytu zmian i ochrony przed utratą równoczesnej edycji. Brak limitowania prób logowania, kont bazodanowych, odzyskiwania hasła, kopii zapasowych i testów integracyjnych PostgreSQL. Domyślnie dostęp tylko z localhost; profil prod ustawia Secure cookie, lecz nie stanowi kompletnej konfiguracji wdrożenia. Wymagane HTTPS, osobna domena/host i przegląd reverse proxy. Brak SMS, inteligentnych terminów, GPS i integracji z produkcją.
-
-Szczegółowy plan oraz gotowe zadania: [PLAN-CRM.md](PLAN-CRM.md).
+To lokalne środowisko deweloperskie. Publiczne wdrożenie, HTTPS, kopie zapasowe i konta użytkowników w bazie pozostają osobnymi zadaniami. Profil `prod` nie jest kompletną konfiguracją wdrożenia. Dokumenty historyczne: [audyt CMS](AUDYT-NcleanCMS.md) i [plan CRM](PLAN-CRM.md).

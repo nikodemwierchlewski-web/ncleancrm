@@ -1,0 +1,9 @@
+spring:
+  config:
+    import: file:./.local/application-local.properties
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:55433/nclean_crm
+    username: crm_dev
+  flyway:
+    user: crm_dev
+    password: ${CRM_DB_PASSWORD}
