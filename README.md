@@ -78,6 +78,6 @@ src/test/java/pl/nclean/crm/calendar/
 
 Początkowe obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświetlana razem z kolorem. W ustawieniach można dodać własne obszary, edytować ich nazwy i kolory HEX oraz je dezaktywować. Dezaktywacja zachowuje istniejące przypisania; nieaktywny obszar można pozostawić przy danym dniu lub go odznaczyć, ale nie przypisywać do kolejnych dni. Zmiana nazwy lub koloru aktualizuje etykiety istniejących przypisań.
 
-Przypisanie obszarów nie rezerwuje terminu. Nie ma jeszcze zleceń, kartoteki klientów, SMS, finansów, GPS ani inteligentnego dobierania terminów.
+Przypisanie obszarów nie rezerwuje terminu. Zlecenia, kartoteka klientów i cennik są opisane w [docs/KLIENT-CENNIK.md](docs/KLIENT-CENNIK.md). Nie ma SMS, finansów, GPS ani inteligentnego dobierania terminów.
 
 To lokalne środowisko deweloperskie. Publiczne wdrożenie, HTTPS, kopie zapasowe i konta użytkowników w bazie pozostają osobnymi zadaniami. Profil `prod` nie jest kompletną konfiguracją wdrożenia. Dokumenty historyczne: [audyt CMS](AUDYT-NcleanCMS.md) i [plan CRM](PLAN-CRM.md).

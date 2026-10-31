@@ -10,6 +10,7 @@
 @media(max-width:360px){.main{padding-inline:12px}.app-header{padding-inline:12px}.month-navigation h2{font-size:18px}.planner-toolbar{padding-inline:12px}.calendar-help{margin-inline:12px;font-size:9px}.calendar-grid{padding-inline:10px}.calendar-day,.calendar-day.is-today{padding:12px 10px}.day-weekday{font-size:11px}.today-badge{font-size:7px}.day-areas{padding-left:38px}.area-chip{font-size:9px}.page-heading h1{font-size:28px}.dialog-heading{padding-inline:16px}.dialog-content{padding-inline:16px}.dialog-footer{padding-inline:16px}.dialog-footer>.button{font-size:10px;gap:6px}.settings-card{padding-inline:16px}.card-heading{gap:10px}.settings-card h2{font-size:20px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 .area-chip.inactive{display:inline-grid;grid-template-columns:8px minmax(0,1fr)}.area-chip.inactive .inactive-label{grid-column:2;white-space:nowrap}
+.record-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
 /* Area names remain readable at every viewport; arbitrary names wrap in their cards. */
 .area-chip{font-size:11px}.work-area-actions .text-button{min-height:44px}
 @media(max-width:1100px){.area-chip{font-size:10px}}

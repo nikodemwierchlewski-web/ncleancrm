@@ -23,6 +23,7 @@
       opener = link;
       const assigned = new Set([...link.querySelectorAll('[data-assigned-area-id]')].map(area => area.dataset.assignedAreaId));
       date.value = link.dataset.calendarDay;
+      document.querySelector('#day-orders').href='/orders?day='+encodeURIComponent(date.value);
       label.dateTime = date.value;
       label.textContent = link.dataset.dateLabel;
       for (const option of options) {

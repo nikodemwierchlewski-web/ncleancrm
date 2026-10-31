@@ -75,7 +75,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -100,7 +100,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -220,7 +220,59 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+    }
+
+    @Test
+    void customerCatalogueAndBookingKeepHistoricalPricesAfterRestart() throws Exception {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        var browser=app.browser();browser.login();
+        assertEquals(200,browser.get("/customers").statusCode());
+        assertEquals(200,browser.get("/settings/services").statusCode());
+        long person=records.saveCustomer(null,0,"Klient syntetyczny","500000010","Adres przykładowy 1","Notatka",true);
+        assertEquals("+48500000010",jdbc.queryForObject("SELECT phone FROM crm_customer WHERE id=?",String.class,person));
+        var service=records.services().get(0);long serviceId=((Number)service.get("id")).longValue();
+        var price=(java.math.BigDecimal)service.get("price");String token=UUID.randomUUID().toString();
+        var fields=new LinkedHashMap<String,Object>();fields.put("token",token);fields.put("day",DAY);fields.put("starts","09:00");fields.put("customer",person);fields.put("address","Adres realizacji 2");fields.put("qty_"+serviceId,"2");
+        assertEquals(302,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(302,browser.settings("/orders",fields,true).statusCode());
+        long booking=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,token);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?::uuid",Integer.class,token));
+        assertEquals(200,browser.get("/orders?day="+DAY).statusCode());
+        assertEquals(302,browser.settings("/settings/services",Map.of("id",serviceId,"version",service.get("version"),"category",service.get("category_id"),"name","Usługa po zmianie","unit","pakiet","price",price.add(new java.math.BigDecimal("50.00")).toPlainString(),"minutes","60","active","on"),true).statusCode());
+        records.saveCustomer(person,0,"Nowa nazwa klienta","500000011","Inny adres","",true);
+        assertEquals(302,browser.settings("/orders/"+booking,Map.of("version","0","day","2026-10-29","starts","10:00","status","DONE"),true).statusCode());
+        assertEquals(0,price.multiply(java.math.BigDecimal.valueOf(2)).compareTo(jdbc.queryForObject("SELECT total FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
+        assertEquals("Klient syntetyczny",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,booking));
+        assertEquals(service.get("name"),jdbc.queryForObject("SELECT name FROM booking_item WHERE booking_id=?",String.class,booking));
+        long count=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisuj","500000010","Adres",Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE)));
+        assertEquals(count,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
+        assertThrows(IllegalArgumentException.class,()->records.saveCustomer(person,0,"Nie nadpisuj","500000010","","",true));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertEquals("DONE",jdbc.queryForObject("SELECT status FROM booking WHERE id=?",String.class,booking));
+        var after=app.browser();after.login();assertEquals(200,after.get("/orders").statusCode());
+    }
+
+    @Test
+    void failedBookingRollsBackInlineCustomerAndFormsRejectMissingData() throws Exception {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        long category=((Number)records.categories().get(0).get("id")).longValue();
+        records.service(null,0,category,"Próba rollback","szt.","9999999999.99",1,true);
+        long service=jdbc.queryForObject("SELECT id FROM service_definition WHERE name='Próba rollback'",Long.class);
+        long before=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Wycofaj","500000010","Adres",Map.of(service,new java.math.BigDecimal("10000"))));
+        assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
+        var browser=app.browser();browser.login();
+        assertHtmlBadRequest(browser.settings("/orders",Map.of("day",DAY,"starts","09:00"),true));
+        assertHtmlBadRequest(browser.settings("/customers",Map.of("name","Brak numeru"),true));
+        assertHtmlBadRequest(browser.settings("/settings/services",Map.of("name","Brak danych"),true));
+        records.category(null,"Nowa kategoria");
+        long created=jdbc.queryForObject("SELECT id FROM service_category WHERE name='Nowa kategoria'",Long.class);
+        records.category(created,"Kategoria zmieniona");
+        records.service(service,0,created,"Usługa wyłączona","m²","12.50",20,false);
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie dodawaj","500000010","Adres",Map.of(service,java.math.BigDecimal.ONE)));
+        assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
     }
 
     private long areaId(String name) { return jdbc.queryForObject("SELECT id FROM district WHERE name = ?", Long.class, name); }

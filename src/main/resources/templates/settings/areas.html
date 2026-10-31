@@ -4,7 +4,7 @@
 <body>
 <a class="skip-link" href="#main">Przejdź do obszarów pracy</a>
 <header class="app-header"><a class="brand" th:href="@{/calendar}" aria-label="ncLEAN CRM — kalendarz"><span>NCLEAN</span><b>CRM</b></a><nav class="app-nav" aria-label="Główna nawigacja"><a th:href="@{/calendar}"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg>Kalendarz</a><a class="selected" th:href="@{/settings/areas}" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#areas"/></svg>Obszary pracy</a></nav><div class="account"><span>Panel właściciela</span><form th:action="@{/logout}" method="post"><button class="icon-button" aria-label="Wyloguj" title="Wyloguj"><svg aria-hidden="true"><use href="/icons.svg#logout"/></svg></button></form></div></header>
-<main id="main" class="main">
+<main id="main" class="main"><nav class="record-links" aria-label="CRM"><a class="button secondary" href="/orders">Zlecenia / szybkie umawianie</a> <a class="button secondary" href="/customers">Klienci</a> <a class="button secondary" href="/settings/services">Cennik</a></nav>
   <header class="page-heading"><div><p class="eyebrow">USTAWIENIA KALENDARZA</p><h1>Obszary pracy</h1><p class="page-description">Własne dzielnice, osiedla i strefy dojazdu — pod nazwami, których używasz.</p></div><a class="button secondary" th:href="@{/calendar}"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg>Wróć do kalendarza</a></header>
   <div class="notice" role="status" th:if="${notice != null}" th:text="${notice}"></div>
   <div class="settings-layout">

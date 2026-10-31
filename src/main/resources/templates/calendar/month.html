@@ -15,7 +15,7 @@
   <nav class="app-nav" aria-label="Główna nawigacja"><a class="selected" th:href="@{/calendar}" aria-current="page"><svg aria-hidden="true"><use href="/icons.svg#calendar"/></svg>Kalendarz</a><a th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#areas"/></svg>Obszary pracy</a></nav>
   <div class="account"><span>Panel właściciela</span><form th:action="@{/logout}" method="post"><button class="icon-button" aria-label="Wyloguj" title="Wyloguj"><svg aria-hidden="true"><use href="/icons.svg#logout"/></svg></button></form></div>
 </header>
-<main id="main" class="main">
+<main id="main" class="main"><nav class="record-links" aria-label="CRM"><a class="button secondary" href="/orders">Zlecenia / szybkie umawianie</a> <a class="button secondary" href="/customers">Klienci</a> <a class="button secondary" href="/settings/services">Cennik</a></nav>
   <header class="page-heading"><div><p class="eyebrow">ORGANIZACJA PRACY</p><h1>Twój kalendarz</h1><p class="page-description">Zaplanuj dzielnice i obszary pracy na każdy dzień.</p></div><a class="button secondary" th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#settings"/></svg>Zarządzaj obszarami</a></header>
   <div class="notice" role="status" th:if="${notice != null}" th:text="${notice}"></div>
   <section class="planner" aria-labelledby="calendar-month-heading">
@@ -51,7 +51,7 @@
       <div class="selection-tools"><span id="selected-area-count" aria-live="polite"></span><button type="button" class="text-button js-only" id="clear-areas">Wyczyść wybór</button></div>
       <a class="manage-link" th:href="@{/settings/areas}"><svg aria-hidden="true"><use href="/icons.svg#settings"/></svg>Dodaj lub edytuj obszary pracy<svg aria-hidden="true"><use href="/icons.svg#arrow-right"/></svg></a>
     </div>
-    <footer class="dialog-footer"><a class="button secondary dialog-close" th:href="@{/calendar(month=${month})}">Anuluj</a><button class="button primary" id="save-areas"><svg aria-hidden="true"><use href="/icons.svg#check"/></svg>Zapisz obszary</button></footer>
+    <a class="button secondary" th:href="@{/orders(day=${selectedDate != null ? selectedDate : today})}" id="day-orders">Zlecenia tego dnia</a><footer class="dialog-footer"><a class="button secondary dialog-close" th:href="@{/calendar(month=${month})}">Anuluj</a><button class="button primary" id="save-areas"><svg aria-hidden="true"><use href="/icons.svg#check"/></svg>Zapisz obszary</button></footer>
   </form>
 </dialog>
 </body></html>
