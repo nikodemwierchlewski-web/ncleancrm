@@ -90,6 +90,19 @@ class CalendarSecurityTest {
         verify(service, never()).setAreaActive(anyLong(), anyBoolean());
     }
 
+    @Test void invalidWeeklyViewDateReturnsBadRequest() throws Exception {
+        mvc.perform(get("/settings/areas").param("validFrom","1999-01-01").with(user("owner").roles("OWNER"))).andExpect(status().isBadRequest());
+    }
+
+    @Test void weeklyPlanAndRestoreRequireOwnerAndCsrf() throws Exception {
+        for(String path:List.of("/settings/areas/weekly","/calendar/areas/restore")){
+            mvc.perform(post(path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());
+            mvc.perform(post(path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());
+        }
+        mvc.perform(post("/calendar/areas/restore").with(user("owner").roles("OWNER")).with(csrf()).param("date",DAY.toString())).andExpect(status().isOk());
+        verify(service).restoreWeekly(DAY);
+    }
+
     @Test void ownerCanReadRenderedCalendarWithSelectedAreas() throws Exception {
         mvc.perform(get("/calendar").param("month", "2026-10").param("day", DAY.toString())
             .with(user("owner").roles("OWNER")))

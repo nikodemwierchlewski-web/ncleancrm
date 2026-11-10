@@ -37,29 +37,39 @@
   const status = $('#customer-search-status');
   const money = value => new Intl.NumberFormat('pl-PL', {style: 'currency', currency: 'PLN'}).format(value);
 
+  const quoteItems = new Map();
+  const agreedPrices = new Map();
   function total() {
     let cents = 0;
-    summary.replaceChildren();
+    const selected = [];
+    const current = new Set();
     for (const line of lines) {
       const input = line.querySelector('input');
       const quantity = Number(input.value || 0);
       if (!(quantity > 0)) continue;
-      const amount = Math.round(Number(line.dataset.price) * quantity * 100);
-      cents += amount;
-      const item = document.createElement('li');
-      const label = document.createElement('span');
-      const name = line.querySelector('strong').textContent;
-      label.textContent = `${name} · ${quantity} ${line.dataset.unit} · ${money(amount / 100)}`;
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.textContent = '×';
-      remove.setAttribute('aria-label', `Usuń z wyceny: ${name}`);
-      remove.addEventListener('click', () => { input.value = '0'; total(); });
-      item.append(label, remove);
-      summary.append(item);
+      const id = input.name.substring(4), name = line.querySelector('strong').textContent;
+      current.add(id);
+      if (!quoteItems.has(id)) {
+        const item = document.createElement('li');item.className='quote-item';
+        const label = document.createElement('span');label.className='quote-label';
+        const suggested = document.createElement('small');suggested.className='suggested-price';suggested.textContent=`Sugerowane: ${money(Number(line.dataset.price))} / ${line.dataset.unit}`;
+        const priceLabel = document.createElement('label');priceLabel.className='quote-price';priceLabel.append(document.createTextNode('Cena dla tego zlecenia'));
+        const price = document.createElement('input');Object.assign(price,{type:'number',name:'price_'+id,min:'0',max:'9999999999.99',step:'0.01',required:true,value:agreedPrices.get(id)??line.dataset.price});price.className='agreed-price';price.setAttribute('aria-label','Cena uzgodniona: '+name);
+        price.addEventListener('input',()=>agreedPrices.set(id,price.value));priceLabel.append(price);
+        const amount = document.createElement('span');amount.className='item-amount';
+        const remove = document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','Usuń z wyceny: '+name);remove.addEventListener('click',()=>{input.value='0';total();});
+        item.append(label,suggested,priceLabel,amount,remove);quoteItems.set(id,item);summary.append(item);
+      }
+      const item=quoteItems.get(id),price=Number(item.querySelector('.agreed-price').value||0);
+      const amount=Math.round(price*quantity*100);cents+=amount;
+      item.querySelector('.quote-label').textContent=`${name} · ${quantity} ${line.dataset.unit}`;
+      item.querySelector('.item-amount').textContent=money(amount/100);
+      selected.push({id,name,quantity});
     }
-    $('#booking-empty').hidden = summary.children.length > 0;
+    for (const [id,item] of quoteItems) if(!current.has(id)){item.remove();quoteItems.delete(id);}
+    $('#booking-empty').hidden = current.size > 0;
     $('#booking-total').textContent = money(cents / 100);
+    form.dispatchEvent(new CustomEvent('booking:change',{detail:selected}));
   }
 
   function filter(category) {

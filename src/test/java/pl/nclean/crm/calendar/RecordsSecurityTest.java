@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RecordsSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean CrmRecords data;
+ @MockitoBean ChemistryService chemistry;
  @Test void ownerSeesTheSameNavigationAndBothSettingsSections() throws Exception {
   mvc.perform(get("/settings").with(user("owner").roles("OWNER"))).andExpect(status().isOk()).andExpect(view().name("settings/index"))
     .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/settings/services\"")))
@@ -28,7 +29,7 @@ class RecordsSecurityTest {
    mvc.perform(get(path)).andExpect(status().is3xxRedirection());
    mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());
   }
-  for(String path:new String[]{"/customers","/customers/search","/customers/lookup","/settings/services","/settings/services/category","/orders","/orders/1"}){
+  for(String path:new String[]{"/customers","/customers/search","/customers/lookup","/settings/services","/settings/services/category","/orders","/orders/1","/settings/services/chemicals","/settings/services/1/chemistry"}){
    mvc.perform(post(path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());
    mvc.perform(post(path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());
   }

@@ -15,6 +15,7 @@
       </div>
       <div class="selection-summary"><h4>Wybrane usługi</h4><p id="booking-empty">Wybierz usługę przyciskiem + lub wpisz ilość.</p><ul id="booking-summary" aria-label="Wybrane pozycje"></ul></div>
     </section>
+    <details id="chemistry-forecast" class="forecast-section"><summary>Ile chemii przewidujesz zużyć? <span id="forecast-total">Nie określono</span></summary><p class="field-help">Sprawdź lub popraw podpowiedź. To przewidywany koszt chemii, bez pozostałych kosztów wykonania.</p><div id="forecast-items"></div></details>
     <section class="booking-contact" aria-labelledby="contact-heading">
       <h3 id="contact-heading">Klient i termin</h3>
       <input type="hidden" name="customer" id="booking-customer">
@@ -30,6 +31,8 @@
       <div class="time-fields"><label>Dzień<input name="day" type="date" min="2000-01-01" max="2100-12-31" required th:value="${day}"></label><label>Godzina<input name="starts" type="time" required value="09:00"></label></div>
     </section>
   </div>
+  <template id="forecast-materials"><span th:each="material:${chemicals}" th:attr="data-id=${material.id},data-name=${material.name},data-unit=${material.unit},data-cost=${material.unitCost}"></span></template>
+  <template id="forecast-recipes"><span th:each="service:${services}" th:with="recipe=${recipes.get(service.id)}" th:attr="data-service=${service.id},data-defined=${recipe != null and recipe.defined}"><i th:if="${recipe != null}" th:each="entry:${recipe.quantities}" th:attr="data-chemical=${entry.key},data-quantity=${entry.value}"></i></span></template>
   <footer class="booking-submit"><div class="quote">Suma <strong id="booking-total" aria-live="polite">0,00 zł</strong></div><button type="submit" class="button primary">Zapisz zlecenie</button><p id="customer-search-status" role="status"></p></footer>
 </form>
 </body></html>

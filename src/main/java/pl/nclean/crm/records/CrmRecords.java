@@ -11,7 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class CrmRecords {
  private final JdbcTemplate db;
- public CrmRecords(JdbcTemplate db){this.db=db;}
+ private final ChemistryService chemistry;
+ public CrmRecords(JdbcTemplate db,ChemistryService chemistry){this.db=db;this.chemistry=chemistry;}
+ public List<ChemistryService.Material> materials(){return chemistry.materials();}
+ public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
+ public Map<Long,BigDecimal> standardCosts(){return chemistry.standardCosts();}
  public List<Map<String,Object>> customers(String query){
   String q=query==null?"":query.strip();
   return db.queryForList("SELECT * FROM crm_customer WHERE position(lower(?) in lower(name))>0 OR position(? in phone)>0 ORDER BY active DESC,name,id",q,q.replaceAll("[\\s()-]",""));
@@ -25,6 +29,8 @@ public class CrmRecords {
   return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
  }
  public List<Map<String,Object>> monthItems(YearMonth month){return db.queryForList("SELECT i.* FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.day>=? AND b.day<? ORDER BY i.booking_id,i.position",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public List<Map<String,Object>> chemicals(long booking){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position WHERE c.booking_id=? ORDER BY c.item_position,c.chemical_id",booking);}
+ public List<Map<String,Object>> monthChemicals(YearMonth month){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position JOIN booking b ON b.id=c.booking_id WHERE b.day>=? AND b.day<? ORDER BY c.booking_id,c.item_position,c.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> items(long booking){return db.queryForList("SELECT * FROM booking_item WHERE booking_id=? ORDER BY position",booking);}
  static String text(String v,int max,boolean required){
   String s=v==null?"":v.strip();if(s.length()>max||(required&&s.isBlank()))throw new IllegalArgumentException("Uzupełnij wymagane pola i sprawdź długość tekstu.");return s;
@@ -45,21 +51,34 @@ public class CrmRecords {
   else changed(db.update("UPDATE service_definition SET category_id=?,name=?,unit=?,price=?,minutes=?,active=?,version=version+1 WHERE id=? AND version=?",category,name,unit,amount,minutes,active,id,version));
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities){
+  return book(token,day,starts,customer,name,number,address,quantities,Map.of(),Map.of());
+ }
+ @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   var existing=db.queryForList("SELECT id FROM booking WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return existing.get(0);
   address=text(address,240,true);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
+  if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
+  var quotes=new ArrayList<ChemistryService.Quote>();boolean allDefined=true;BigDecimal chemistryTotal=BigDecimal.ZERO;
   var lines=new ArrayList<Map<String,Object>>();BigDecimal total=BigDecimal.ZERO;
   for(var entry:quantities.entrySet()){
    BigDecimal qty=entry.getValue();if(qty==null||qty.signum()<=0||qty.scale()>2||qty.compareTo(new BigDecimal("10000"))>0)throw new IllegalArgumentException("Ilość musi być dodatnia, maksymalnie 10000 i dwa miejsca po przecinku.");
    var found=db.queryForList("SELECT * FROM service_definition WHERE id=? AND active=TRUE",entry.getKey());if(found.isEmpty())throw new IllegalArgumentException("Usługa została wyłączona lub nie istnieje. Odśwież cennik.");
-   var line=new LinkedHashMap<>(found.get(0));BigDecimal amount=((BigDecimal)line.get("price")).multiply(qty).setScale(2,RoundingMode.HALF_UP);line.put("quantity",qty);line.put("amount",amount);lines.add(line);total=total.add(amount);
+   var line=new LinkedHashMap<>(found.get(0));line.put("suggested_price",line.get("price"));
+   if(prices.containsKey(entry.getKey())){if(prices.get(entry.getKey())==null)throw new IllegalArgumentException("Podaj cenę uzgodnioną.");line.put("price",money(prices.get(entry.getKey()).toPlainString()));}
+   var quote=chemistry.quote(entry.getKey(),qty,forecasts.get(entry.getKey()));quotes.add(quote);allDefined&=quote.defined();if(quote.cost()!=null)chemistryTotal=chemistryTotal.add(quote.cost());
+   BigDecimal amount=((BigDecimal)line.get("price")).multiply(qty).setScale(2,RoundingMode.HALF_UP);line.put("quantity",qty);line.put("amount",amount);lines.add(line);total=total.add(amount);
   }
   if(customer==null)customer=saveCustomer(null,0,name,number,address,"",true);
   var people=db.queryForList("SELECT * FROM crm_customer WHERE id=? AND active=TRUE",customer);if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
   var person=people.get(0);
   long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,name==null||name.isBlank()?person.get("name"):text(name,120,true),number==null||number.isBlank()?person.get("phone"):phone(number),address,total);
-  for(int i=0;i<lines.size();i++){var line=lines.get(i);db.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount) VALUES (?,?,?,?,?,?,?,?)",id,i,line.get("id"),line.get("name"),line.get("unit"),line.get("quantity"),line.get("price"),line.get("amount"));}
+  for(int i=0;i<lines.size();i++){
+   var line=lines.get(i);var quote=quotes.get(i);
+   db.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount,suggested_price,forecast_defined,chemical_cost) VALUES (?,?,?,?,?,?,?,?,?,?,?)",id,i,line.get("id"),line.get("name"),line.get("unit"),line.get("quantity"),line.get("price"),line.get("amount"),line.get("suggested_price"),quote.defined(),quote.cost());
+   for(var usage:quote.usages())db.update("INSERT INTO booking_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) VALUES (?,?,?,?,?,?,?,?)",id,i,usage.chemicalId(),usage.name(),usage.unit(),usage.quantity(),usage.unitCost(),usage.amount());
+  }
+  db.update("UPDATE booking SET chemical_cost=? WHERE id=?",allDefined?chemistryTotal:null,id);
   return id;
  }
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){

@@ -1,0 +1,5 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
+<details class="forecast-history" th:fragment="details(order,usages)"><summary>Prognoza chemii: <span th:text="${order.chemical_cost == null ? 'Nie określono lub niepełna' : order.chemical_cost + ' zł'}"></span></summary>
+ <p>Prognoza zapisana przy umawianiu — bez późniejszego przeliczania według cennika.</p>
+ <ul><li th:each="usage:${usages}" th:text="|${usage.service_name} · ${usage.name}: ${usage.quantity} ${usage.unit} · ${usage.amount} zł|"></li></ul>
+</details></body></html>

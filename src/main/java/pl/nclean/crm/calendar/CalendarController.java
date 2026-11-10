@@ -76,6 +76,9 @@ public class CalendarController {
         service.assign(date, districtIds == null ? List.of() : districtIds);
         return java.util.Map.of("saved",true);
     }
+    @PostMapping(value="/calendar/areas/restore",produces="application/json")
+    @ResponseBody
+    java.util.Map<String,Boolean> restoreWeekly(@RequestParam LocalDate date) { service.restoreWeekly(date);return java.util.Map.of("saved",true); }
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
@@ -107,6 +110,8 @@ public class CalendarController {
         model.addAttribute("lines", lines);
         model.addAttribute("categories", records.categories());
         model.addAttribute("services", records.services());
+        model.addAttribute("chemicals",records.materials());model.addAttribute("recipes",records.recipes());
+        var chemicalLines=new java.util.HashMap<Long,List<java.util.Map<String,Object>>>();for(var line:records.monthChemicals(month))chemicalLines.computeIfAbsent(((Number)line.get("booking_id")).longValue(),k->new java.util.ArrayList<>()).add(line);model.addAttribute("bookingChemicals",chemicalLines);
         model.addAttribute("token", java.util.UUID.randomUUID());
         model.addAttribute("month", month);
         model.addAttribute("defaultDay", month.equals(YearMonth.now(WARSAW)) ? LocalDate.now(WARSAW) : month.atDay(1));

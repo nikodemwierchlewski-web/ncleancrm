@@ -2,11 +2,13 @@
 
 Na kalendarzu dodajesz zlecenie przyciskiem **+ Zlecenie**. Klientów otwierasz z głównej nawigacji; cennik znajdziesz w **Ustawienia → Cennik**. Historia zleceń klienta oraz dotychczasowa lista `/orders` pozostają dostępne.
 
+Szczegóły planu tygodniowego, standardów chemii i prognoz: [PLAN-CENNIK-CHEMIA.md](PLAN-CENNIK-CHEMIA.md).
+
 ## Cennik
 
 W **Cennik** można dodać kategorię lub zmienić jej nazwę. Dodając i edytując usługę, wybierasz kategorię, własną nazwę, jednostkę (np. szt., m², pakiet), kwotę do zapłaty PLN i orientacyjny czas na jednostkę. Możesz wyłączyć usługę, zachowując ją w starych zleceniach. Zmiany zapisz przyciskiem **Zapisz usługę**. Pierwszy katalog zawiera 17 przykładowych usług; przed użyciem ustaw własne ceny.
 
-Ceny i ilości mogą mieć dwa miejsca po przecinku. Wycenę zlecenia oblicza serwer na podstawie aktualnego cennika. Zapisane zlecenie przechowuje własne nazwy, jednostki, ilości i ceny. Zmiana cennika oraz terminu lub statusu starego zlecenia nie przelicza jego kwoty. Katalog jest importowany migracją V3 tylko raz; start aplikacji nie nadpisuje zmian w panelu. Kwoty są uzgodnionymi kwotami do zapłaty, bez modułu faktur i rozliczeń VAT.
+Ceny i ilości mogą mieć dwa miejsca po przecinku. Cennik podpowiada cenę; w podsumowaniu rezerwacji można wpisać uzgodnioną cenę jednostkową. Serwer waliduje tę cenę i oblicza wycenę. Zapisane zlecenie przechowuje własne nazwy, jednostki, ilości i ceny. Zmiana cennika oraz terminu lub statusu starego zlecenia nie przelicza jego kwoty. Katalog jest importowany migracją V3 tylko raz; start aplikacji nie nadpisuje zmian w panelu. Kwoty są uzgodnionymi kwotami do zapłaty, bez modułu faktur i rozliczeń VAT.
 
 ## Klienci
 

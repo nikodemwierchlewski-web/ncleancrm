@@ -2,6 +2,8 @@
 
 Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn i stały panel dnia, a na telefonie kompaktowy pasek tygodnia i plan wybranego dnia. Formularz zachowuje usługi z kilku kategorii i podpowiada klienta w jednym polu. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
 
+Nowe opcje: tygodniowy plan obszarów z wyjątkami, ceny uzgadniane w rezerwacji oraz standardy i prognozy chemii. Instrukcja: [docs/PLAN-CENNIK-CHEMIA.md](docs/PLAN-CENNIK-CHEMIA.md). Wyniki sprawdzenia: [docs/WERYFIKACJA-PLANU-I-PROGNOZ.md](docs/WERYFIKACJA-PLANU-I-PROGNOZ.md).
+
 Opis codziennej obsługi: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
@@ -38,7 +40,7 @@ Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruc
 - Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
 - Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
 - Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
-- Flyway uruchamia migracje V1 i V2 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. Istniejąca baza V1 otrzymuje tylko migrację V2. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Flyway uruchamia migracje V1–V5 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
 - Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
 
 Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.

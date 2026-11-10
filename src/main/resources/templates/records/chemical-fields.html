@@ -1,0 +1,9 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
+<form th:fragment="fields(material)" th:action="@{/settings/services/chemicals}" method="post">
+ <input th:if="${material != null}" name="id" type="hidden" th:value="${material.id}"><input th:if="${material != null}" name="version" type="hidden" th:value="${material.version}">
+ <label>Nazwa środka<input name="name" required maxlength="120" th:value="${material == null ? '' : material.name}"></label>
+ <label>Ilość w opakowaniu<input name="packageQuantity" type="number" min="0.001" max="99999999999.999" step="0.001" required th:value="${material == null ? 1 : material.packageQuantity}"></label>
+ <label>Jednostka opakowania<select name="packageUnit" required><option th:each="unit:${ {'l','ml','kg','g','szt'} }" th:value="${unit}" th:selected="${material == null ? unit == 'l' : unit == material.packageUnit}" th:text="${unit}"></option></select></label>
+ <label>Cena opakowania PLN<input name="packagePrice" type="number" min="0" max="9999999999.99" step="0.01" required th:value="${material == null ? '' : material.packagePrice}"></label>
+ <button class="button primary" th:text="${material == null ? 'Dodaj środek' : 'Zapisz środek'}"></button>
+</form></body></html>

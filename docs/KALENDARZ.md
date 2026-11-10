@@ -16,9 +16,11 @@ Karta dnia pokazuje godzinę, usługi, klienta i adres. Wykonane i anulowane zle
 
 Błąd zapisu pozostawia formularz, wybrane usługi oraz kontakt i adres. Ponowny zapis jest blokowany podczas wysyłania. Token żądania zapobiega powtórnemu utworzeniu tej samej rezerwacji. Zmiana cennika nie przelicza wcześniejszych zleceń.
 
+Nowe opcje opisuje [PLAN-CENNIK-CHEMIA.md](PLAN-CENNIK-CHEMIA.md): ceny uzgodnione, prognoza chemii i dziedziczenie tygodniowego planu obszarów.
+
 ## Obszary i ustawienia
 
-**Obszary dnia** otwierają osobny panel przypisania. Możesz zaznaczyć kilka obszarów albo wyczyścić oznaczenia. Dzień ma delikatne tło, paski kolorów i nazwy; na telefonie kolory są również w pasku tygodnia. Obszar jest opcjonalnym ręcznym oznaczeniem, nie dobiera terminów.
+**Obszary dnia** otwierają panel przypisania i pokazują źródło oznaczenia. Plan tygodniowy jest domyślny; indywidualny wyjątek (również pusty) ma pierwszeństwo. Przywrócenie planu usuwa wyjątek. Możesz zaznaczyć kilka obszarów albo wyczyścić oznaczenia. Dzień ma delikatne tło, paski kolorów i nazwy; na telefonie kolory są również w pasku tygodnia. Obszar jest opcjonalnym ręcznym oznaczeniem, nie dobiera terminów.
 
 Główna nawigacja jest taka sama na wszystkich ekranach: **Kalendarz · Klienci · Ustawienia**. W ustawieniach są **Cennik** i **Obszary pracy**. Dezaktywacja obszaru zachowuje wcześniejsze przypisania. Istniejące adresy `/orders`, `/settings/services` i `/settings/areas` nadal działają; historia klienta nadal prowadzi do jego zleceń.
 

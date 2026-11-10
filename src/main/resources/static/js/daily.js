@@ -63,6 +63,8 @@
     }
     $('#day-agenda').scrollTop = 0;
     $('#area-date').value = day;
+    $('#restore-weekly-date').value=day;
+    $('#area-source').textContent=cell.dataset.scheduleSource;
     $('#area-editor-date').textContent = label;
     $('#area-editor-date').dateTime = day;
     renderWeek();
@@ -145,7 +147,7 @@
   $('#clear-areas').addEventListener('click', () => document.querySelectorAll('[data-area-option] input').forEach(input => input.checked = false));
   document.addEventListener('submit', event => {
     const form = event.target;
-    if (!form.matches('#day-area-form,.order-update') || event.defaultPrevented) return;
+    if (!form.matches('#day-area-form,#restore-weekly-form,.order-update') || event.defaultPrevented) return;
     event.preventDefault();
     window.NcleanForms.submit(form, form.querySelector('.save-error'), () => {
       const day = form.querySelector('[name=day]')?.value || selected;

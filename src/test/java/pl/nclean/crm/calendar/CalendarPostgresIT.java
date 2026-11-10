@@ -61,6 +61,9 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
+        jdbc.update("DELETE FROM service_chemical");jdbc.update("UPDATE service_definition SET chemistry_defined=FALSE");jdbc.update("DELETE FROM chemical");
+        jdbc.update("DELETE FROM weekly_area");jdbc.update("DELETE FROM weekly_area_plan");jdbc.update("DELETE FROM day_area_override");
         jdbc.update("DELETE FROM day_district");
         jdbc.update("DELETE FROM district WHERE id > 5");
         for (int i = 0; i < SEED_NAMES.size(); i++) {
@@ -75,7 +78,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -100,7 +103,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -220,7 +223,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -338,6 +341,115 @@ class CalendarPostgresIT {
         assertEquals("Kontakt wizyty lean",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,id));
         assertEquals("Adres tej wizyty lean",jdbc.queryForObject("SELECT address FROM booking WHERE id=?",String.class,id));
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?",Integer.class,token));
+    }
+
+    @Test
+    void upgradingV3KeepsOldPricesAndDoesNotInventChemicalForecasts() {
+        String schema="legacy_estimates",url=POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema;
+        var source=new DriverManagerDataSource(url,POSTGRES.getUsername(),POSTGRES.getPassword());var old=new JdbcTemplate(source);
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("3").load().migrate();
+        long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Stary klient syntetyczny','+48500000088') RETURNING id",Long.class);
+        long service=old.queryForObject("SELECT id FROM service_definition WHERE name='Kanapa / sofa'",Long.class);
+        long booking=old.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,DATE '2026-10-28',TIME '10:00','Stary klient syntetyczny','+48500000088','Adres',180) RETURNING id",Long.class,UUID.randomUUID(),person);
+        old.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount) VALUES (?,0,?,'Kanapa / sofa','szt.',1,180,180)",booking,service);
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
+        var item=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);
+        assertEquals(0,new java.math.BigDecimal("180").compareTo((java.math.BigDecimal)item.get("price")));
+        assertEquals(0,new java.math.BigDecimal("180").compareTo((java.math.BigDecimal)item.get("suggested_price")));
+        assertEquals(false,item.get("forecast_defined"));assertNull(item.get("chemical_cost"));
+        assertEquals(0,old.queryForObject("SELECT count(*) FROM booking_chemical",Integer.class));
+    }
+
+    @Test
+    void weeklyVersionsExceptionsAndRestorePreserveHistoryAndRestart() throws Exception {
+        var calendar=app.context().getBean(CalendarService.class);
+        var today=java.time.LocalDate.now(java.time.ZoneId.of("Europe/Warsaw"));
+        var monday=today.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.MONDAY));
+        long krzyki=areaId("Krzyki"),fabryczna=areaId("Fabryczna");
+        calendar.assign(today.minusDays(1),List.of(fabryczna));
+        calendar.saveWeekly(today,Map.of(1,List.of(krzyki),2,List.of(fabryczna)));
+        assertEquals(java.util.Set.of(krzyki),calendar.assignedAreaIds(monday));
+        assertEquals(java.util.Set.of(fabryczna),calendar.assignedAreaIds(monday.plusDays(1)));
+        calendar.assign(monday,List.of());assertEquals(java.util.Set.of(),calendar.assignedAreaIds(monday));
+        assertTrue(calendar.days(java.time.YearMonth.from(monday)).stream().filter(d->d.date().equals(monday)).findFirst().orElseThrow().overridden());
+        calendar.restoreWeekly(monday);assertEquals(java.util.Set.of(krzyki),calendar.assignedAreaIds(monday));
+        calendar.assign(monday,List.of(fabryczna));
+        calendar.saveWeekly(monday.plusWeeks(1),Map.of(1,List.of(fabryczna)));
+        assertEquals(java.util.Set.of(fabryczna),calendar.assignedAreaIds(monday.plusWeeks(1)));
+        assertEquals(java.util.Set.of(fabryczna),calendar.assignedAreaIds(monday));
+        calendar.restoreWeekly(monday);assertEquals(java.util.Set.of(krzyki),calendar.assignedAreaIds(monday));
+        assertEquals(java.util.Set.of(fabryczna),calendar.assignedAreaIds(today.minusDays(1)));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        var after=app.context().getBean(CalendarService.class);assertEquals(java.util.Set.of(krzyki),after.assignedAreaIds(monday));assertEquals(java.util.Set.of(fabryczna),after.assignedAreaIds(monday.plusWeeks(1)));
+        var browser=app.browser();browser.login();assertTrue(browser.get("/calendar?day="+monday).body().contains("Z planu tygodniowego"));
+    }
+
+    @Test
+    void emptyWeeklyPlanReplacesEarlierVersionWithoutChangingEarlierDays() {
+        var calendar=app.context().getBean(CalendarService.class);var today=java.time.LocalDate.now(java.time.ZoneId.of("Europe/Warsaw"));
+        long krzyki=areaId("Krzyki");var monday=today.with(java.time.temporal.TemporalAdjusters.nextOrSame(java.time.DayOfWeek.MONDAY));
+        calendar.saveWeekly(today,Map.of(1,List.of(krzyki)));calendar.saveWeekly(monday.plusWeeks(1),Map.of());
+        assertEquals(java.util.Set.of(krzyki),calendar.assignedAreaIds(monday));assertEquals(java.util.Set.of(),calendar.assignedAreaIds(monday.plusWeeks(1)));
+        assertThrows(IllegalArgumentException.class,()->calendar.saveWeekly(today.minusDays(1),Map.of(1,List.of(krzyki))));
+        calendar.assign(monday,List.of(krzyki));calendar.setAreaActive(krzyki,false);calendar.assign(monday,List.of(krzyki));
+        assertEquals(java.util.Set.of(krzyki),calendar.assignedAreaIds(monday));
+        assertThrows(IllegalArgumentException.class,()->calendar.saveWeekly(monday.plusWeeks(2),Map.of(3,List.of(krzyki))));
+    }
+
+    private long estimateService(String name) {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long category=((Number)data.categories().get(0).get("id")).longValue();
+        data.service(null,0,category,name,"szt.","180.00",60,true);
+        return jdbc.queryForObject("SELECT id FROM service_definition WHERE name=?",Long.class,name);
+    }
+
+    @Test
+    void negotiatedPriceAndChemicalSnapshotsRemainAfterCatalogueEditsAndRestart() throws Exception {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);
+        long service=estimateService("Usługa prognozy");long material=chemistry.saveMaterial(null,0,"Płukanka próba","l","1","50.00");
+        chemistry.saveRecipe(service,0,true,Map.of(material,new java.math.BigDecimal("50")));
+        var quote=chemistry.quote(service,new java.math.BigDecimal("2"),null);assertEquals(0,new java.math.BigDecimal("5.00").compareTo(quote.cost()));
+        var browser=app.browser();browser.login();var token=UUID.randomUUID();
+        var fields=Map.<String,Object>of("calendar","1","token",token,"day",DAY,"starts","11:00","name","Klient prognozy","phone","500000070","address","Adres prognozy","qty_"+service,"2","price_"+service,"220.00");
+        assertEquals(200,browser.settings("/orders",fields,true).statusCode());assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        long booking=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?",Long.class,token);
+        var item=data.items(booking).get(0);assertEquals(0,new java.math.BigDecimal("180").compareTo((java.math.BigDecimal)item.get("suggested_price")));assertEquals(0,new java.math.BigDecimal("220").compareTo((java.math.BigDecimal)item.get("price")));
+        assertEquals(0,new java.math.BigDecimal("440").compareTo(jdbc.queryForObject("SELECT total FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
+        assertEquals(0,new java.math.BigDecimal("5").compareTo(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
+        chemistry.saveMaterial(material,0,"Płukanka nowa cena","ml","1000","100.00");chemistry.saveRecipe(service,1,true,Map.of(material,new java.math.BigDecimal("150")));
+        var current=data.services().stream().filter(v->((Number)v.get("id")).longValue()==service).findFirst().orElseThrow();data.service(service,((Number)current.get("version")).longValue(),((Number)current.get("category_id")).longValue(),"Usługa nowa cena","szt.","300",60,true);
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        var snapshot=jdbc.queryForMap("SELECT * FROM booking_chemical WHERE booking_id=?",booking);assertEquals("Płukanka próba",snapshot.get("name"));assertEquals("ml",snapshot.get("unit"));assertEquals(0,new java.math.BigDecimal("100").compareTo((java.math.BigDecimal)snapshot.get("quantity")));assertEquals(0,new java.math.BigDecimal("5").compareTo((java.math.BigDecimal)snapshot.get("amount")));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?",Integer.class,token));
+    }
+
+    @Test
+    void manualChemicalForecastZeroUnknownAndDimensionValidationAreDistinct() {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);
+        long service=estimateService("Usługa ręcznej prognozy");long liquid=chemistry.saveMaterial(null,0,"Płyn","l","1","50");long powder=chemistry.saveMaterial(null,0,"Proszek","kg","2","80");
+        chemistry.saveRecipe(service,0,true,Map.of(liquid,new java.math.BigDecimal("50")));
+        assertEquals(0,new java.math.BigDecimal("0.04").compareTo(chemistry.materials().stream().filter(m->m.id()==powder).findFirst().orElseThrow().unitCost()));
+        var forecast=new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(liquid,new java.math.BigDecimal("20"),powder,new java.math.BigDecimal("10")));
+        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Ręczna prognoza","500000071","Adres",Map.of(service,new java.math.BigDecimal("2")),Map.of(),Map.of(service,forecast));
+        assertEquals(2,data.chemicals(booking).size());assertEquals(0,new java.math.BigDecimal("1.40").compareTo(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
+        var zero=chemistry.quote(service,java.math.BigDecimal.ONE,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of()));assertTrue(zero.defined());assertEquals(0,zero.cost().signum());
+        long zeroBooking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Prognoza zero","500000079","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of())));
+        assertTrue((Boolean)data.items(zeroBooking).get(0).get("forecast_defined"));assertEquals(0,jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,zeroBooking).signum());
+        var unknown=chemistry.quote(service,java.math.BigDecimal.ONE,new pl.nclean.crm.records.ChemistryService.Forecast(false,Map.of()));assertFalse(unknown.defined());assertNull(unknown.cost());
+        assertThrows(IllegalArgumentException.class,()->chemistry.saveMaterial(liquid,0,"Płyn","kg","1","50"));
+        assertThrows(IllegalArgumentException.class,()->chemistry.quote(service,java.math.BigDecimal.ONE,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(liquid,new java.math.BigDecimal("-1")))));
+        assertThrows(IllegalArgumentException.class,()->chemistry.saveMaterial(null,0,"Brak opakowania","l","0","50"));
+    }
+
+    @Test
+    void missingStandardDoesNotBlockBookingAndInvalidForecastRollsBack() {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Usługa bez standardu");
+        long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Bez prognozy","500000072","Adres",Map.of(service,java.math.BigDecimal.ONE));
+        assertNull(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,id));assertFalse((Boolean)data.items(id).get(0).get("forecast_defined"));
+        long before=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
+        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz","500000073","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE)))));
+        assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
+        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz ceny","500000074","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(service,new java.math.BigDecimal("-1")),Map.of()));
+        assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
     }
 
     private static void assertCalendarRedirect(HttpResponse<String> response, String day) {
