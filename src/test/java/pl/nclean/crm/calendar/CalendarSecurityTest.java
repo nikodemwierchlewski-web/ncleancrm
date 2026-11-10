@@ -30,6 +30,7 @@ class CalendarSecurityTest {
         new CalendarService.District(2, "Fabryczna", "#DBEAFE", true));
     @Autowired MockMvc mvc;
     @MockitoBean CalendarService service;
+    @MockitoBean pl.nclean.crm.records.CrmRecords records;
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry properties) {

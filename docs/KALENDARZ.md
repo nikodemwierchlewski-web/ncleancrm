@@ -1,27 +1,30 @@
-# Obsługa kalendarza
+# Codzienna obsługa kalendarza
 
-Po zalogowaniu otwiera się kalendarz miesiąca. Na komputerze dni są ułożone w 7 kolumnach; na telefonie są czytelną listą. Każdy przypisany obszar ma etykietę z nazwą i kolorem. Nie trzeba otwierać dnia, żeby zobaczyć jego obszary.
+Po zalogowaniu otwiera się kalendarz. Na komputerze miesiąc ma 7 kolumn. Wpis pokazuje godzinę, usługę i klienta; po trzech wpisach przycisk **+N kolejnych** otwiera pełny plan dnia. Zlecenia są ułożone według godziny, również te wykonane lub anulowane (z opisem statusu).
 
-## Przypisanie obszarów do dnia
+Na telefonie i tablecie (do 900 px) domyślnie widać pasek tygodnia i karty zleceń wybranego dnia. **Wybierz datę** rozwija przegląd miesiąca. Strzałki tygodnia przechodzą również do sąsiedniego miesiąca. Przycisk **+ Zlecenie** pozostaje w nagłówku podczas przewijania. Wybrany dzień zostaje w adresie strony, również po zapisie i odświeżeniu.
 
-1. Kliknij dzień lub wybierz go klawiaturą.
-2. W panelu zaznacz dowolne potrzebne obszary pracy.
-3. Kliknij **Zapisz**. Zmiana trafia do PostgreSQL, a etykiety pojawiają się przy dniu.
+## Zlecenie bez kreatora
 
-Ponowne otwarcie dnia pokazuje zapisane zaznaczenia. Zmień je i zapisz, aby zastąpić przypisanie. Odznaczenie wszystkich obszarów i zapis pozostawia dzień bez oznaczenia. Zamknięcie panelu bez zapisu nie zmienia danych.
+1. Wybierz dzień i **+ Zlecenie**.
+2. Wybierz kategorię, ustaw ilości usług przyciskami −/+ lub wpisz liczbę. Ceny i suma są widoczne od razu.
+3. Wpisz imię i telefon albo wyszukaj klienta po imieniu/telefonie i wybierz z listy. Dane i adres zostaną uzupełnione. Kontakt oraz adres możesz poprawić dla tej wizyty bez zmiany kartoteki i dawnych zleceń.
+4. Ustaw godzinę i zapisz. Data jest już wybrana. Zapis zamyka formularz i pokazuje zlecenie w kalendarzu.
 
-Przyciski nawigacji oraz wybór miesiąca pozwalają zmienić oglądany okres. Bieżący dzień jest wyróżniony. Panel można zamknąć przyciskiem zamknięcia lub klawiszem Escape. Bez JavaScript kliknięcie dnia otwiera formularz po przejściu na stronę tego dnia; zapis nadal działa.
+Błąd zapisu pozostawia formularz i wpisane dane. Podczas wysyłania ponowny zapis jest blokowany; token rezerwacji zabezpiecza również przed ponowieniem tego samego żądania. Zmiana cennika nie przelicza wcześniejszych zleceń.
 
-## Ustawienia → Obszary pracy
+Kliknij zlecenie, aby zobaczyć kontakt, klikalny numer telefonu, adres, usługi i kwotę. W tym panelu edytujesz termin i status. Edycję kartoteki oraz cennika otwierasz z głównej nawigacji.
 
-- **Dodawanie:** wpisz nazwę i kolor w formacie `#RRGGBB`, np. `#208BE3`, i zapisz.
-- **Edycja:** wybierz obszar, zmień nazwę lub kolor i zapisz. Etykiety już przypisanych dni pokazują aktualną nazwę i kolor.
-- **Dezaktywacja:** wyłącza obszar z nowych przypisań i pozostawia jego wcześniejsze przypisania. Nieaktywny obszar jest opisany przy zapisanym dniu; można go zachować albo odznaczyć.
+## Kolory i obszary
 
-Nazwy nie mogą być puste ani dłuższe niż 100 znaków. Nazwa istniejącego obszaru nie może być użyta ponownie, również ze zmienioną wielkością liter. Niepoprawny kolor HEX albo nieznany identyfikator obszaru nie zostaną zapisane.
+Na komputerze kliknij numer dnia, a w panelu rozwiń **Przypisz obszary pracy**. Na telefonie wybierz **Obszary dnia**. Zaznacz kilka obszarów i zapisz; wyczyszczenie wyboru usuwa oznaczenia tego dnia.
 
-## Zapis i historia
+Dzień otrzymuje delikatne tło pierwszego obszaru, osobne paski kolorów oraz etykiety wszystkich nazw. Pasek tygodnia również pokazuje kolory. Obszary są ręcznym oznaczeniem, nie dobierają terminów.
 
-Dane pozostają po restarcie aplikacji i kontenera PostgreSQL, gdy zachowasz jego wolumen. Aktualizacja z wersji V1 uruchamia migrację V2, która zachowuje dotychczasowe przypisania i pozwala dodać kolejne obszary do tych samych dni. Wykonana migracja V1 nie jest modyfikowana.
+W **Obszary pracy** dodajesz i edytujesz nazwę oraz HEX (`#RRGGBB`). Dezaktywacja wyłącza nowe przypisania i zachowuje historię. Zamknięcie panelu lub Escape bez zapisu nie zmienia danych.
 
-Edycja i zapis wymagają zalogowania właściciela. Formularze są chronione przez CSRF. Przypisanie obszarów jest ręcznym oznaczeniem organizacyjnym; nie tworzy zleceń ani nie dobiera terminów.
+## Dane i wymagania
+
+Interakcje paneli wymagają JavaScript. Dane są przechowywane w istniejącym PostgreSQL, bez localStorage i dodatkowego prototypu. Zmiana kalendarza nie wymaga nowej migracji; V1–V3 pozostają niezmienione. Restart aplikacji lub kontenera z zachowanym wolumenem nie usuwa danych.
+
+Odczyt i zapis wymagają konta OWNER. Wszystkie zapisy wymagają CSRF. Aplikacja nie korzysta z produkcyjnej bazy nclean.pl. Uruchomienie na Windows: [WINDOWS.md](WINDOWS.md).

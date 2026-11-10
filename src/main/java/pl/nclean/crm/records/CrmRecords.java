@@ -21,6 +21,10 @@ public class CrmRecords {
  public List<Map<String,Object>> bookings(LocalDate day,Long customer){
   return db.queryForList("SELECT * FROM booking WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
  }
+ public List<Map<String,Object>> monthBookings(YearMonth month){
+  return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
+ }
+ public List<Map<String,Object>> monthItems(YearMonth month){return db.queryForList("SELECT i.* FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.day>=? AND b.day<? ORDER BY i.booking_id,i.position",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> items(long booking){return db.queryForList("SELECT * FROM booking_item WHERE booking_id=? ORDER BY position",booking);}
  static String text(String v,int max,boolean required){
   String s=v==null?"":v.strip();if(s.length()>max||(required&&s.isBlank()))throw new IllegalArgumentException("Uzupełnij wymagane pola i sprawdź długość tekstu.");return s;
@@ -54,7 +58,7 @@ public class CrmRecords {
   if(customer==null)customer=saveCustomer(null,0,name,number,address,"",true);
   var people=db.queryForList("SELECT * FROM crm_customer WHERE id=? AND active=TRUE",customer);if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
   var person=people.get(0);
-  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,person.get("name"),person.get("phone"),address,total);
+  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,name==null||name.isBlank()?person.get("name"):text(name,120,true),number==null||number.isBlank()?person.get("phone"):phone(number),address,total);
   for(int i=0;i<lines.size();i++){var line=lines.get(i);db.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount) VALUES (?,?,?,?,?,?,?,?)",id,i,line.get("id"),line.get("name"),line.get("unit"),line.get("quantity"),line.get("price"),line.get("amount"));}
   return id;
  }

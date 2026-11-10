@@ -34,7 +34,11 @@ public class RecordsController {
   p.forEach((key,value)->{if(key.startsWith("qty_")&&!value.isBlank()){var q=new BigDecimal(value.replace(',','.'));if(q.signum()!=0)quantities.put(Long.parseLong(key.substring(4)),q);}});
   data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities);return "redirect:/orders?day="+p.get("day");
  }
+ @PostMapping(value="/orders",params="calendar",produces="application/json") @ResponseBody
+ Map<String,Boolean> calendarBook(@RequestParam Map<String,String> p){book(p);return Map.of("saved",true);}
+ @PostMapping(value="/orders/{id}",params="calendar",produces="application/json") @ResponseBody
+ Map<String,Boolean> calendarUpdate(@PathVariable long id,@RequestParam Map<String,String> p){update(id,p);return Map.of("saved",true);}
  @PostMapping("/orders/{id}") String update(@PathVariable long id,@RequestParam Map<String,String> p){data.reschedule(id,version(p),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),p.get("status"));return "redirect:/orders?day="+p.get("day");}
  @ExceptionHandler({IllegalArgumentException.class,DateTimeException.class,DataIntegrityViolationException.class}) @ResponseStatus(HttpStatus.BAD_REQUEST)
- String invalid(Exception ex,Model model){model.addAttribute("message",ex instanceof NumberFormatException||ex instanceof DateTimeException?"Sprawdź daty i wartości liczbowe.":ex instanceof DataIntegrityViolationException?"Zapis nie powiódł się. Sprawdź listę przed ponownym dodaniem.":ex.getMessage());return "records/error";}
+ Object invalid(Exception ex,Model model,jakarta.servlet.http.HttpServletRequest request){model.addAttribute("message",ex instanceof NumberFormatException||ex instanceof DateTimeException?"Sprawdź daty i wartości liczbowe.":ex instanceof DataIntegrityViolationException?"Zapis nie powiódł się. Sprawdź listę przed ponownym dodaniem.":ex.getMessage());if(request.getParameter("calendar")!=null)return org.springframework.http.ResponseEntity.badRequest().body(Map.of("message",model.getAttribute("message")));return "records/error";}
 }

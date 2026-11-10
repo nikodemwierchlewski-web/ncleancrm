@@ -280,6 +280,36 @@ class CalendarPostgresIT {
         return jdbc.queryForList("SELECT district_id FROM day_district WHERE day = ? ORDER BY district_id", Long.class, java.sql.Date.valueOf(day));
     }
     private static String calendarPath(String day) { return "/calendar?month=2026-10&day=" + day; }
+    @Test
+    void calendarShowsEightBookingsInTimeOrderAndJsonWritesSurviveRestart() throws Exception {
+        jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        var browser=app.browser();browser.login();
+        long person=data.saveCustomer(null,0,"Klient kalendarza","500000020","Adres domyślny","",true);
+        long service=((Number)data.services().get(0).get("id")).longValue();
+        for(int hour=15;hour>=8;hour--)data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.of(hour,0),person,null,null,"Adres wizyty",Map.of(service,java.math.BigDecimal.ONE));
+        var month=data.monthBookings(java.time.YearMonth.of(2026,10));assertEquals(8,month.size());
+        assertEquals("08:00:00",month.get(0).get("starts").toString());
+        var page=browser.get(calendarPath(DAY));assertEquals(200,page.statusCode());assertTrue(page.body().contains("+5 kolejnych"));
+        String token=UUID.randomUUID().toString();
+        var fields=Map.<String,Object>of("calendar","1","token",token,"day",DAY,"starts","16:00","customer",person,"name","Kontakt na tę wizytę","phone","500000021","address","Inny adres","qty_"+service,"1");
+        assertEquals(403,browser.settings("/orders",fields,false).statusCode());
+        var created=browser.settings("/orders",fields,true);assertEquals(200,created.statusCode());assertTrue(created.body().contains("saved"));
+        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(9,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
+        assertEquals("Klient kalendarza",jdbc.queryForObject("SELECT name FROM crm_customer WHERE id=?",String.class,person));
+        long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,token);
+        assertEquals("Kontakt na tę wizytę",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,id));
+        var invalid=new LinkedHashMap<String,Object>(fields);invalid.put("token",UUID.randomUUID());invalid.put("qty_"+service,"-1");
+        var rejected=browser.settings("/orders",invalid,true);assertEquals(400,rejected.statusCode());assertTrue(rejected.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+        assertEquals(200,browser.settings("/calendar/areas",Map.of("calendar","1","date",DAY,"districtIds",List.of(areaId("Krzyki"),areaId("Fabryczna"))),true).statusCode());
+        assertEquals(200,browser.settings("/orders/"+id,Map.of("calendar","1","version","0","day",DAY,"starts","07:30","status","DONE"),true).statusCode());
+        assertEquals(400,browser.settings("/orders/"+id,Map.of("calendar","1","version","0","day",DAY,"starts","07:30","status","DONE"),true).statusCode());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        var after=app.browser();after.login();var html=after.get(calendarPath(DAY));assertEquals(200,html.statusCode());assertTrue(html.body().contains("Kontakt na tę wizytę"));
+        assertEquals(2,assignedAreas(DAY).size());assertEquals("DONE",jdbc.queryForObject("SELECT status FROM booking WHERE id=?",String.class,id));
+    }
+
     private static void assertCalendarRedirect(HttpResponse<String> response, String day) {
         assertEquals(302, response.statusCode());
         var target = URI.create(response.headers().firstValue("Location").orElseThrow());

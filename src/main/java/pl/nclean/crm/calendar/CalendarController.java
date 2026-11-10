@@ -25,7 +25,8 @@ public class CalendarController {
     private static final Locale POLISH = Locale.forLanguageTag("pl-PL");
     private static final ZoneId WARSAW = ZoneId.of("Europe/Warsaw");
     private final CalendarService service;
-    public CalendarController(CalendarService service) { this.service = service; }
+    private final pl.nclean.crm.records.CrmRecords records;
+    public CalendarController(CalendarService service, pl.nclean.crm.records.CrmRecords records) { this.service = service; this.records = records; }
 
     @InitBinder("dayAreasForm")
     void bindDay(WebDataBinder binder) { binder.setAllowedFields("date", "districtIds"); }
@@ -42,7 +43,7 @@ public class CalendarController {
         if (selectedDate != null) selected = YearMonth.from(selectedDate);
         populate(model, selected, selectedDate, null, List.of());
         model.addAttribute("dayEditorOpen", selectedDate != null && !"1".equals(saved));
-        model.addAttribute("notice", "1".equals(saved) ? "Zapisano obszary pracy." : null);
+        model.addAttribute("notice", "1".equals(saved) ? "Zapisano zmiany." : null);
         return "calendar/month";
     }
 
@@ -68,6 +69,18 @@ public class CalendarController {
         return "calendar/month";
     }
 
+    @PostMapping(value="/calendar/areas", params="calendar", produces="application/json")
+    @ResponseBody
+    java.util.Map<String,Boolean> saveFromCalendar(@RequestParam LocalDate date,
+        @RequestParam(required=false) List<Long> districtIds) {
+        service.assign(date, districtIds == null ? List.of() : districtIds);
+        return java.util.Map.of("saved",true);
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    java.util.Map<String,String> invalidSelection(IllegalArgumentException ex) { return java.util.Map.of("message", ex.getMessage()); }
+
     // Keep existing V1 form submissions working during the interface transition.
     @PostMapping("/calendar/district")
     String assign(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -81,7 +94,22 @@ public class CalendarController {
     }
 
     private void populate(Model model, YearMonth month, LocalDate selectedDate, Set<Long> selectedIds, List<String> errors) {
+        var orders = records.monthBookings(month);
+        var byDate = new java.util.LinkedHashMap<String, java.util.List<java.util.Map<String,Object>>>();
+        var lines = new java.util.HashMap<Long, java.util.List<java.util.Map<String,Object>>>();
+        for (var order : orders) {
+            byDate.computeIfAbsent(order.get("day").toString(), k -> new java.util.ArrayList<>()).add(order);
+
+        }
+        for (var line : records.monthItems(month)) lines.computeIfAbsent(((Number)line.get("booking_id")).longValue(), k -> new java.util.ArrayList<>()).add(line);
+        model.addAttribute("ordersByDay", byDate);
+        model.addAttribute("orders", orders);
+        model.addAttribute("lines", lines);
+        model.addAttribute("categories", records.categories());
+        model.addAttribute("services", records.services());
+        model.addAttribute("token", java.util.UUID.randomUUID());
         model.addAttribute("month", month);
+        model.addAttribute("defaultDay", month.equals(YearMonth.now(WARSAW)) ? LocalDate.now(WARSAW) : month.atDay(1));
         model.addAttribute("monthLabel", month.format(DateTimeFormatter.ofPattern("LLLL yyyy", POLISH)));
         model.addAttribute("days", service.days(month));
         model.addAttribute("districts", service.districts());
