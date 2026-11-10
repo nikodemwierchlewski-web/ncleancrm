@@ -46,4 +46,4 @@ W dawnych zleceniach cena sugerowana jest zachowana na podstawie ówczesnej zapi
 
 Serwer używa BigDecimal. Ilości chemii mają do trzech miejsc po przecinku; automatyczne przemnożenie standardu jest zaokrąglane do 0,001 jednostki bazowej. Koszt jednostki ma 16 miejsc po przecinku, kwoty pozycji 2 miejsca, a sumy są sumami zaokrąglonych pozycji. JS pokazuje podpowiedzi; autorytatywne wyliczenie i walidację wykonuje serwer.
 
-Zapis rezerwacji i prognoz jest jedną transakcją. Token zapobiega powieleniu tego samego zlecenia. Nadal wymagane są OWNER i CSRF. Nie dodano magazynu, rzeczywistego rozliczania chemii, finansów, SMS ani GPS; aplikacja nie korzysta z produkcji nclean.pl.
+Zapis rezerwacji i prognoz jest jedną transakcją. Token zapobiega powieleniu tego samego zlecenia. Nadal wymagane są OWNER i CSRF. Rzeczywiste ilości i propozycje standardów opisuje [RZECZYWISTE-ZUZYCIE-I-PROPOZYCJE.md](RZECZYWISTE-ZUZYCIE-I-PROPOZYCJE.md). Nie dodano magazynu, finansów, SMS ani GPS; aplikacja nie korzysta z produkcji nclean.pl.

@@ -31,6 +31,20 @@ public class CrmRecords {
  public List<Map<String,Object>> monthItems(YearMonth month){return db.queryForList("SELECT i.* FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.day>=? AND b.day<? ORDER BY i.booking_id,i.position",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> chemicals(long booking){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position WHERE c.booking_id=? ORDER BY c.item_position,c.chemical_id",booking);}
  public List<Map<String,Object>> monthChemicals(YearMonth month){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position JOIN booking b ON b.id=c.booking_id WHERE b.day>=? AND b.day<? ORDER BY c.booking_id,c.item_position,c.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public List<Map<String,Object>> actuals(long booking){return db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? ORDER BY item_position,chemical_id",booking);}
+ public List<Map<String,Object>> monthActuals(YearMonth month){return db.queryForList("SELECT a.* FROM booking_actual_chemical a JOIN booking b ON b.id=a.booking_id WHERE b.day>=? AND b.day<? ORDER BY a.booking_id,a.item_position,a.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public Map<String,Map<Long,BigDecimal>> actualFields(Map<Long,List<Map<String,Object>>> lines,List<Map<String,Object>> forecasts,List<Map<String,Object>> actuals){
+  var result=new HashMap<String,Map<Long,BigDecimal>>();var units=new HashMap<Long,String>();materials().forEach(m->units.put(m.id(),m.unit()));
+  for(var entry:lines.entrySet())for(var item:entry.getValue()){
+   String key=entry.getKey()+":"+item.get("position");var values=new LinkedHashMap<Long,BigDecimal>();
+   var source=((Number)item.get("actual_version")).longValue()==0?forecasts:actuals;
+   for(var row:source)if(((Number)row.get("booking_id")).longValue()==entry.getKey()&&row.get("item_position").equals(item.get("position"))){
+    long chemical=((Number)row.get("chemical_id")).longValue();if(Objects.equals(units.get(chemical),row.get("unit")))values.put(chemical,(BigDecimal)row.get("quantity"));
+   }
+   result.put(key,values);
+  }
+  return result;
+ }
  public List<Map<String,Object>> items(long booking){return db.queryForList("SELECT * FROM booking_item WHERE booking_id=? ORDER BY position",booking);}
  static String text(String v,int max,boolean required){
   String s=v==null?"":v.strip();if(s.length()>max||(required&&s.isBlank()))throw new IllegalArgumentException("Uzupełnij wymagane pola i sprawdź długość tekstu.");return s;

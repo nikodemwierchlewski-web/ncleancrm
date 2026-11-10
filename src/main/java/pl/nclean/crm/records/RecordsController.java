@@ -12,11 +12,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 public class RecordsController {
  private final CrmRecords data;
  private final ChemistryService chemistry;
- public RecordsController(CrmRecords data,ChemistryService chemistry){this.data=data;this.chemistry=chemistry;}
+ private final ActualUsageService actualUsage;
+ public RecordsController(CrmRecords data,ChemistryService chemistry,ActualUsageService actualUsage){this.data=data;this.chemistry=chemistry;this.actualUsage=actualUsage;}
  static Long id(Map<String,String> p,String key){String v=p.get(key);return v==null||v.isBlank()?null:Long.valueOf(v);}
  static long version(Map<String,String> p){return Long.parseLong(p.getOrDefault("version","0"));}
  static String required(Map<String,String> p,String key){String value=p.get(key);if(value==null||value.isBlank())throw new IllegalArgumentException("Uzupełnij wymagane dane formularza.");return value;}
- void common(Model m){m.addAttribute("categories",data.categories());m.addAttribute("services",data.services());m.addAttribute("chemicals",data.materials());m.addAttribute("recipes",data.recipes());m.addAttribute("standardCosts",data.standardCosts());}
+ void common(Model m){m.addAttribute("categories",data.categories());m.addAttribute("services",data.services());m.addAttribute("chemicals",data.materials());m.addAttribute("recipes",data.recipes());m.addAttribute("standardCosts",data.standardCosts());m.addAttribute("usageSuggestions",actualUsage.suggestions());}
  @GetMapping("/customers") String customers(Model m){m.addAttribute("customers",data.customers(""));return "records/customers";}
  @PostMapping("/customers/search") String search(@RequestParam String query,Model m){m.addAttribute("customers",data.customers(query));return "records/customers";}
  @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customers(query).stream().filter(p->Boolean.TRUE.equals(p.get("active"))).limit(50).map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
@@ -28,12 +29,20 @@ public class RecordsController {
   var quantities=new LinkedHashMap<Long,BigDecimal>();p.forEach((key,value)->{if(key.startsWith("standard_")&&!value.isBlank()){var q=ChemistryService.quantity(value,false);if(q.signum()>0)quantities.put(Long.valueOf(key.substring(9)),q);}});
   chemistry.saveRecipe(id,version(p),p.containsKey("defined"),quantities);return "redirect:/settings/services";
  }
+ @PostMapping("/settings/services/{id}/suggestion") String applySuggestion(@PathVariable long id,@RequestParam Map<String,String> p){actualUsage.apply(id,Long.parseLong(required(p,"chemical")),version(p));return "redirect:/settings/services";}
+ @PostMapping(value="/orders/{id}/items/{position}/actual",produces="application/json") @ResponseBody
+ Map<String,Boolean> actual(@PathVariable long id,@PathVariable int position,@RequestParam Map<String,String> p){
+  var amounts=new LinkedHashMap<Long,BigDecimal>();p.forEach((key,value)->{if(key.startsWith("actual_")&&!value.isBlank())amounts.put(Long.valueOf(key.substring(7)),ChemistryService.quantity(value,false));});
+  actualUsage.record(id,position,version(p),amounts);return Map.of("saved",true);
+ }
  @PostMapping("/settings/services/category") String category(@RequestParam Map<String,String> p){data.category(id(p,"id"),p.get("name"));return "redirect:/settings/services";}
  @PostMapping("/settings/services") String service(@RequestParam Map<String,String> p){data.service(id(p,"id"),version(p),Long.parseLong(p.get("category")),p.get("name"),p.get("unit"),p.get("price"),Integer.parseInt(p.get("minutes")),p.containsKey("active"));return "redirect:/settings/services";}
  @GetMapping("/orders") String orders(@RequestParam Map<String,String> p,Model m){
   common(m);LocalDate day=p.containsKey("day")?LocalDate.parse(p.get("day")):null;
   var orders=data.bookings(day,id(p,"customer"));m.addAttribute("orders",orders);
   var lines=new HashMap<Long,List<Map<String,Object>>>();for(var order:orders)lines.put(((Number)order.get("id")).longValue(),data.items(((Number)order.get("id")).longValue()));m.addAttribute("lines",lines);var chemicalLines=new HashMap<Long,List<Map<String,Object>>>();for(var order:orders){long id=((Number)order.get("id")).longValue();chemicalLines.put(id,data.chemicals(id));}m.addAttribute("bookingChemicals",chemicalLines);
+  var actualRows=new ArrayList<Map<String,Object>>();for(var order:orders)actualRows.addAll(data.actuals(((Number)order.get("id")).longValue()));
+  m.addAttribute("actualRows",actualRows);m.addAttribute("actualFields",data.actualFields(lines,chemicalLines.values().stream().flatMap(List::stream).toList(),actualRows));
   m.addAttribute("day",day==null?LocalDate.now(ZoneId.of("Europe/Warsaw")):day);m.addAttribute("token",UUID.randomUUID());return "records/orders";
  }
  @PostMapping("/orders") String book(@RequestParam Map<String,String> p){

@@ -11,7 +11,12 @@
    <h2 th:text="${service.name}"></h2><p><b th:text="|${service.price} zł / ${service.unit}|"></b> · <span th:text="${service.active ? 'Aktywna' : 'Nieaktywna'}"></span></p>
    <p class="field-help">Standardowy koszt chemii: <span th:text="${standardCosts.containsKey(service.id) ? standardCosts.get(service.id) + ' zł / ' + service.unit : 'Nie określono'}"></span></p>
    <details><summary>Edytuj usługę</summary><form th:replace="~{records/service-fields :: fields(${service},${service.category_id})}"></form></details>
-   <details class="service-recipe"><summary>Standardowe zużycie chemii</summary><p>Podaj ilości na jedną jednostkę tej usługi. Dodatnie ilości zapisują standard; zaznacz pole poniżej również wtedy, gdy świadomie nie używasz chemii.</p>
+   <details class="usage-suggestions"><summary>Propozycje z rzeczywistego zużycia</summary><p>Po co najmniej 5 wykonanych zleceniach z wpisanymi ilościami pokażemy medianę zużycia na jedną jednostkę usługi. Prognozy nie są próbkami. Uwzględniamy obecną jednostkę usługi i jawne wartości 0.</p>
+    <p th:if="${!usageSuggestions.containsKey(service.id)}">Jeszcze za mało danych.</p>
+    <article class="usage-suggestion" th:each="suggestion:${usageSuggestions.get(service.id)}"><h4 th:text="${suggestion.name}"></h4><p><strong th:text="|${suggestion.quantity} ${suggestion.unit} / ${service.unit}|"></strong></p><p class="field-help" th:text="|Zlecenia: ${suggestion.samples} · zakres: ${suggestion.minimum}–${suggestion.maximum} ${suggestion.unit} / ${service.unit} · ostatnia usługa: ${suggestion.lastDate}|"></p>
+     <form th:action="@{/settings/services/{id}/suggestion(id=${service.id})}" method="post"><input name="version" type="hidden" th:value="${service.version}"><input name="chemical" type="hidden" th:value="${suggestion.chemicalId}"><button class="button secondary">Zastosuj jako standard</button></form>
+    </article>
+   </details><details class="service-recipe"><summary>Standardowe zużycie chemii</summary><p>Podaj ilości na jedną jednostkę tej usługi. Dodatnie ilości zapisują standard; zaznacz pole poniżej również wtedy, gdy świadomie nie używasz chemii.</p>
     <form th:action="@{/settings/services/{id}/chemistry(id=${service.id})}" method="post" th:with="recipe=${recipes.get(service.id)}">
      <input name="version" type="hidden" th:value="${service.version}">
      <label class="check"><input type="checkbox" name="defined" th:checked="${recipe != null and recipe.defined}">Standard uzupełniony (również zużycie 0)</label>

@@ -49,8 +49,8 @@ public class ChemistryService {
         if(id==null)return db.queryForObject("INSERT INTO chemical(name,package_unit,package_quantity,package_price) VALUES (?,?,?,?) RETURNING id",Long.class,name,packageUnit,amount,money);
         var rows=db.queryForList("SELECT * FROM chemical WHERE id=? FOR UPDATE",id);
         if(rows.isEmpty())throw new IllegalArgumentException("Nieznany środek chemiczny.");
-        if(!baseUnit((String)rows.get(0).get("package_unit")).equals(baseUnit(packageUnit)) && db.queryForObject("SELECT count(*) FROM service_chemical WHERE chemical_id=?",Integer.class,id)>0)
-            throw new IllegalArgumentException("Ten środek ma przypisany standard zużycia. Dla innego rodzaju jednostki dodaj osobny środek.");
+        if(!baseUnit((String)rows.get(0).get("package_unit")).equals(baseUnit(packageUnit)) && db.queryForObject("SELECT (SELECT count(*) FROM service_chemical WHERE chemical_id=?)+(SELECT count(*) FROM booking_actual_chemical WHERE chemical_id=?)",Integer.class,id,id)>0)
+            throw new IllegalArgumentException("Ten środek ma przypisany standard lub zapisane rzeczywiste zużycie. Dla innego rodzaju jednostki dodaj osobny środek.");
         CrmRecords.changed(db.update("UPDATE chemical SET name=?,package_unit=?,package_quantity=?,package_price=?,version=version+1 WHERE id=? AND version=?",name,packageUnit,amount,money,id,version));return id;
     }
     @Transactional

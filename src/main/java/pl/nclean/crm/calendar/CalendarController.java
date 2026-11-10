@@ -112,6 +112,7 @@ public class CalendarController {
         model.addAttribute("services", records.services());
         model.addAttribute("chemicals",records.materials());model.addAttribute("recipes",records.recipes());
         var chemicalLines=new java.util.HashMap<Long,List<java.util.Map<String,Object>>>();for(var line:records.monthChemicals(month))chemicalLines.computeIfAbsent(((Number)line.get("booking_id")).longValue(),k->new java.util.ArrayList<>()).add(line);model.addAttribute("bookingChemicals",chemicalLines);
+        var actualRows=records.monthActuals(month);model.addAttribute("actualRows",actualRows);model.addAttribute("actualFields",records.actualFields(lines,chemicalLines.values().stream().flatMap(List::stream).toList(),actualRows));
         model.addAttribute("token", java.util.UUID.randomUUID());
         model.addAttribute("month", month);
         model.addAttribute("defaultDay", month.equals(YearMonth.now(WARSAW)) ? LocalDate.now(WARSAW) : month.atDay(1));

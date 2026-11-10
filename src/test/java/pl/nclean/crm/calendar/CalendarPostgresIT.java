@@ -61,7 +61,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
-        jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
+        jdbc.update("DELETE FROM booking_actual_chemical");jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
         jdbc.update("DELETE FROM service_chemical");jdbc.update("UPDATE service_definition SET chemistry_defined=FALSE");jdbc.update("DELETE FROM chemical");
         jdbc.update("DELETE FROM weekly_area");jdbc.update("DELETE FROM weekly_area_plan");jdbc.update("DELETE FROM day_area_override");
         jdbc.update("DELETE FROM day_district");
@@ -78,7 +78,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -103,7 +103,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -223,7 +223,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(6, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -450,6 +450,75 @@ class CalendarPostgresIT {
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
         assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz ceny","500000074","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(service,new java.math.BigDecimal("-1")),Map.of()));
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
+    }
+
+    @Test
+    void actualUsageLearnsPerUnitMedianOnlyAfterFiveCompletedReportedBookings() {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
+        long service=estimateService("Usługa nauki zużycia");long liquid=chemistry.saveMaterial(null,0,"Płukanka obserwowana","l","1","50");long other=chemistry.saveMaterial(null,0,"Drugi środek","ml","500","40");
+        chemistry.saveRecipe(service,0,true,Map.of(liquid,new java.math.BigDecimal("50"),other,new java.math.BigDecimal("20")));
+        var ids=new java.util.ArrayList<Long>();
+        for(int index=0;index<7;index++){
+            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient próby obserwacji","500000091","Adres próby",Map.of(service,new java.math.BigDecimal("2")));
+            data.reschedule(id,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,index==6?"CANCELLED":"DONE");ids.add(id);
+        }
+        assertTrue(actual.suggestions().isEmpty(),"Forecasts and completion alone are not observations");
+        String[] perUnit={"0","50","60","70","1000"};
+        for(int index=0;index<5;index++){
+            actual.record(ids.get(index),0,0,Map.of(liquid,new java.math.BigDecimal(perUnit[index]).multiply(new java.math.BigDecimal("2"))));
+            if(index<4)assertTrue(actual.suggestions().isEmpty());
+        }
+        var suggestion=actual.suggestions().get(service).get(0);assertEquals(5,suggestion.samples());assertEquals(0,new java.math.BigDecimal("60").compareTo(suggestion.quantity()));assertEquals(0,suggestion.minimum().signum());assertEquals(0,new java.math.BigDecimal("1000").compareTo(suggestion.maximum()));
+        actual.apply(service,liquid,1);assertEquals(0,new java.math.BigDecimal("60").compareTo(chemistry.recipes().get(service).quantities().get(liquid)));assertEquals(0,new java.math.BigDecimal("20").compareTo(chemistry.recipes().get(service).quantities().get(other)));
+        assertEquals(0,new java.math.BigDecimal("100").compareTo((java.math.BigDecimal)data.chemicals(ids.get(1)).stream().filter(row->((Number)row.get("chemical_id")).longValue()==liquid).findFirst().orElseThrow().get("quantity")),"Applying a standard does not rewrite old forecasts");
+        actual.record(ids.get(0),0,1,Map.of(liquid,new java.math.BigDecimal("200")));
+        var corrected=actual.suggestions().get(service).get(0);assertEquals(5,corrected.samples());assertEquals(0,new java.math.BigDecimal("70").compareTo(corrected.quantity()));
+        data.reschedule(ids.get(1),1,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"CANCELLED");assertTrue(actual.suggestions().isEmpty());
+        data.reschedule(ids.get(1),2,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"DONE");
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertEquals(5,app.context().getBean(pl.nclean.crm.records.ActualUsageService.class).suggestions().get(service).get(0).samples());
+    }
+
+    @Test
+    void actualUsageRejectsUnfinishedInvalidAndStaleWritesAndBlankMeansUnknown() {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
+        long service=estimateService("Usługa walidacji pomiarów");long material=chemistry.saveMaterial(null,0,"Środek rzeczywisty","l","1","40");
+        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient pomiarów","500000092","Adres",Map.of(service,java.math.BigDecimal.ONE));
+        assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(material,java.math.BigDecimal.ONE)));
+        data.reschedule(booking,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"DONE");
+        assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(material,new java.math.BigDecimal("-1"))));
+        assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE)));
+        actual.record(booking,0,0,Map.of(material,java.math.BigDecimal.ZERO));assertTrue((Boolean)data.items(booking).get(0).get("actual_defined"));
+        assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(material,new java.math.BigDecimal("100"))));
+        assertEquals(0,((java.math.BigDecimal)data.actuals(booking).get(0).get("quantity")).signum());
+        assertThrows(IllegalArgumentException.class,()->chemistry.saveMaterial(material,0,"Środek rzeczywisty","kg","1","40"));
+        actual.record(booking,0,1,Map.of());assertFalse((Boolean)data.items(booking).get(0).get("actual_defined"));assertTrue(data.actuals(booking).isEmpty());
+        assertNull(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,booking));
+    }
+
+    @Test
+    void actualUsageHttpAndSuggestionUseValidatedServerDataAndKeepUnitsSeparate() throws Exception {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
+        long service=estimateService("Usługa jednostek pomiarów");long material=chemistry.saveMaterial(null,0,"Płyn jednostek","ml","1000","50");
+        var browser=app.browser();browser.login();
+        long first=0;
+        for(int index=0;index<6;index++){
+            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient jednostek","500000093","Adres",Map.of(service,new java.math.BigDecimal("2")));
+            data.reschedule(id,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"DONE");if(index==0)first=id;
+            if(index<5){
+                String path="/orders/"+id+"/items/0/actual";
+                assertEquals(403,browser.settings(path,Map.of("calendar","1","version","0","actual_"+material,"120"),false).statusCode());
+                assertEquals(200,browser.settings(path,Map.of("calendar","1","version","0","actual_"+material,"120"),true).statusCode());
+            }
+        }
+        assertEquals(5,actual.suggestions().get(service).get(0).samples());
+        assertEquals(302,browser.settings("/settings/services/"+service+"/suggestion",Map.of("chemical",material,"version","0","quantity","999999"),true).statusCode());
+        assertEquals(0,new java.math.BigDecimal("60").compareTo(chemistry.recipes().get(service).quantities().get(material)));
+        assertTrue(browser.get("/orders?day="+DAY).body().contains("Rzeczywiste zużycie chemii"));
+        var fields=data.actualFields(Map.of(first,data.items(first)),data.chemicals(first),data.actuals(first));assertEquals(0,new java.math.BigDecimal("120").compareTo(fields.get(first+":0").get(material)));
+        var current=data.services().stream().filter(v->((Number)v.get("id")).longValue()==service).findFirst().orElseThrow();
+        data.service(service,((Number)current.get("version")).longValue(),((Number)current.get("category_id")).longValue(),"Usługa innej jednostki","pakiet","180",60,true);
+        assertTrue(actual.suggestions().isEmpty(),"Different service units must not be mixed");
     }
 
     private static void assertCalendarRedirect(HttpResponse<String> response, String day) {
