@@ -1,30 +1,29 @@
-# Codzienna obsługa kalendarza
+# Kalendarz i szybkie umawianie
 
-Po zalogowaniu otwiera się kalendarz. Na komputerze miesiąc ma 7 kolumn. Wpis pokazuje godzinę, usługę i klienta; po trzech wpisach przycisk **+N kolejnych** otwiera pełny plan dnia. Zlecenia są ułożone według godziny, również te wykonane lub anulowane (z opisem statusu).
+Kalendarz jest ekranem startowym. Na komputerze miesiąc ma 7 kolumn, a po prawej stale widać plan wybranego dnia. Kliknięcie dnia zmienia ten plan bez otwierania okna. W kratce mieszczą się dwa krótkie wpisy; **+N kolejnych** wybiera dzień i pokazuje jego pełną listę po prawej.
 
-Na telefonie i tablecie (do 900 px) domyślnie widać pasek tygodnia i karty zleceń wybranego dnia. **Wybierz datę** rozwija przegląd miesiąca. Strzałki tygodnia przechodzą również do sąsiedniego miesiąca. Przycisk **+ Zlecenie** pozostaje w nagłówku podczas przewijania. Wybrany dzień zostaje w adresie strony, również po zapisie i odświeżeniu.
+Na telefonie i tablecie do 900 px nagłówek zawiera datę i **+ Zlecenie**. Pod nim są pasek tygodnia, obszary i karty zleceń. Dotknięcie daty rozwija miesiąc; wybór dnia ponownie go zwija. Przycisk dodawania pozostaje dostępny podczas przewijania. Wybrana data jest zachowana w adresie strony i po zapisie.
 
-## Zlecenie bez kreatora
+Karta dnia pokazuje godzinę, usługi, klienta i adres. Wykonane i anulowane zlecenia mają spokojniejszy wygląd oraz opis statusu. Kliknij kartę, aby zobaczyć pozycje i kwotę, zadzwonić przez odnośnik telefonu albo zmienić termin i status.
+
+## Jedno krótkie zlecenie
 
 1. Wybierz dzień i **+ Zlecenie**.
-2. Wybierz kategorię, ustaw ilości usług przyciskami −/+ lub wpisz liczbę. Ceny i suma są widoczne od razu.
-3. Wpisz imię i telefon albo wyszukaj klienta po imieniu/telefonie i wybierz z listy. Dane i adres zostaną uzupełnione. Kontakt oraz adres możesz poprawić dla tej wizyty bez zmiany kartoteki i dawnych zleceń.
-4. Ustaw godzinę i zapisz. Data jest już wybrana. Zapis zamyka formularz i pokazuje zlecenie w kalendarzu.
+2. Wybierz kategorię przyciskiem. Zwiększ ilość usługi przyciskiem + albo wpisz wartość. Możesz przejść do innej kategorii: wcześniejsze ilości pozostają wybrane i trafiają do zapisu. Podsumowanie obejmuje wszystkie kategorie; × usuwa pojedynczą pozycję.
+3. W polu **Telefon lub klient** wpisz numer albo imię. Wybierz podpowiedź istniejącego klienta lub uzupełnij dane nowej osoby. Wpisany numer jest podpowiadany w polu telefonu, bez nadpisywania ręcznych poprawek. Samo dopasowanie numeru nie łączy kontaktów.
+4. Dla wybranego klienta adres domyślny uzupełnia się automatycznie. Możesz poprawić adres tej wizyty, a przez **Edytuj kontakt wizyty** również imię i telefon. Te poprawki nie przepisują kartoteki ani wcześniejszych rezerwacji. **Zmień klienta** ponownie otwiera wyszukiwanie.
+5. Sprawdź datę, godzinę i sumę, a następnie zapisz. Na telefonie suma i zapis pozostają dostępne podczas przewijania formularza.
 
-Błąd zapisu pozostawia formularz i wpisane dane. Podczas wysyłania ponowny zapis jest blokowany; token rezerwacji zabezpiecza również przed ponowieniem tego samego żądania. Zmiana cennika nie przelicza wcześniejszych zleceń.
+Błąd zapisu pozostawia formularz, wybrane usługi oraz kontakt i adres. Ponowny zapis jest blokowany podczas wysyłania. Token żądania zapobiega powtórnemu utworzeniu tej samej rezerwacji. Zmiana cennika nie przelicza wcześniejszych zleceń.
 
-Kliknij zlecenie, aby zobaczyć kontakt, klikalny numer telefonu, adres, usługi i kwotę. W tym panelu edytujesz termin i status. Edycję kartoteki oraz cennika otwierasz z głównej nawigacji.
+## Obszary i ustawienia
 
-## Kolory i obszary
+**Obszary dnia** otwierają osobny panel przypisania. Możesz zaznaczyć kilka obszarów albo wyczyścić oznaczenia. Dzień ma delikatne tło, paski kolorów i nazwy; na telefonie kolory są również w pasku tygodnia. Obszar jest opcjonalnym ręcznym oznaczeniem, nie dobiera terminów.
 
-Na komputerze kliknij numer dnia, a w panelu rozwiń **Przypisz obszary pracy**. Na telefonie wybierz **Obszary dnia**. Zaznacz kilka obszarów i zapisz; wyczyszczenie wyboru usuwa oznaczenia tego dnia.
+Główna nawigacja jest taka sama na wszystkich ekranach: **Kalendarz · Klienci · Ustawienia**. W ustawieniach są **Cennik** i **Obszary pracy**. Dezaktywacja obszaru zachowuje wcześniejsze przypisania. Istniejące adresy `/orders`, `/settings/services` i `/settings/areas` nadal działają; historia klienta nadal prowadzi do jego zleceń.
 
-Dzień otrzymuje delikatne tło pierwszego obszaru, osobne paski kolorów oraz etykiety wszystkich nazw. Pasek tygodnia również pokazuje kolory. Obszary są ręcznym oznaczeniem, nie dobierają terminów.
+## Zapis i wymagania
 
-W **Obszary pracy** dodajesz i edytujesz nazwę oraz HEX (`#RRGGBB`). Dezaktywacja wyłącza nowe przypisania i zachowuje historię. Zamknięcie panelu lub Escape bez zapisu nie zmienia danych.
+Interakcje wymagają JavaScript. Prawdziwa aplikacja zapisuje do istniejącego PostgreSQL; nie używa localStorage do danych CRM. Migracje V1–V3 pozostają niezmienione. Restart aplikacji lub kontenera z zachowanym wolumenem nie usuwa danych.
 
-## Dane i wymagania
-
-Interakcje paneli wymagają JavaScript. Dane są przechowywane w istniejącym PostgreSQL, bez localStorage i dodatkowego prototypu. Zmiana kalendarza nie wymaga nowej migracji; V1–V3 pozostają niezmienione. Restart aplikacji lub kontenera z zachowanym wolumenem nie usuwa danych.
-
-Odczyt i zapis wymagają konta OWNER. Wszystkie zapisy wymagają CSRF. Aplikacja nie korzysta z produkcyjnej bazy nclean.pl. Uruchomienie na Windows: [WINDOWS.md](WINDOWS.md).
+Odczyt i zapis wymagają konta OWNER. Formularze używają CSRF. Aplikacja nie łączy się z produkcyjną bazą nclean.pl. Uruchomienie na Windows: [WINDOWS.md](WINDOWS.md).

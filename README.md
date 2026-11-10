@@ -1,6 +1,6 @@
 # ncLEAN CRM — lokalny kalendarz
 
-Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn, a na telefonie pasek tygodnia i plan wybranego dnia. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
+Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn i stały panel dnia, a na telefonie kompaktowy pasek tygodnia i plan wybranego dnia. Formularz zachowuje usługi z kilku kategorii i podpowiada klienta w jednym polu. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
 
 Opis codziennej obsługi: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 

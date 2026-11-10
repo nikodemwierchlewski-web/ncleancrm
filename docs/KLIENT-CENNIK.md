@@ -1,6 +1,6 @@
 # Klienci, cennik i szybkie umawianie
 
-Na kalendarzu dostępne są przyciski **Zlecenia / szybkie umawianie**, **Klienci** i **Cennik**. W panelu wybranego dnia przycisk **Zlecenia tego dnia** przechodzi do jego rezerwacji.
+Na kalendarzu dodajesz zlecenie przyciskiem **+ Zlecenie**. Klientów otwierasz z głównej nawigacji; cennik znajdziesz w **Ustawienia → Cennik**. Historia zleceń klienta oraz dotychczasowa lista `/orders` pozostają dostępne.
 
 ## Cennik
 
@@ -16,8 +16,8 @@ Kartoteka pozwala dodawać i edytować imię/nazwę, telefon, adres domyślny, n
 
 ## Szybkie umawianie
 
-1. Wybierz kategorię i ilości usług. Suma przelicza się podczas wpisywania.
-2. Wpisz fragment imienia albo telefonu i wybierz klienta z listy. Adres domyślny zostanie uzupełniony; możesz podać inny adres realizacji. Dla nowego klienta wpisz imię i telefon w tym samym formularzu.
+1. Wybierz kategorię i ilości usług. Możesz wybierać pozycje z kilku kategorii — podsumowanie i suma obejmują wszystkie wybrane usługi.
+2. Wpisz imię albo telefon w jednym polu i wybierz podpowiedź klienta lub uzupełnij dane nowej osoby. Wpisany numer jest wykorzystywany ponownie, bez automatycznego łączenia kontaktów. Adres domyślny zostanie uzupełniony; możesz podać inny adres realizacji. Dla nowego klienta wpisz imię i telefon w tym samym formularzu.
 3. Wybierz dzień i godzinę, następnie **Zapisz zlecenie**.
 
 Klient tworzony podczas umawiania i zlecenie zapisują się w jednej transakcji. Ponowienie tego samego zapisu nie tworzy drugiej rezerwacji. Numer wpisany w wyszukiwarkę nie trafia do URL. Wymagane są logowanie OWNER i CSRF.

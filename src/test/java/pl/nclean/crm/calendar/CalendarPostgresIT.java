@@ -290,7 +290,7 @@ class CalendarPostgresIT {
         for(int hour=15;hour>=8;hour--)data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.of(hour,0),person,null,null,"Adres wizyty",Map.of(service,java.math.BigDecimal.ONE));
         var month=data.monthBookings(java.time.YearMonth.of(2026,10));assertEquals(8,month.size());
         assertEquals("08:00:00",month.get(0).get("starts").toString());
-        var page=browser.get(calendarPath(DAY));assertEquals(200,page.statusCode());assertTrue(page.body().contains("+5 kolejnych"));
+        var page=browser.get(calendarPath(DAY));assertEquals(200,page.statusCode());assertTrue(page.body().contains("+6 kolejnych"));
         String token=UUID.randomUUID().toString();
         var fields=Map.<String,Object>of("calendar","1","token",token,"day",DAY,"starts","16:00","customer",person,"name","Kontakt na tę wizytę","phone","500000021","address","Inny adres","qty_"+service,"1");
         assertEquals(403,browser.settings("/orders",fields,false).statusCode());
@@ -308,6 +308,36 @@ class CalendarPostgresIT {
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
         var after=app.browser();after.login();var html=after.get(calendarPath(DAY));assertEquals(200,html.statusCode());assertTrue(html.body().contains("Kontakt na tę wizytę"));
         assertEquals(2,assignedAreas(DAY).size());assertEquals("DONE",jdbc.queryForObject("SELECT status FROM booking WHERE id=?",String.class,id));
+    }
+
+    @Test
+    void bookingAcrossCategoriesKeepsEveryItemAndVisitContactAfterRestart() throws Exception {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        var active=data.services().stream().filter(s -> Boolean.TRUE.equals(s.get("active"))).toList();
+        var first=active.get(0);
+        var second=active.stream().filter(s -> !s.get("category_id").equals(first.get("category_id"))).findFirst().orElseThrow();
+        long firstId=((Number)first.get("id")).longValue(),secondId=((Number)second.get("id")).longValue();
+        long customer=data.saveCustomer(null,0,"Stały klient lean","500000041","Adres domyślny lean","",true);
+        var token=UUID.randomUUID();
+        var fields=new LinkedHashMap<String,Object>();
+        fields.put("calendar","1");fields.put("token",token);fields.put("day","2026-10-30");fields.put("starts","12:30");fields.put("customer",customer);
+        fields.put("name","Kontakt wizyty lean");fields.put("phone","500000042");fields.put("address","Adres tej wizyty lean");
+        fields.put("qty_"+firstId,"2");fields.put("qty_"+secondId,"1.5");
+        var browser=app.browser();browser.login();
+        assertEquals(403,browser.settings("/orders",fields,false).statusCode());
+        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?",Long.class,token);
+        assertEquals(2,data.items(id).size());
+        var expected=((java.math.BigDecimal)first.get("price")).multiply(new java.math.BigDecimal("2")).add(((java.math.BigDecimal)second.get("price")).multiply(new java.math.BigDecimal("1.5"))).setScale(2,java.math.RoundingMode.HALF_UP);
+        assertEquals(0,expected.compareTo(jdbc.queryForObject("SELECT total FROM booking WHERE id=?",java.math.BigDecimal.class,id)));
+        assertEquals("Adres domyślny lean",jdbc.queryForObject("SELECT address FROM crm_customer WHERE id=?",String.class,customer));
+        assertEquals("Stały klient lean",jdbc.queryForObject("SELECT name FROM crm_customer WHERE id=?",String.class,customer));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id));
+        assertEquals("Kontakt wizyty lean",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,id));
+        assertEquals("Adres tej wizyty lean",jdbc.queryForObject("SELECT address FROM booking WHERE id=?",String.class,id));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?",Integer.class,token));
     }
 
     private static void assertCalendarRedirect(HttpResponse<String> response, String day) {

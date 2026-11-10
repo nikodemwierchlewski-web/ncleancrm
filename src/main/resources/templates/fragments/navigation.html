@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org"><body>
+<header class="app-header" th:fragment="header(active)">
+  <a class="brand" href="/calendar" aria-label="ncLEAN CRM — kalendarz"><span>NCLEAN</span><b>CRM</b></a>
+  <nav class="record-nav" aria-label="Główna nawigacja">
+    <a href="/calendar" th:attr="aria-current=${active == 'calendar' ? 'page' : null}">Kalendarz</a>
+    <a href="/customers" th:attr="aria-current=${active == 'customers' ? 'page' : null}">Klienci</a>
+    <a href="/settings" th:attr="aria-current=${active == 'settings' ? 'page' : null}">Ustawienia</a>
+  </nav>
+  <form th:action="@{/logout}" method="post"><button class="icon-button" aria-label="Wyloguj" title="Wyloguj"><svg aria-hidden="true"><use href="/icons.svg#logout"/></svg></button></form>
+</header>
+</body></html>

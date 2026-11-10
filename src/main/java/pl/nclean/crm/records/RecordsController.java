@@ -20,6 +20,7 @@ public class RecordsController {
  @PostMapping("/customers/search") String search(@RequestParam String query,Model m){m.addAttribute("customers",data.customers(query));return "records/customers";}
  @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customers(query).stream().filter(p->Boolean.TRUE.equals(p.get("active"))).limit(50).map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
  @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));return "redirect:/customers";}
+ @GetMapping("/settings") String settings(){return "settings/index";}
  @GetMapping("/settings/services") String services(Model m){common(m);return "records/services";}
  @PostMapping("/settings/services/category") String category(@RequestParam Map<String,String> p){data.category(id(p,"id"),p.get("name"));return "redirect:/settings/services";}
  @PostMapping("/settings/services") String service(@RequestParam Map<String,String> p){data.service(id(p,"id"),version(p),Long.parseLong(p.get("category")),p.get("name"),p.get("unit"),p.get("price"),Integer.parseInt(p.get("minutes")),p.containsKey("active"));return "redirect:/settings/services";}

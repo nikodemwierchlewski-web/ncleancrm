@@ -1,37 +1,160 @@
 (() => {
- 'use strict';
- const $=s=>document.querySelector(s),main=$('.daily');if(!main)return;
- const cells=[...document.querySelectorAll('[data-calendar-day]')],mobile=()=>matchMedia('(max-width:900px)').matches;
- let selected=main.dataset.selected,opener=null;
- const dayCell=()=>cells.find(c=>c.dataset.calendarDay===selected);
- const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
- const parsed=s=>new Date(s+'T12:00:00');
- const open=dialog=>{opener=document.activeElement;if(!dialog.open)dialog.showModal();};
- function cards(target){target.replaceChildren();const list=dayCell()?.querySelectorAll('.booking-chip')||[];for(const item of list){const copy=item.cloneNode(true);copy.classList.remove('extra-booking');target.append(copy);}if(!list.length){const p=document.createElement('p');p.textContent='Brak zleceń. Dodaj pierwsze przyciskiem + Zlecenie.';target.append(p);}}
- function select(day,changeUrl=true){selected=day;for(const c of cells)c.classList.toggle('is-selected',c.dataset.calendarDay===day);$('#agenda-title').textContent=dayCell()?.dataset.dateLabel||day;$('#agenda-areas').replaceChildren(...[...(dayCell()?.querySelector('.day-areas').children||[])].map(n=>n.cloneNode(true)));cards($('#agenda-orders'));$('#area-date').value=day;$('#area-editor-date').textContent=dayCell()?.dataset.dateLabel||day;$('#area-editor-date').dateTime=day;renderWeek();if(changeUrl){const u=new URL(location.href);u.searchParams.set('day',day);u.searchParams.set('saved','1');history.replaceState(null,'',u);}}
- function renderWeek(){const start=parsed(selected);start.setDate(start.getDate()-(start.getDay()+6)%7);$('#week-strip').replaceChildren();for(let i=0;i<7;i++){const d=new Date(start);d.setDate(d.getDate()+i);const date=iso(d),b=document.createElement('button');b.type='button';b.dataset.weekDay=date;b.setAttribute('aria-label',d.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'}));b.setAttribute('aria-pressed',String(date===selected));b.classList.toggle('selected',date===selected);const label=document.createElement('small');label.textContent=d.toLocaleDateString('pl-PL',{weekday:'short'});b.append(label,document.createTextNode(String(d.getDate())));const cell=cells.find(c=>c.dataset.calendarDay===date);if(cell){const bands=document.createElement('span');bands.className='week-bands';for(const band of cell.querySelectorAll('.area-bands i'))bands.append(band.cloneNode(true));b.append(bands);const areas=cell.querySelector('.day-areas').textContent.trim();b.setAttribute('aria-label',b.getAttribute('aria-label')+'; '+(areas||'bez obszaru')+'; '+cell.querySelectorAll('.booking-chip').length+' zleceń');}$('#week-strip').append(b);}}
- function choose(day,panel=true){if(!cells.some(c=>c.dataset.calendarDay===day)){location.href='/calendar?day='+encodeURIComponent(day)+'&saved=1';return;}select(day);if(panel&&mobile()){main.classList.remove('month-open');$('#toggle-month').setAttribute('aria-expanded','false');}if(panel&&!mobile())showDay();}
- function showDay(areas=false){const ids=new Set([...dayCell().querySelectorAll('[data-assigned-area-id]')].map(n=>n.dataset.assignedAreaId));for(const option of document.querySelectorAll('[data-area-option]')){const checked=ids.has(option.dataset.areaOption);option.querySelector('input').checked=checked;option.hidden=option.dataset.active!=='true'&&!checked;}cards($('#panel-orders'));$('#area-details').open=areas;open($('#area-editor'));}
- for(const c of cells){const color=c.querySelector('.area-bands i');if(color)c.style.setProperty('--area-color',color.style.background);const count=c.querySelectorAll('.booking-chip').length;c.dataset.count=count+' zlec.';c.classList.toggle('has-orders',count>0);}
- document.addEventListener('click',e=>{
-  const day=e.target.closest('[data-select-day],[data-week-day]');if(day){choose(day.dataset.selectDay||day.dataset.weekDay);return;}
-  const order=e.target.closest('[data-order]');if(order){$('#area-editor').close();$('#order-content').replaceChildren($('#order-'+order.dataset.order).content.cloneNode(true));open($('#order-editor'));return;}
-  const cell=e.target.closest('[data-calendar-day]');if(cell){choose(cell.dataset.calendarDay);return;}
-  if(e.target.closest('.add-booking')){$('#area-editor').close();$('#booking-form [name=day]').value=selected;open($('#booking-editor'));return;}
-  if(e.target.closest('[data-close]'))e.target.closest('dialog').close();
- });
- for(const dialog of document.querySelectorAll('dialog')){dialog.addEventListener('close',()=>opener?.focus({preventScroll:true}));dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const b=dialog.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)dialog.close();});}
- $('#mobile-areas').addEventListener('click',()=>showDay(true));
- $('#toggle-month').addEventListener('click',()=>{const on=main.classList.toggle('month-open');$('#toggle-month').setAttribute('aria-expanded',String(on));});
- $('#jump-month').addEventListener('change',e=>{if(e.target.validity.valid&&e.target.value)location.href='/calendar?month='+e.target.value;});
- for(const [id,delta] of [['previous-week',-7],['next-week',7]])$('#'+id).addEventListener('click',()=>{const d=parsed(selected);d.setDate(d.getDate()+delta);const day=iso(d);if(day<'2000-01-01'||day>'2100-12-31')return;choose(day,false);});
- $('#clear-areas').addEventListener('click',()=>document.querySelectorAll('[data-area-option] input').forEach(i=>i.checked=false));
- document.addEventListener('submit',async e=>{
-  const f=e.target;if(!f.matches('#booking-form,#day-area-form,.order-update')||e.defaultPrevented)return;e.preventDefault();if(f.dataset.saving)return;
-  const error=f.querySelector('.save-error,#customer-search-status')||$('#calendar-status');error.textContent='';const body=new URLSearchParams(new FormData(f));body.set('calendar','1');
-  f.dataset.saving='1';const button=f.querySelector('button[type=submit],button:not([type]),#save-areas');if(button)button.disabled=true;
-  try{const response=await fetch(f.action,{method:'POST',body,headers:{Accept:'application/json'}});if(!response.ok||!response.headers.get('content-type')?.includes('application/json')){let message='Nie udało się zapisać. Sprawdź połączenie i zalogowanie, a potem spróbuj ponownie.';try{message=(await response.json()).message||message;}catch(_){}throw Error(message);}const day=f.querySelector('[name=day]')?.value||selected;location.href='/calendar?day='+encodeURIComponent(day)+'&saved=1';}
-  catch(ex){error.textContent=ex.message;delete f.dataset.saving;if(button)button.disabled=false;}
- });
- select(selected,false);if(main.dataset.open==='true'&&!mobile())showDay();
+  'use strict';
+  const $ = selector => document.querySelector(selector);
+  const main = $('.daily');
+  if (!main) return;
+  const cells = [...document.querySelectorAll('[data-calendar-day]')];
+  const parse = value => new Date(`${value}T12:00:00`);
+  const iso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  let selected = main.dataset.selected;
+  const openers = new WeakMap();
+  const cellFor = day => cells.find(cell => cell.dataset.calendarDay === day);
+
+  function open(dialog) {
+    openers.set(dialog, document.activeElement);
+    if (!dialog.open) dialog.showModal();
+  }
+  function renderWeek() {
+    const start = parse(selected);
+    start.setDate(start.getDate() - (start.getDay() + 6) % 7);
+    $('#week-strip').replaceChildren();
+    for (let index = 0; index < 7; index++) {
+      const date = new Date(start);
+      date.setDate(date.getDate() + index);
+      const day = iso(date), button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.weekDay = day;
+      button.setAttribute('aria-pressed', String(day === selected));
+      button.classList.toggle('selected', day === selected);
+      const weekday = document.createElement('small');
+      weekday.textContent = date.toLocaleDateString('pl-PL', {weekday: 'short'});
+      button.append(weekday, document.createTextNode(String(date.getDate())));
+      const cell = cellFor(day);
+      let description = date.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'});
+      if (cell) {
+        const bands = document.createElement('span');
+        bands.className = 'week-bands';
+        for (const band of cell.querySelectorAll('.area-bands i')) bands.append(band.cloneNode(true));
+        button.append(bands);
+        description += `; ${cell.querySelector('.day-areas').textContent.trim() || 'bez obszaru'}; ${cell.querySelectorAll('.booking-chip').length} zleceń`;
+      }
+      button.setAttribute('aria-label', description);
+      $('#week-strip').append(button);
+    }
+  }
+  function select(day, updateUrl = true) {
+    selected = day;
+    const cell = cellFor(day);
+    for (const item of cells) item.classList.toggle('is-selected', item === cell);
+    const label = cell.dataset.dateLabel;
+    $('#agenda-title').textContent = label;
+    $('#selected-date-label').textContent = parse(day).toLocaleDateString('pl-PL', {day: 'numeric', month: 'long'});
+    $('#agenda-areas').replaceChildren(...[...cell.querySelector('.day-areas').children].map(node => node.cloneNode(true)));
+    $('#agenda-orders').replaceChildren();
+    for (const order of cell.querySelectorAll('.booking-chip')) {
+      const copy = order.cloneNode(true);
+      copy.classList.remove('extra-booking');
+      $('#agenda-orders').append(copy);
+    }
+    if (!$('#agenda-orders').children.length) {
+      const empty = document.createElement('p');
+      empty.textContent = 'Brak zleceń. Dodaj pierwsze przyciskiem + Zlecenie.';
+      $('#agenda-orders').append(empty);
+    }
+    $('#day-agenda').scrollTop = 0;
+    $('#area-date').value = day;
+    $('#area-editor-date').textContent = label;
+    $('#area-editor-date').dateTime = day;
+    renderWeek();
+    if (updateUrl) {
+      const url = new URL(location.href);
+      url.searchParams.set('day', day);
+      url.searchParams.delete('saved');
+      history.replaceState(null, '', url);
+    }
+  }
+  function choose(day) {
+    if (!cellFor(day)) {
+      location.href = `/calendar?day=${encodeURIComponent(day)}`;
+      return;
+    }
+    select(day);
+    main.classList.remove('month-open');
+    $('#toggle-month').setAttribute('aria-expanded', 'false');
+  }
+  function showAreas() {
+    const assigned = new Set([...cellFor(selected).querySelectorAll('[data-assigned-area-id]')].map(node => node.dataset.assignedAreaId));
+    for (const option of document.querySelectorAll('[data-area-option]')) {
+      const checked = assigned.has(option.dataset.areaOption);
+      option.querySelector('input').checked = checked;
+      option.hidden = option.dataset.active !== 'true' && !checked;
+    }
+    $('#empty-area-options').hidden = [...document.querySelectorAll('[data-area-option]')].some(option => !option.hidden);
+    $('#area-details').open = true;
+    open($('#area-editor'));
+  }
+  for (const cell of cells) {
+    const color = cell.querySelector('.area-bands i');
+    if (color) cell.style.setProperty('--area-color', color.style.background);
+    const count = cell.querySelectorAll('.booking-chip').length;
+    cell.dataset.count = `${count} zlec.`;
+    cell.classList.toggle('has-orders', count > 0);
+  }
+  document.addEventListener('click', event => {
+    const day = event.target.closest('[data-select-day],[data-week-day]');
+    if (day) { choose(day.dataset.selectDay || day.dataset.weekDay); return; }
+    const order = event.target.closest('[data-order]');
+    if (order) {
+      $('#order-content').replaceChildren($(`#order-${order.dataset.order}`).content.cloneNode(true));
+      open($('#order-editor'));
+      return;
+    }
+    const cell = event.target.closest('[data-calendar-day]');
+    if (cell) { choose(cell.dataset.calendarDay); return; }
+    if (event.target.closest('.add-booking')) {
+      $('#booking-form [name=day]').value = selected;
+      open($('#booking-editor'));
+      return;
+    }
+    if (event.target.closest('[data-close]')) event.target.closest('dialog').close();
+  });
+  for (const dialog of document.querySelectorAll('dialog')) {
+    dialog.addEventListener('close', () => openers.get(dialog)?.focus({preventScroll: true}));
+    dialog.addEventListener('click', event => {
+      if (event.target !== dialog) return;
+      const box = dialog.getBoundingClientRect();
+      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
+    });
+  }
+  $('#edit-day-areas').addEventListener('click', showAreas);
+  $('#toggle-month').addEventListener('click', () => {
+    const shown = main.classList.toggle('month-open');
+    $('#toggle-month').setAttribute('aria-expanded', String(shown));
+  });
+  $('#jump-month').addEventListener('change', event => {
+    if (event.target.validity.valid && event.target.value) location.href = `/calendar?month=${event.target.value}`;
+  });
+  for (const [id, delta] of [['previous-week', -7], ['next-week', 7]]) {
+    $(`#${id}`).addEventListener('click', () => {
+      const date = parse(selected);
+      date.setDate(date.getDate() + delta);
+      const day = iso(date);
+      if (day >= '2000-01-01' && day <= '2100-12-31') choose(day);
+    });
+  }
+  $('#clear-areas').addEventListener('click', () => document.querySelectorAll('[data-area-option] input').forEach(input => input.checked = false));
+  document.addEventListener('submit', event => {
+    const form = event.target;
+    if (!form.matches('#day-area-form,.order-update') || event.defaultPrevented) return;
+    event.preventDefault();
+    window.NcleanForms.submit(form, form.querySelector('.save-error'), () => {
+      const day = form.querySelector('[name=day]')?.value || selected;
+      location.href = `/calendar?day=${encodeURIComponent(day)}&saved=1`;
+    });
+  });
+  const updateHeight = () => document.documentElement.style.setProperty('--available-height', `${window.visualViewport?.height || innerHeight}px`);
+  window.visualViewport?.addEventListener('resize', updateHeight);
+  updateHeight();
+  select(selected, false);
+  if ($('#calendar-status').textContent) setTimeout(() => { $('#calendar-status').textContent = ''; }, 4000);
 })();

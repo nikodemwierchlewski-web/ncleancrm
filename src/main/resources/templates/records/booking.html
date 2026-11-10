@@ -1,1 +1,35 @@
-<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body><form th:fragment="booking" id="booking-form" th:action="@{/orders}" method="post"><input type="hidden" name="token" th:value="${token}"><h2>1. Kategoria i usługi</h2><label>Kategoria<select id="booking-category"><option th:each="cat:${categories}" th:value="${cat.id}" th:text="${cat.name}"></option></select></label><div class="service-line" th:each="service:${services}" th:if="${service.active}" th:attr="data-category=${service.category_id},data-price=${service.price}"><label><strong th:text="${service.name}"></strong><span th:text="|${service.price} zł / ${service.unit} · ${service.minutes} min|"></span><input type="number" min="0" max="10000" step="0.01" value="0" th:name="|qty_${service.id}|" th:attr="aria-label=|Ilość: ${service.name}|"></label></div><p class="quote">Suma: <strong id="booking-total">0,00 zł</strong></p><h2>2. Klient</h2><label>Szukaj klienta po imieniu lub telefonie<input id="customer-search" autocomplete="off" type="search"></label><select name="customer" id="booking-customer" aria-label="Wybierz klienta"><option value="">Nowy klient — wpisz dane poniżej</option></select><div id="new-customer"><label>Imię / nazwa<input name="name" required maxlength="120" autocomplete="name"></label><label>Telefon<input name="phone" type="tel" required maxlength="30" autocomplete="tel"></label></div><h2>3. Adres i termin</h2><label>Adres realizacji<input id="booking-address" name="address" required maxlength="240" autocomplete="street-address"></label><label>Dzień<input name="day" type="date" min="2000-01-01" max="2100-12-31" required th:value="${day}"></label><label>Godzina<input name="starts" type="time" required value="09:00"></label><button class="button primary">Zapisz zlecenie</button><p id="customer-search-status" role="status"></p></form></body></html>
+<!doctype html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org"><body>
+<form th:fragment="booking" id="booking-form" th:action="@{/orders}" method="post">
+  <input type="hidden" name="token" th:value="${token}">
+  <div class="booking-layout">
+    <section class="booking-services" aria-labelledby="services-heading">
+      <h3 id="services-heading">Usługi</h3>
+      <div id="booking-categories" class="category-tabs" role="group" aria-label="Kategoria usług">
+        <button type="button" th:each="cat:${categories}" th:attr="data-category-choice=${cat.id}" th:text="${cat.name}"></button>
+      </div>
+      <div class="service-picker" role="region" aria-label="Usługi wybranej kategorii" tabindex="0">
+        <div class="service-line" th:each="service:${services}" th:if="${service.active}" th:attr="data-category=${service.category_id},data-price=${service.price},data-unit=${service.unit}">
+          <label><span class="service-description"><strong th:text="${service.name}"></strong><small th:text="|${service.price} zł / ${service.unit}|"></small></span><input type="number" min="0" max="10000" step="0.01" value="0" th:name="|qty_${service.id}|" th:attr="aria-label=|Ilość: ${service.name}|"></label>
+        </div>
+      </div>
+      <div class="selection-summary"><h4>Wybrane usługi</h4><p id="booking-empty">Wybierz usługę przyciskiem + lub wpisz ilość.</p><ul id="booking-summary" aria-label="Wybrane pozycje"></ul></div>
+    </section>
+    <section class="booking-contact" aria-labelledby="contact-heading">
+      <h3 id="contact-heading">Klient i termin</h3>
+      <input type="hidden" name="customer" id="booking-customer">
+      <div id="customer-picker">
+        <label for="customer-search">Telefon lub klient</label>
+        <input id="customer-search" type="search" autocomplete="off" aria-controls="customer-results" aria-describedby="customer-lookup-status" placeholder="Numer telefonu lub imię">
+        <ul id="customer-results" aria-label="Podpowiedzi klientów" hidden></ul>
+        <p id="customer-lookup-status" class="field-help" role="status"></p>
+      </div>
+      <div id="selected-customer" hidden><strong id="selected-customer-label"></strong><div><button type="button" class="text-button" id="change-customer">Zmień klienta</button><button type="button" class="text-button" id="edit-contact">Edytuj kontakt wizyty</button></div></div>
+      <div id="new-customer" class="contact-fields"><label>Imię / nazwa<input name="name" required maxlength="120" autocomplete="name"></label><label>Telefon<input name="phone" type="tel" required maxlength="30" autocomplete="tel" inputmode="tel"></label></div>
+      <label>Adres wizyty<input id="booking-address" name="address" required maxlength="240" autocomplete="street-address"></label>
+      <div class="time-fields"><label>Dzień<input name="day" type="date" min="2000-01-01" max="2100-12-31" required th:value="${day}"></label><label>Godzina<input name="starts" type="time" required value="09:00"></label></div>
+    </section>
+  </div>
+  <footer class="booking-submit"><div class="quote">Suma <strong id="booking-total" aria-live="polite">0,00 zł</strong></div><button type="submit" class="button primary">Zapisz zlecenie</button><p id="customer-search-status" role="status"></p></footer>
+</form>
+</body></html>

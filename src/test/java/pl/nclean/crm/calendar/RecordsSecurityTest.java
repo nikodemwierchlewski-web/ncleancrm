@@ -17,8 +17,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RecordsSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean CrmRecords data;
+ @Test void ownerSeesTheSameNavigationAndBothSettingsSections() throws Exception {
+  mvc.perform(get("/settings").with(user("owner").roles("OWNER"))).andExpect(status().isOk()).andExpect(view().name("settings/index"))
+    .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/settings/services\"")))
+    .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/settings/areas\"")))
+    .andExpect(content().string(org.hamcrest.Matchers.containsString("Główna nawigacja")));
+ }
  @Test void recordsRequireOwnerAndCsrf() throws Exception {
-  for(String path:new String[]{"/customers","/settings/services","/orders"}){
+  for(String path:new String[]{"/customers","/settings","/settings/services","/orders"}){
    mvc.perform(get(path)).andExpect(status().is3xxRedirection());
    mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());
   }
