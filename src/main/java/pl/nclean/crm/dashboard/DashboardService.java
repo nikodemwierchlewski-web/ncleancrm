@@ -43,7 +43,7 @@ public class DashboardService {
         var included=new HashSet<Long>();
         for(var order:orders){String status=(String)order.get("status");if(status.equals("PLANNED"))planned++;else if(status.equals("DONE"))done++;else cancelled++;
             if(status.equals("CANCELLED")||(mode.equals("actual")&&!status.equals("DONE")))continue;
-            revenue=revenue.add((BigDecimal)order.get("total"));included.add(((Number)order.get("id")).longValue());
+            revenue=revenue.add((BigDecimal)(mode.equals("actual")&&order.get("final_total")!=null?order.get("final_total"):order.get("total")));included.add(((Number)order.get("id")).longValue());
         }
         // Aggregate before joining to avoid multiplying booking/item prices by chemical rows.
         var lines=db.queryForList("SELECT i.booking_id,i.forecast_defined,i.chemical_cost,i.actual_defined,COALESCE((SELECT SUM(a.amount) FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position),0) actual_cost, EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position AND a.amount IS NULL) unknown_price, EXISTS(SELECT 1 FROM booking_chemical c WHERE c.booking_id=i.booking_id AND c.item_position=i.position AND c.quantity>0 AND NOT EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=c.booking_id AND a.item_position=c.item_position AND a.chemical_id=c.chemical_id AND a.unit=c.unit)) missing_material FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.day BETWEEN ? AND ?",p.start(),p.end());

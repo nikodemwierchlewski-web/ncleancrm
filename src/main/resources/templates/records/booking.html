@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pl" xmlns:th="http://www.thymeleaf.org"><body>
 <form th:fragment="booking" id="booking-form" th:action="@{/orders}" method="post">
+  <template id="repeat-booking" th:if="${repeatPerson != null}" th:attr="data-id=${repeatPerson.id},data-name=${repeatPerson.name},data-phone=${repeatPerson.phone},data-address=${repeatAddress}"><i th:each="i:${repeatItems}" th:attr="data-service=${i.service_id},data-quantity=${i.quantity}"></i></template>
   <input type="hidden" name="token" th:value="${token}">
   <div class="booking-layout">
     <section class="booking-services" aria-labelledby="services-heading">
@@ -33,6 +34,7 @@
   </div>
   <template id="forecast-materials"><span th:each="material:${chemicals}" th:attr="data-id=${material.id},data-name=${material.name},data-unit=${material.unit},data-cost=${material.unitCost}"></span></template>
   <template id="forecast-recipes"><span th:each="service:${services}" th:with="recipe=${recipes.get(service.id)}" th:attr="data-service=${service.id},data-defined=${recipe != null and recipe.defined}"><i th:if="${recipe != null}" th:each="entry:${recipe.quantities}" th:attr="data-chemical=${entry.key},data-quantity=${entry.value}"></i></span></template>
+  <label th:if="${repeatPerson != null}" class="check"><input type="checkbox" required>Potwierdzam nowy termin i aktualne ceny. Wybierz ponownie ewentualne wyłączone usługi.</label>
   <footer class="booking-submit"><div class="quote">Suma <strong id="booking-total" aria-live="polite">0,00 zł</strong></div><button type="submit" class="button primary">Zapisz zlecenie</button><p id="customer-search-status" role="status"></p></footer>
 </form>
 </body></html>

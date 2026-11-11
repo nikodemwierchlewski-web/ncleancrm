@@ -17,7 +17,7 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error").permitAll()
+                .requestMatchers("/error","/manifest.webmanifest","/sw.js","/offline.html","/pwa/icon-192.png","/pwa/icon-512.png").permitAll()
                 .anyRequest().hasRole("OWNER"))
             .formLogin(Customizer.withDefaults())
             .logout(logout -> logout.invalidateHttpSession(true).deleteCookies("NCLEAN_CRM_SESSION"))

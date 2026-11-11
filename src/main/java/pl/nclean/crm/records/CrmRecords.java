@@ -23,7 +23,7 @@ public class CrmRecords {
  public List<Map<String,Object>> categories(){return db.queryForList("SELECT * FROM service_category ORDER BY name,id");}
  public List<Map<String,Object>> services(){return db.queryForList("SELECT s.*,c.name category FROM service_definition s JOIN service_category c ON c.id=s.category_id ORDER BY c.name,s.name,s.id");}
  public List<Map<String,Object>> bookings(LocalDate day,Long customer){
-  return db.queryForList("SELECT * FROM booking WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
+  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label FROM booking b WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
  }
  public List<Map<String,Object>> monthBookings(YearMonth month){
   return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
@@ -97,6 +97,9 @@ public class CrmRecords {
  }
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
-  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,version=version+1 WHERE id=? AND version=?",day,starts,status,id,version));
+  db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
+  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new IllegalArgumentException("Nieznane zlecenie.");
+  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
+  db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE id=?",id,before.get(0).get("snapshot"),id);
  }
 }

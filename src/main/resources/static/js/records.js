@@ -201,6 +201,8 @@
   });
   $('#edit-contact').addEventListener('click', () => { fields.hidden = !fields.hidden; if (!fields.hidden) contactName.focus(); });
 
+  const repeat=document.querySelector('#repeat-booking');
+  if(repeat){pick(repeat.dataset);repeat.content.querySelectorAll('[data-service]').forEach(item=>{const input=form.querySelector('[name=qty_'+item.dataset.service+']');if(input)input.value=Number(input.value)+Number(item.dataset.quantity);});total();}
   form.addEventListener('submit', event => {
     event.preventDefault();
     if (!lines.some(line => Number(line.querySelector('input').value) > 0)) {

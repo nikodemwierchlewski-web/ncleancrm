@@ -65,6 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
         jdbc.update("DELETE FROM booking_actual_chemical");jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
@@ -84,7 +85,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -109,7 +110,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -229,7 +230,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(8, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(9, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -699,6 +700,49 @@ class CalendarPostgresIT {
         var invalid=browser.settings("/fuel/day",Map.of("day",today,"version",-1,"odometer","1234","hours",24,"minutes",1),true);assertEquals(400,invalid.statusCode());assertTrue(invalid.body().contains("value=\"1234\""));assertTrue(invalid.body().contains("value=\"24\""));
         var purchase=new LinkedHashMap<String,Object>();purchase.put("purchased_at",today.atStartOfDay());purchase.put("version",-1);purchase.put("request_token",UUID.randomUUID());purchase.put("amount","123");purchase.put("target","GENERATOR");purchase.put("fuel_type","PETROL");purchase.put("full_tank","on");purchase.put("note","Zachowaj dane rachunku");
         var error=browser.settings("/fuel/purchases",purchase,true);assertEquals(400,error.statusCode());assertTrue(error.body().contains("Zachowaj dane rachunku"));assertTrue(error.body().contains("value=\"123\""));
+    }
+
+
+    private long workBooking(String name,LocalDate day) {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService(name);
+        return records.book(UUID.randomUUID(),day,java.time.LocalTime.of(9,0),null,"Klient dnia","500000098","Adres wizyty",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of());
+    }
+    @Test void completionKeepsQuoteAndPaymentsSeparateAndCorrectionsAuditable() {
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var date=DashboardService.today();long id=workBooking("Usługa domknięcia",date);
+        work.complete(id,0,"180","60","Notatka",Map.of(),Map.of(),List.of(),OWNER);
+        assertEquals(new BigDecimal("200.00"),work.order(id).get("total"));assertEquals(new BigDecimal("180.00"),work.order(id).get("final_total"));assertEquals(new BigDecimal("0"),work.paid(id));
+        var token=UUID.randomUUID();long first=work.pay(id,token,date,"50","TRANSFER","");assertEquals(first,work.pay(id,token,date,"50","TRANSFER",""));work.pay(id,UUID.randomUUID(),date,"130","CASH","");assertEquals(new BigDecimal("180.00"),work.paid(id));
+        assertThrows(IllegalArgumentException.class,()->work.pay(id,UUID.randomUUID(),date,"1","CASH",""));assertThrows(IllegalArgumentException.class,()->work.complete(id,1,"170","60","",Map.of(),Map.of(),List.of(),OWNER));
+        work.reverse(id,first,UUID.randomUUID(),date,"Błędny przelew");assertEquals(new BigDecimal("130.00"),work.paid(id));assertEquals(3,work.payments(id).size());assertThrows(IllegalArgumentException.class,()->work.reverse(id,first,UUID.randomUUID(),date,"Ponownie"));
+        assertEquals(new BigDecimal("50.00"),work.finance(date,date,new BigDecimal("180"),new BigDecimal("150"),true).outstanding());assertEquals(new BigDecimal("130.00"),work.finance(date,date,new BigDecimal("180"),new BigDecimal("150"),true).received());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(new BigDecimal("130.00"),app.context().getBean(pl.nclean.crm.work.WorkService.class).paid(id));
+    }
+    @Test void timerSurvivesRestartAndOnlyOneCanRunAndManualRescheduleStopsIt() {
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var date=DashboardService.today();long id=workBooking("Pomiar A",date),other=workBooking("Pomiar B",date);work.timer(id,0,true,OWNER);
+        assertThrows(IllegalArgumentException.class,()->work.timer(other,0,true,OWNER));jdbc.update("UPDATE booking SET timer_started=CURRENT_TIMESTAMP-INTERVAL '90 seconds' WHERE id=?",id);
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);var restarted=app.context().getBean(pl.nclean.crm.work.WorkService.class);assertEquals(id,((Number)restarted.active().get("id")).longValue());restarted.timer(id,1,false,OWNER);assertTrue(((Number)restarted.order(id).get("work_minutes")).intValue()>=2);
+        restarted.timer(other,0,true,OWNER);app.context().getBean(pl.nclean.crm.records.CrmRecords.class).reschedule(other,1,date,java.time.LocalTime.NOON,"CANCELLED");assertTrue(restarted.active().isEmpty());assertFalse(restarted.history(other).isEmpty());
+    }
+    @Test void closingBundleNeedsExplicitBalancedAllocationAndActualConfirmation() {
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chem=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var date=DashboardService.today();long a=estimateService("Pakiet A"),b=estimateService("Pakiet B"),material=chem.saveMaterial(null,0,"Płyn do pakietu","l","1","50");
+        var quantities=new LinkedHashMap<Long,BigDecimal>();quantities.put(a,BigDecimal.ONE);quantities.put(b,BigDecimal.ONE);long id=records.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient pakietu","500000097","Adres",quantities);
+        assertThrows(IllegalArgumentException.class,()->work.complete(id,0,"300","90","",Map.of(0,new BigDecimal("100")),Map.of(),List.of(),OWNER));
+        work.complete(id,0,"300","90","",Map.of(),Map.of(),List.of(),OWNER);assertNull(records.items(id).get(0).get("final_amount"));assertTrue(records.actuals(id).isEmpty());
+        work.complete(id,1,"300","90","",Map.of(0,new BigDecimal("100"),1,new BigDecimal("200")),Map.of(0,30,1,60),List.of(new pl.nclean.crm.work.WorkService.Measurement(0,0,Map.of(material,BigDecimal.ZERO))),OWNER);
+        assertEquals(new BigDecimal("100.00"),records.items(id).get(0).get("final_amount"));assertEquals(0,((BigDecimal)records.actuals(id).get(0).get("amount")).signum());assertFalse((Boolean)records.items(id).get(1).get("actual_defined"));
+        var stats=work.analytics(date,date);assertEquals(2,stats.size());assertTrue(stats.stream().anyMatch(row->new BigDecimal("100.00").equals(row.get("net"))));
+    }
+    @Test void paymentDatesAreIndependentOfServiceDayAndFuturePaymentsAreRejected() {
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var today=DashboardService.today();long id=workBooking("Wczorajsza usługa",today.minusDays(1));work.complete(id,0,"200","60","",Map.of(),Map.of(),List.of(),OWNER);work.pay(id,UUID.randomUUID(),today,"100","CARD","");
+        assertEquals(new BigDecimal("0"),work.finance(today.minusDays(1),today.minusDays(1),new BigDecimal("200"),BigDecimal.ZERO,false).received());assertEquals(new BigDecimal("100.00"),work.finance(today,today,BigDecimal.ZERO,BigDecimal.ZERO,false).received());
+        assertThrows(IllegalArgumentException.class,()->work.pay(id,UUID.randomUUID(),today.plusDays(1),"100","CASH",""));
+        assertEquals(new BigDecimal("200.00"),app.context().getBean(DashboardService.class).summary(today.minusDays(1),"day","actual").revenue());
+    }
+    @Test void workScreensAndCsvAndPwaRenderWithoutPublicCustomerData() throws Exception {
+        long id=workBooking("Usługa interfejsu",DashboardService.today());var browser=app.browser();browser.login();
+        for(String path:List.of("/today","/work/"+id,"/dashboard?mode=actual","/orders?repeat="+id,"/customers/"+app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("customer_id")))assertEquals(200,browser.get(path).statusCode(),path);
+        var invalid=browser.settings("/work/"+id+"/complete",Map.of("version",0,"final_total","-12","minutes","30","note","Zachowaj formularz"),true);assertEquals(400,invalid.statusCode());assertTrue(invalid.body().contains("Zachowaj formularz"));
+        assertEquals(403,browser.settings("/work/"+id+"/timer",Map.of("version",0,"action","start"),false).statusCode());assertEquals(302,browser.settings("/work/"+id+"/timer",Map.of("version",0,"action","start"),true).statusCode());assertEquals(200,browser.get("/export/orders.csv").statusCode());var anonymous=app.browser();assertEquals(302,anonymous.get("/export/orders.csv").statusCode());assertEquals(200,anonymous.get("/manifest.webmanifest").statusCode());assertEquals(200,anonymous.get("/pwa/icon-192.png").statusCode());
     }
 
     private record RunningApp(ConfigurableApplicationContext context, URI base) implements AutoCloseable {
