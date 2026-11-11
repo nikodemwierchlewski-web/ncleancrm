@@ -32,7 +32,7 @@ public class CalendarController {
     void bindDay(WebDataBinder binder) { binder.setAllowedFields("date", "districtIds"); }
 
     @GetMapping("/")
-    String home() { return "redirect:/today"; }
+    String home() { return "redirect:/calendar"; }
 
     @GetMapping("/calendar")
     String calendar(@RequestParam(required = false) String month,

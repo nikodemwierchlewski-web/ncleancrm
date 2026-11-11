@@ -97,3 +97,5 @@ Początkowe obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświe
 Przypisanie obszarów nie rezerwuje terminu. Zlecenia, kartoteka klientów i cennik są opisane w [docs/KLIENT-CENNIK.md](docs/KLIENT-CENNIK.md). Podsumowanie kosztów i przychodów opisano w [docs/DASHBOARD.md](docs/DASHBOARD.md). Nie ma SMS, księgowości, GPS ani inteligentnego dobierania terminów.
 
 To lokalne środowisko deweloperskie. Publiczne wdrożenie, HTTPS, kopie zapasowe i konta użytkowników w bazie pozostają osobnymi zadaniami. Profil `prod` nie jest kompletną konfiguracją wdrożenia. Dokumenty historyczne: [audyt CMS](AUDYT-NcleanCMS.md) i [plan CRM](PLAN-CRM.md).
+
+Interfejs i obsługa: [UX — codzienna praca](docs/UX-LEAN.md).
