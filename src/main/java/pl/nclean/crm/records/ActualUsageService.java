@@ -16,11 +16,19 @@ public class ActualUsageService {
     private final JdbcTemplate db;
     private final ChemistryService chemistry;
     public ActualUsageService(JdbcTemplate db,ChemistryService chemistry){this.db=db;this.chemistry=chemistry;}
+    @Transactional
+    public void zero(long booking,int position,long version){
+        record(booking,position,version,Map.of());
+        // Historical units remain valid for explicit zeros, even after catalogue changes.
+        db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) SELECT booking_id,item_position,chemical_id,name,unit,0,unit_cost,0 FROM booking_chemical WHERE booking_id=? AND item_position=?",booking,position);
+        db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=TRUE WHERE booking_id=? AND position=?",booking,position);
+    }
     public record Suggestion(long serviceId,long chemicalId,String name,String unit,BigDecimal quantity,
                              int samples,BigDecimal minimum,BigDecimal maximum,LocalDate lastDate) {}
 
     @Transactional
     public void record(long booking,int position,long version,Map<Long,BigDecimal> quantities){
+        db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
         var items=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE i.booking_id=? AND i.position=? FOR UPDATE OF b,i",booking,position);
         if(items.isEmpty())throw new IllegalArgumentException("Nieznana pozycja zlecenia.");
         if(!"DONE".equals(items.get(0).get("status")))throw new IllegalArgumentException("Rzeczywiste zużycie zapisz po oznaczeniu zlecenia jako wykonane.");
@@ -31,7 +39,7 @@ public class ActualUsageService {
             if(!materials.containsKey(entry.getKey())||entry.getValue()==null)throw new IllegalArgumentException("Wybierz istniejący środek.");
             normalized.put(entry.getKey(),ChemistryService.quantity(entry.getValue().toPlainString(),false));
         }
-        CrmRecords.changed(db.update("UPDATE booking_item SET actual_defined=?,actual_version=actual_version+1 WHERE booking_id=? AND position=? AND actual_version=?",!normalized.isEmpty(),booking,position,version));
+        CrmRecords.changed(db.update("UPDATE booking_item SET actual_no_chem=FALSE,actual_defined=?,actual_version=actual_version+1 WHERE booking_id=? AND position=? AND actual_version=?",!normalized.isEmpty(),booking,position,version));
         var previous=new HashMap<Long,Map<String,Object>>();
         for(var row:db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position))previous.put(((Number)row.get("chemical_id")).longValue(),row);
         db.update("DELETE FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position);

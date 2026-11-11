@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DashboardSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean DashboardService service;
+ @MockitoBean pl.nclean.crm.work.DayReviewService review;
  @MockitoBean pl.nclean.crm.work.WorkService work;
  @MockitoBean pl.nclean.crm.fuel.FuelJournalService fuel;
  @Test void dashboardCostsRequireOwnerAndCsrf() throws Exception {

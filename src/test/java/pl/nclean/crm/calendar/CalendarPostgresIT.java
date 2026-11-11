@@ -65,7 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
-        jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
+        jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
@@ -86,7 +86,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -111,7 +111,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -231,7 +231,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(10, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(11, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -803,6 +803,46 @@ class CalendarPostgresIT {
         @Override public void close() { context.close(); }
     }
 
+
+    private Map<String,String> reviewFields(long id) {
+        var b=app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id);
+        var f=new LinkedHashMap<String,String>();f.put("version",b.get("version").toString());f.put("outcome","DONE");f.put("final_total","0");f.put("no_notes","on");f.put("before_exception","Klient odmówił");f.put("after_exception","Klient odmówił");
+        for(var item:app.context().getBean(pl.nclean.crm.records.CrmRecords.class).items(id)){String pos=item.get("position").toString();f.put("actualVersion_"+pos,item.get("actual_version").toString());f.put("chem_"+pos,"ZERO");}return f;
+    }
+    @Test void reviewSeparatesAppointmentNotesAndAcceptsZeroWithExplicitExceptions() {
+        var day=DashboardService.today();long id=workBooking("Przegląd",day);jdbc.update("UPDATE booking SET work_note='Parking od tyłu' WHERE id=?",id);
+        var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);assertEquals(0,service.review(day).complete());
+        var f=reviewFields(id);f.remove("no_notes");f.put("note","Klient zadowolony");service.save(id,day,f,OWNER);
+        var order=app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id);assertEquals("Parking od tyłu",order.get("work_note"));assertEquals("Klient zadowolony",order.get("completion_note"));assertEquals(1,service.review(day).complete());assertEquals(0,((BigDecimal)order.get("final_total")).signum());
+        assertTrue((Boolean)app.context().getBean(pl.nclean.crm.records.CrmRecords.class).items(id).get(0).get("actual_no_chem"));
+    }
+    @Test void reviewClosurePersistsAndReopensForNewOrdersAndPhotoChanges() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Zamknięcie",day);var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);service.save(id,day,reviewFields(id),OWNER);
+        var r=service.review(day);service.close(day,r.fingerprint(),OWNER);assertTrue(service.review(day).closed());app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);assertTrue(service.review(day).closed());
+        var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);context.upload(id,"BEFORE",UUID.randomUUID(),serviceImage("IMG_20261111_100000.jpg"),OWNER,((Number)work.order(id).get("version")).longValue());assertFalse(service.review(day).closed());assertTrue(service.review(day).changed());
+        service.close(day,service.review(day).fingerprint(),OWNER);workBooking("Nowa wizyta",day);assertFalse(service.review(day).closed());
+    }
+    @Test void reviewBlocksMissingFieldsUnknownChemistryAndStaleWrites() {
+        var day=DashboardService.today();long id=workBooking("Braki",day);var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var f=reviewFields(id);f.put("chem_0","KEEP");f.remove("before_exception");f.remove("after_exception");f.remove("no_notes");service.save(id,day,f,OWNER);
+        var r=service.review(day);assertEquals(0,r.complete());assertTrue(r.orders().get(0).get("missing").toString().contains("chemia"));assertThrows(IllegalArgumentException.class,()->service.close(day,r.fingerprint(),OWNER));assertThrows(IllegalArgumentException.class,()->service.save(id,day,f,OWNER));
+        var fresh=reviewFields(id);fresh.put("chem_0","MEASURED");assertThrows(IllegalArgumentException.class,()->service.save(id,day,fresh,OWNER));assertEquals(0,service.review(day).complete());
+    }
+    @Test void reviewMovesAndCancelsWithoutInventingMeasurementsOrPayments() {
+        var day=DashboardService.today();long id=workBooking("Przełożenie",day);var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var f=reviewFields(id);f.put("outcome","MOVED");f.put("new_day",day.plusDays(2).toString());f.put("new_starts","13:30");f.put("reason","Na prośbę klienta");service.save(id,day,f,OWNER);assertTrue(service.review(day).orders().isEmpty());assertEquals(1,service.review(day).moves().size());assertEquals(1,service.review(day.plusDays(2)).orders().size());
+        long cancelled=workBooking("Anulowanie",day);f=reviewFields(cancelled);f.put("outcome","CANCELLED");service.save(cancelled,day,f,OWNER);assertEquals(1,service.review(day).complete());assertTrue(app.context().getBean(pl.nclean.crm.records.CrmRecords.class).actuals(cancelled).isEmpty());
+    }
+    @Test void reviewEmptyDayAndPartialPaymentAndHttpSecurity() throws Exception {
+        var day=DashboardService.today();var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);service.close(day,service.review(day).fingerprint(),OWNER);assertTrue(service.review(day).closed());long id=workBooking("Przelew oczekujący",day);var f=reviewFields(id);f.put("final_total","200");service.save(id,day,f,OWNER);app.context().getBean(pl.nclean.crm.work.WorkService.class).pay(id,UUID.randomUUID(),day,"50","TRANSFER","");assertEquals(1,service.review(day).complete());
+        var browser=app.browser();browser.login();assertEquals(200,browser.get("/day-closeout?date="+day).statusCode());assertEquals(302,app.browser().get("/day-closeout").statusCode());assertEquals(403,browser.settings("/day-closeout/close",Map.of("date",day,"fingerprint",service.review(day).fingerprint()),false).statusCode());
+        var stale=service.review(day).fingerprint();jdbc.update("UPDATE booking SET completion_note='Korekta' WHERE id=?",id);assertThrows(IllegalArgumentException.class,()->service.close(day,stale,OWNER));
+    }
+
+    @Test void concurrentPhotoAndClosureDoNotLeaveStaleClosedDayOrDeadlock() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Równoczesne zdjęcie",day);var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);review.save(id,day,reviewFields(id),OWNER);String fingerprint=review.review(day).fingerprint();long version=((Number)app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("version")).longValue();var image=serviceImage("IMG_20261111_100000.jpg");var photos=app.context().getBean(pl.nclean.crm.context.ContextService.class);
+        var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        try{var close=pool.submit(()->{gate.await();try{review.close(day,fingerprint,OWNER);}catch(IllegalArgumentException expected){assertTrue(expected.getMessage().contains("innym oknie"));}return true;});var upload=pool.submit(()->{gate.await();photos.upload(id,"AFTER",UUID.randomUUID(),image,OWNER,version);return true;});gate.countDown();assertTrue(close.get(20,java.util.concurrent.TimeUnit.SECONDS));assertTrue(upload.get(20,java.util.concurrent.TimeUnit.SECONDS));assertFalse(review.review(day).closed());}finally{pool.shutdownNow();}
+        var future=day.plusDays(1);assertThrows(IllegalArgumentException.class,()->review.close(future,review.review(future).fingerprint(),OWNER));
+    }
     private static final class Browser {
         private final URI base;
         private final HttpClient http;
