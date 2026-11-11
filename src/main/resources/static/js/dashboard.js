@@ -1,10 +1,8 @@
 (() => {
-  const donut=document.querySelector('.donut');
-  if(donut && donut.dataset.empty!=='true'){
-    let start=0;const segments=[];
-    document.querySelectorAll('[data-percent]').forEach(row=>{const end=start+Number(row.dataset.percent);segments.push(`${row.dataset.color} ${start}% ${end}%`);start=end;});
-    donut.style.background=`conic-gradient(${segments.join(',')})`;
-  }
+  const arcs=[...document.querySelectorAll('.cost-arc')];
+  const circumference=2*Math.PI*80;let offset=0;
+  const sum=arcs.reduce((total,arc)=>total+Math.max(0,Number(arc.dataset.percent)||0),0);
+  for(const arc of arcs){const proportion=sum?Math.max(0,Number(arc.dataset.percent)||0)/sum:0;const length=proportion*circumference;arc.setAttribute('stroke-dasharray',`${length} ${circumference-length}`);arc.setAttribute('stroke-dashoffset',String(-offset));arc.style.opacity=length?1:0;offset+=length;}
   const rows=document.querySelector('#cost-rows'),add=document.querySelector('#add-cost');
   let next=rows?rows.children.length:0;
   add?.addEventListener('click',()=>{
