@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RecordsSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean CrmRecords data;
+ @MockitoBean org.springframework.jdbc.core.JdbcTemplate jdbc;
  @MockitoBean ChemistryService chemistry;
  @MockitoBean ActualUsageService actualUsage;
  @Test void ownerSeesTheSameNavigationAndBothSettingsSections() throws Exception {

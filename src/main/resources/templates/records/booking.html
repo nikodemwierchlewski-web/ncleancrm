@@ -28,6 +28,8 @@
       </div>
       <div id="selected-customer" hidden><strong id="selected-customer-label"></strong><div><button type="button" class="text-button" id="change-customer">Zmień klienta</button><button type="button" class="text-button" id="edit-contact">Edytuj kontakt wizyty</button></div></div>
       <div id="new-customer" class="contact-fields"><label>Imię / nazwa<input name="name" required maxlength="120" autocomplete="name"></label><label>Telefon<input name="phone" type="tel" required maxlength="30" autocomplete="tel" inputmode="tel"></label></div>
+      <label id="booking-source">Skąd klient do nas trafił? <select name="source"><option value="UNKNOWN">Nieustalone</option><option value="GOOGLE">Google / Mapy</option><option value="FACEBOOK">Facebook</option><option value="REFERRAL">Polecenie</option><option value="OLX">OLX</option><option value="OTHER">Inne</option></select></label>
+      <details><summary>Opcjonalne ustalenia</summary><label id="booking-referral" hidden>Polecenie — od kogo<input name="referral_note" maxlength="200"></label><label>Notatka do zlecenia<textarea name="note" maxlength="2000" rows="2" placeholder="Np. piętro, parking, dostęp do wody"></textarea></label></details>
       <label>Adres wizyty<input id="booking-address" name="address" required maxlength="240" autocomplete="street-address"></label>
       <div class="time-fields"><label>Dzień<input name="day" type="date" min="2000-01-01" max="2100-12-31" required th:value="${day}"></label><label>Godzina<input name="starts" type="time" required value="09:00"></label></div>
     </section>

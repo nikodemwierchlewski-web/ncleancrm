@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class WorkSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean WorkService work;
+ @MockitoBean pl.nclean.crm.context.ContextService context;
  @MockitoBean CrmRecords records;
  @MockitoBean DashboardService dashboard;
  @MockitoBean CalendarService calendar;

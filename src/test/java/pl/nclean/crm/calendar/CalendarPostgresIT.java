@@ -65,6 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
@@ -85,7 +86,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -110,7 +111,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -230,7 +231,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(9, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(10, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -743,6 +744,36 @@ class CalendarPostgresIT {
         for(String path:List.of("/today","/work/"+id,"/dashboard?mode=actual","/orders?repeat="+id,"/customers/"+app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("customer_id")))assertEquals(200,browser.get(path).statusCode(),path);
         var invalid=browser.settings("/work/"+id+"/complete",Map.of("version",0,"final_total","-12","minutes","30","note","Zachowaj formularz"),true);assertEquals(400,invalid.statusCode());assertTrue(invalid.body().contains("Zachowaj formularz"));
         assertEquals(403,browser.settings("/work/"+id+"/timer",Map.of("version",0,"action","start"),false).statusCode());assertEquals(302,browser.settings("/work/"+id+"/timer",Map.of("version",0,"action","start"),true).statusCode());assertEquals(200,browser.get("/export/orders.csv").statusCode());var anonymous=app.browser();assertEquals(302,anonymous.get("/export/orders.csv").statusCode());assertEquals(200,anonymous.get("/manifest.webmanifest").statusCode());assertEquals(200,anonymous.get("/pwa/icon-192.png").statusCode());
+    }
+
+
+    private org.springframework.mock.web.MockMultipartFile serviceImage(String name) throws Exception {var image=new java.awt.image.BufferedImage(8,8,java.awt.image.BufferedImage.TYPE_INT_RGB);var bytes=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(image,"png",bytes);return new org.springframework.mock.web.MockMultipartFile("image",name,"image/png",bytes.toByteArray());}
+    @Test void photosDeriveTimePreserveManualPriorityAndArePrivateAndDurable() throws Exception {
+        var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var day=DashboardService.today();long id=workBooking("Usługa zdjęciowa",day);String date=day.toString().replace("-","");var token=UUID.randomUUID();var before=serviceImage("IMG_"+date+"_103025.jpg");UUID first=context.upload(id,"BEFORE",token,before,OWNER,0);assertEquals(first,context.upload(id,"BEFORE",token,before,OWNER,0));assertNull(context.time(id).minutes());
+        UUID after=context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("IMG_"+date+"_111025.jpg"),OWNER,1);assertEquals(40L,context.time(id).minutes());assertEquals(40,jdbc.queryForObject("SELECT work_minutes FROM booking WHERE id=?",Integer.class,id));assertEquals("PHOTO",jdbc.queryForObject("SELECT work_time_source FROM booking WHERE id=?",String.class,id));
+        var browser=app.browser();assertEquals(302,browser.get("/photos/"+first).statusCode());browser.login();assertEquals(200,browser.get("/photos/"+first).statusCode());
+        context.manualTime(id,2,day.atTime(10,0),day.atTime(11,0),OWNER);context.delete(id,after,OWNER);assertEquals(60,jdbc.queryForObject("SELECT work_minutes FROM booking WHERE id=?",Integer.class,id));
+        context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("bez-daty.png"),OWNER,4);assertNull(context.time(id).minutes());assertEquals(60,jdbc.queryForObject("SELECT work_minutes FROM booking WHERE id=?",Integer.class,id));assertEquals("MANUAL",jdbc.queryForObject("SELECT work_time_source FROM booking WHERE id=?",String.class,id));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertTrue(app.context().getBean(pl.nclean.crm.context.ContextService.class).image(first).length>0);
+    }
+    @Test void unknownPhotoDeletionAndConflictingDatesNeverBecomeAnInventedTime() throws Exception {
+        var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var day=DashboardService.today();long id=workBooking("Niepełne zdjęcia",day);String date=day.toString().replace("-","");context.upload(id,"BEFORE",UUID.randomUUID(),serviceImage("IMG_"+date+"_120000.jpg"),OWNER,0);context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("IMG_"+date+"_110000.jpg"),OWNER,1);assertNull(context.time(id).minutes());assertNull(jdbc.queryForObject("SELECT work_minutes FROM booking WHERE id=?",Integer.class,id));assertThrows(IllegalArgumentException.class,()->context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("x.png"),OWNER,0));
+        var photos=context.photos(id);context.delete(id,(UUID)photos.get(0).get("id"),OWNER);assertNull(context.time(id).minutes());
+    }
+    @Test void customerSourceNotesSearchAndCallbacksPreserveHistory() {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var day=DashboardService.today().minusMonths(7);long service=estimateService("Usługa powrotu");long id=data.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"Anna Źródło","500000096","Adres szukany",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"REFERRAL","Od Ewy","Piętro 3, jest winda");var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);long person=((Number)work.order(id).get("customer_id")).longValue();data.reschedule(id,0,day,java.time.LocalTime.NOON,"DONE");assertEquals("REFERRAL",jdbc.queryForObject("SELECT source FROM crm_customer WHERE id=?",String.class,person));assertEquals("Piętro 3, jest winda",work.order(id).get("work_note"));assertEquals(2,context.search("500000096").size());assertEquals(2,context.search("szukany").size());assertTrue(context.search("x").isEmpty());assertTrue(context.callbacks().stream().anyMatch(c->((Number)c.get("id")).longValue()==person));
+        var token=UUID.randomUUID();context.contact(person,0,token,DashboardService.today().plusMonths(1),"Rozmawiałem");context.contact(person,0,token,DashboardService.today().plusMonths(1),"Ponowienie");assertEquals(1,context.contacts(person).size());assertTrue(context.callbacks().isEmpty());
+        jdbc.update("UPDATE crm_customer SET contact_due=CURRENT_DATE-1 WHERE id=?",person);data.book(UUID.randomUUID(),DashboardService.today().plusDays(2),java.time.LocalTime.NOON,person,null,null,"Inny adres",Map.of(service,BigDecimal.ONE));assertTrue(context.callbacks().isEmpty());assertEquals("REFERRAL",jdbc.queryForObject("SELECT source FROM crm_customer WHERE id=?",String.class,person));
+    }
+
+
+    @Test void explicitTimerReplacesEstimatedPhotoTimeAndNewPhotosCannotOverwriteTimer() throws Exception {
+        var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var day=DashboardService.today();String date=day.toString().replace("-","");long id=workBooking("Zdjęcia i timer",day);context.upload(id,"BEFORE",UUID.randomUUID(),serviceImage("IMG_"+date+"_100000.jpg"),OWNER,0);context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("IMG_"+date+"_104000.jpg"),OWNER,1);assertEquals(40,work.order(id).get("work_minutes"));work.timer(id,2,true,OWNER);assertNull(work.order(id).get("work_minutes"));context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("IMG_"+date+"_110000.jpg"),OWNER,3);assertNull(work.order(id).get("work_minutes"));work.timer(id,4,false,OWNER);assertEquals("TIMER",work.order(id).get("work_time_source"));assertTrue(((Number)work.order(id).get("work_minutes")).intValue()<40);
+    }
+
+
+    @Test void movingPhotoDerivedVisitClearsInvalidAutomaticTimeWithoutChangingManualHistory() throws Exception {
+        var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var day=DashboardService.today();String date=day.toString().replace("-","");long id=workBooking("Zmiana dnia zdjęć",day);context.upload(id,"BEFORE",UUID.randomUUID(),serviceImage("IMG_"+date+"_100000.jpg"),OWNER,0);context.upload(id,"AFTER",UUID.randomUUID(),serviceImage("IMG_"+date+"_104000.jpg"),OWNER,1);app.context().getBean(pl.nclean.crm.records.CrmRecords.class).reschedule(id,2,day.plusDays(1),java.time.LocalTime.NOON,"PLANNED");assertNull(work.order(id).get("work_minutes"));assertEquals("UNKNOWN",work.order(id).get("work_time_source"));assertEquals(2,context.photos(id).size());
     }
 
     private record RunningApp(ConfigurableApplicationContext context, URI base) implements AutoCloseable {

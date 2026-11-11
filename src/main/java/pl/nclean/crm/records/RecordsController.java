@@ -13,15 +13,18 @@ public class RecordsController {
  private final CrmRecords data;
  private final ChemistryService chemistry;
  private final ActualUsageService actualUsage;
- public RecordsController(CrmRecords data,ChemistryService chemistry,ActualUsageService actualUsage){this.data=data;this.chemistry=chemistry;this.actualUsage=actualUsage;}
+ public RecordsController(CrmRecords data,ChemistryService chemistry,ActualUsageService actualUsage,org.springframework.jdbc.core.JdbcTemplate jdbc){this.data=data;this.chemistry=chemistry;this.actualUsage=actualUsage;this.jdbc=jdbc;}
+ private final org.springframework.jdbc.core.JdbcTemplate jdbc;
  static Long id(Map<String,String> p,String key){String v=p.get(key);return v==null||v.isBlank()?null:Long.valueOf(v);}
+ void contextSource(long id,Map<String,String> p){if(!p.containsKey("source"))return;String source=pl.nclean.crm.context.ContextService.source(p.get("source"));String referral=source.equals("REFERRAL")?p.getOrDefault("referral_note","").strip():"";if(referral.length()>200)throw new IllegalArgumentException("Polecenie: maksymalnie 200 znaków.");jdbc.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,id);}
  static long version(Map<String,String> p){return Long.parseLong(p.getOrDefault("version","0"));}
  static String required(Map<String,String> p,String key){String value=p.get(key);if(value==null||value.isBlank())throw new IllegalArgumentException("Uzupełnij wymagane dane formularza.");return value;}
  void common(Model m){m.addAttribute("categories",data.categories());m.addAttribute("services",data.services());m.addAttribute("chemicals",data.materials());m.addAttribute("recipes",data.recipes());m.addAttribute("standardCosts",data.standardCosts());m.addAttribute("usageSuggestions",actualUsage.suggestions());}
  @GetMapping("/customers") String customers(Model m){m.addAttribute("customers",data.customers(""));return "records/customers";}
  @PostMapping("/customers/search") String search(@RequestParam String query,Model m){m.addAttribute("customers",data.customers(query));return "records/customers";}
  @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customers(query).stream().filter(p->Boolean.TRUE.equals(p.get("active"))).limit(50).map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
- @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));return "redirect:/customers";}
+ @org.springframework.transaction.annotation.Transactional
+ @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){long saved=data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));contextSource(saved,p);return "redirect:/customers";}
  @GetMapping("/settings") String settings(){return "settings/index";}
  @GetMapping("/settings/services") String services(Model m){common(m);return "records/services";}
  @PostMapping("/settings/services/chemicals") String chemical(@RequestParam Map<String,String> p){chemistry.saveMaterial(id(p,"id"),version(p),p.get("name"),p.get("packageUnit"),p.get("packageQuantity"),p.get("packagePrice"));return "redirect:/settings/services";}
@@ -59,7 +62,7 @@ public class RecordsController {
     forecasts.put(service,new ChemistryService.Forecast(mode.equals("defined"),usage));
    }
   }
-  data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts);return "redirect:/orders?day="+p.get("day");
+  data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""));return "redirect:/orders?day="+p.get("day");
  }
  @PostMapping(value="/orders",params="calendar",produces="application/json") @ResponseBody
  Map<String,Boolean> calendarBook(@RequestParam Map<String,String> p){book(p);return Map.of("saved",true);}

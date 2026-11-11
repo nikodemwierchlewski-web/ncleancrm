@@ -68,9 +68,12 @@ public class CrmRecords {
   return book(token,day,starts,customer,name,number,address,quantities,Map.of(),Map.of());
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts){
+  return book(token,day,starts,customer,name,number,address,quantities,prices,forecasts,"UNKNOWN","","");
+ }
+ @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   var existing=db.queryForList("SELECT id FROM booking WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return existing.get(0);
-  address=text(address,240,true);
+  address=text(address,240,true);source=pl.nclean.crm.context.ContextService.source(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
   if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
   var quotes=new ArrayList<ChemistryService.Quote>();boolean allDefined=true;BigDecimal chemistryTotal=BigDecimal.ZERO;
@@ -83,10 +86,11 @@ public class CrmRecords {
    var quote=chemistry.quote(entry.getKey(),qty,forecasts.get(entry.getKey()));quotes.add(quote);allDefined&=quote.defined();if(quote.cost()!=null)chemistryTotal=chemistryTotal.add(quote.cost());
    BigDecimal amount=((BigDecimal)line.get("price")).multiply(qty).setScale(2,RoundingMode.HALF_UP);line.put("quantity",qty);line.put("amount",amount);lines.add(line);total=total.add(amount);
   }
-  if(customer==null)customer=saveCustomer(null,0,name,number,address,"",true);
+  if(customer==null){customer=saveCustomer(null,0,name,number,address,"",true);db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,customer);}
   var people=db.queryForList("SELECT * FROM crm_customer WHERE id=? AND active=TRUE",customer);if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
   var person=people.get(0);
   long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,name==null||name.isBlank()?person.get("name"):text(name,120,true),number==null||number.isBlank()?person.get("phone"):phone(number),address,total);
+  db.update("UPDATE booking SET work_note=? WHERE id=?",note,id);
   for(int i=0;i<lines.size();i++){
    var line=lines.get(i);var quote=quotes.get(i);
    db.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount,suggested_price,forecast_defined,chemical_cost) VALUES (?,?,?,?,?,?,?,?,?,?,?)",id,i,line.get("id"),line.get("name"),line.get("unit"),line.get("quantity"),line.get("price"),line.get("amount"),line.get("suggested_price"),quote.defined(),quote.cost());
@@ -98,8 +102,12 @@ public class CrmRecords {
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new IllegalArgumentException("Nieznane zlecenie.");
-  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
+  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new IllegalArgumentException("Nieznane zlecenie.");
+  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
+  boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
+  boolean stopped=before.get(0).get("timer_started")!=null&&!status.equals("PLANNED");
+  if(photoMoved)db.update("UPDATE booking SET work_minutes=NULL,work_started_at=NULL,work_finished_at=NULL,work_time_source='UNKNOWN' WHERE id=?",id);
+  if(photoMoved||stopped){db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);if(stopped&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE id=?) WHERE booking_id=?",id,id);}
   db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE id=?",id,before.get(0).get("snapshot"),id);
  }
 }

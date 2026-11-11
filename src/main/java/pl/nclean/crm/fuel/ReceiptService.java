@@ -18,6 +18,10 @@ public class ReceiptService {
     private final JdbcTemplate db;
     public ReceiptService(JdbcTemplate db){this.db=db;}
     @Transactional public UUID upload(MultipartFile file){
+        byte[] image=normalize(file);db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);UUID id=UUID.randomUUID();db.update("INSERT INTO fuel_receipt(id,image) VALUES (?,?)",id,image);
+        db.update("DELETE FROM fuel_receipt r WHERE created_at<CURRENT_TIMESTAMP-INTERVAL '24 hours' AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id)");return id;
+    }
+    public byte[] normalize(MultipartFile file){
         if(file==null||file.isEmpty()||file.getSize()>MAX_BYTES)throw new IllegalArgumentException("Wybierz zdjęcie JPEG lub PNG do 8 MB.");
         try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(file.getBytes()))){
             var readers=ImageIO.getImageReaders(input);if(!readers.hasNext())throw new IllegalArgumentException("Plik nie jest poprawnym zdjęciem JPEG lub PNG.");
@@ -26,8 +30,7 @@ public class ReceiptService {
                 reader.setInput(input,true,true);int width=reader.getWidth(0),height=reader.getHeight(0);if(width<=0||height<=0||(long)width*height>20_000_000)throw new IllegalArgumentException("Zdjęcie może mieć maksymalnie 20 megapikseli.");
                 var image=reader.read(0);var normalized=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);var graphics=normalized.createGraphics();try{graphics.setColor(Color.WHITE);graphics.fillRect(0,0,width,height);graphics.drawImage(image,0,0,null);}finally{graphics.dispose();}
                 var bytes=new ByteArrayOutputStream();if(!ImageIO.write(normalized,"jpeg",bytes)||bytes.size()>MAX_BYTES)throw new IllegalArgumentException("Zdjęcie po przetworzeniu przekracza limit. Wybierz mniejszy obraz.");
-                db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);UUID id=UUID.randomUUID();db.update("INSERT INTO fuel_receipt(id,image) VALUES (?,?)",id,bytes.toByteArray());
-                db.update("DELETE FROM fuel_receipt r WHERE created_at<CURRENT_TIMESTAMP-INTERVAL '24 hours' AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id)");return id;
+                return bytes.toByteArray();
             }finally{reader.dispose();}
         }catch(IOException ex){throw new IllegalArgumentException("Nie udało się odczytać zdjęcia. Wybierz poprawny plik JPEG lub PNG.");}
     }

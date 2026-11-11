@@ -201,6 +201,9 @@
   });
   $('#edit-contact').addEventListener('click', () => { fields.hidden = !fields.hidden; if (!fields.hidden) contactName.focus(); });
 
+  const sourceGroup=document.querySelector('#booking-source'),referralGroup=document.querySelector('#booking-referral');
+  const sourceState=()=>{if(sourceGroup)sourceGroup.hidden=!!customer.value;if(referralGroup)referralGroup.hidden=!!customer.value||form.elements.source.value!=='REFERRAL';};
+  new MutationObserver(sourceState).observe(fields,{attributes:true,attributeFilter:['hidden']});form.elements.source?.addEventListener('change',sourceState);sourceState();
   const repeat=document.querySelector('#repeat-booking');
   if(repeat){pick(repeat.dataset);repeat.content.querySelectorAll('[data-service]').forEach(item=>{const input=form.querySelector('[name=qty_'+item.dataset.service+']');if(input)input.value=Number(input.value)+Number(item.dataset.quantity);});total();}
   form.addEventListener('submit', event => {
