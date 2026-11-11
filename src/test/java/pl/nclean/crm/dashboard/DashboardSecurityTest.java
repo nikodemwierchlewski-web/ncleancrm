@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DashboardSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean DashboardService service;
+ @MockitoBean pl.nclean.crm.fuel.FuelJournalService fuel;
  @Test void dashboardCostsRequireOwnerAndCsrf() throws Exception {
   for(String path:new String[]{"/dashboard","/settings/costs"}){mvc.perform(get(path)).andExpect(status().is3xxRedirection());mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
   for(String path:new String[]{"/settings/costs/month","/settings/costs/fuel"}){mvc.perform(post(path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());mvc.perform(post(path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());}

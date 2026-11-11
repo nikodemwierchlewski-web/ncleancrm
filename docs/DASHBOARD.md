@@ -44,3 +44,6 @@ Zachowano OWNER, Spring Security, CSRF i PostgreSQL; nie dodano publicznego tryb
 - Przykład kontrolny: plan 1260 zł − chemia 35 zł − paliwo 48 zł − marketing 10 zł − stałe 5 zł = **1162 zł**. Wykonanie: 900 − 30 − 24 − 10 − 5 = **831 zł**.
 - Testy przeglądarkowe używają tymczasowego schematu w lokalnym PostgreSQL; schemat usunięto po teście. Testcontainers ma oddzielny kontener i losowe poświadczenia. Bez kontaktu z produkcją nclean.pl.
 - Środowisko nie udostępnia współdzielonej przeglądarki ani przekierowania portów. Oddzielny plik demonstracyjny dashboardu powstał z wyrenderowanych widoków aplikacji, zawiera wyłącznie syntetyczne dane i lokalne obliczenia; nie jest połączeniem z działającym serwerem CRM. Pełna aplikacja została osobno sprawdzona w Chromium.
+
+
+Dziennik licznika/agregatu i rachunki paliwowe z V8 rozszerzają wcześniejszy sposób wyliczania paliwa; aktualna kolejność źródeł, prywatne zdjęcia i porównanie pełny–pełny: [PALIWO-I-AGREGAT.md](PALIWO-I-AGREGAT.md).

@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class DashboardController {
     private final DashboardService service;
-    public DashboardController(DashboardService service){this.service=service;}
+    private final pl.nclean.crm.fuel.FuelJournalService fuel;
+    public DashboardController(DashboardService service,pl.nclean.crm.fuel.FuelJournalService fuel){this.service=service;this.fuel=fuel;}
     @GetMapping("/dashboard") String dashboard(@RequestParam(required=false) LocalDate date,@RequestParam(defaultValue="day") String range,@RequestParam(defaultValue="plan") String mode,Model m){
-        var selected=date==null?DashboardService.today():date;var s=service.summary(selected,range,mode);m.addAttribute("s",s);m.addAttribute("date",selected);m.addAttribute("today",DashboardService.today());return "dashboard/index";
+        var selected=date==null?DashboardService.today():date;var s=service.summary(selected,range,mode);m.addAttribute("s",s);m.addAttribute("date",selected);m.addAttribute("today",DashboardService.today());m.addAttribute("legacyFuel",fuel.legacyFuel(selected));m.addAttribute("journal",fuel.daily(selected));m.addAttribute("previousReading",fuel.previous(selected));m.addAttribute("nextReading",fuel.next(selected));m.addAttribute("fuelUsage",fuel.usage(selected,selected).get(selected));m.addAttribute("fuelTotals",fuel.totals(s.period().start(),s.period().end()));m.addAttribute("fuelParameters",fuel.parameters(selected));return "dashboard/index";
     }
     private String costs(YearMonth month,LocalDate day,Model m){
         if(month.getYear()<2000||month.getYear()>2100)throw new IllegalArgumentException("Wybierz miesiąc w latach 2000–2100.");

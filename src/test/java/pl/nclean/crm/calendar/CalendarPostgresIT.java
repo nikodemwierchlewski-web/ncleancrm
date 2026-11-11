@@ -65,6 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
         jdbc.update("DELETE FROM booking_actual_chemical");jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
         jdbc.update("DELETE FROM service_chemical");jdbc.update("UPDATE service_definition SET chemistry_defined=FALSE");jdbc.update("DELETE FROM chemical");
@@ -83,7 +84,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -108,7 +109,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -228,7 +229,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(8, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -630,6 +631,74 @@ class CalendarPostgresIT {
         assertThrows(IllegalArgumentException.class,()->dashboard.saveMonth(YearMonth.from(date),-1,List.of(new DashboardService.Cost("Zły koszt",null,BigDecimal.ONE))));assertEquals(-1,dashboard.monthVersion(YearMonth.from(date)));
         assertThrows(IllegalArgumentException.class,()->dashboard.saveFuel(date,-1,new BigDecimal("-1"),BigDecimal.ONE,null,null,null));assertEquals(-1,((Number)dashboard.fuel(date).get("version")).longValue());
         dashboard.saveMonth(YearMonth.from(date),-1,List.of());dashboard.saveFuel(date,-1,BigDecimal.ONE,BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ZERO,null);assertTrue(dashboard.summary(date,"day","actual").complete());
+    }
+
+
+    private long seedFuelParameters(LocalDate date) {
+        return jdbc.queryForObject("INSERT INTO fuel_parameters(request_token,effective_day,car_rate,generator_rate,car_fuel,generator_fuel,car_price,generator_price) VALUES (?,?,8,1.5,'DIESEL','PETROL',6,7) RETURNING id",Long.class,UUID.randomUUID(),date);
+    }
+    private pl.nclean.crm.fuel.FuelJournalService.Purchase purchaseInput(UUID token,LocalDate date,int minute,String litres,String odo,boolean full,boolean complete,String target,String type,UUID receipt) {
+        return new pl.nclean.crm.fuel.FuelJournalService.Purchase(null,-1,token,date.atTime(0,minute),target,type,"60",litres,"",full,odo,complete,"Próba",receipt);
+    }
+    @Test void fuelReadingsHandleBaselineGapsCorrectionAndSnapshots() {
+        var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var today=DashboardService.today();seedFuelParameters(today.minusDays(10));
+        fuel.saveDay(today.minusDays(2),-1,"1000",0,0,false,OWNER);var baseline=fuel.usage(today.minusDays(2),today).get(today.minusDays(2));assertFalse(baseline.carKnown());assertNull(baseline.kilometres());
+        fuel.saveDay(today,-1,"1100",1,30,false,OWNER);var gap=fuel.usage(today,today).get(today);assertFalse(gap.carKnown());assertEquals(new BigDecimal("100.0"),gap.kilometres());assertEquals(new BigDecimal("15.75"),gap.generatorCost());assertTrue(gap.note().contains("Brak podziału"));
+        fuel.saveDay(today.minusDays(1),-1,"1050",0,0,false,OWNER);assertEquals(new BigDecimal("24.00"),fuel.usage(today,today).get(today).carCost());
+        var originalFuel=fuel;assertThrows(IllegalArgumentException.class,()->originalFuel.saveDay(today.minusDays(1),0,"1060",0,0,false,OWNER));fuel.saveDay(today.minusDays(1),0,"1060",0,0,true,OWNER);assertEquals(new BigDecimal("19.20"),fuel.usage(today,today).get(today).carCost());
+        assertThrows(IllegalArgumentException.class,()->originalFuel.saveDay(today.minusDays(1),0,"1060",0,0,true,OWNER));assertThrows(IllegalArgumentException.class,()->originalFuel.saveDay(today.minusDays(1),1,"1200",0,0,true,OWNER));assertThrows(IllegalArgumentException.class,()->originalFuel.saveDay(today,0,"1100",24,1,true,OWNER));
+        fuel.saveParameters(UUID.randomUUID(),today,"20","3","DIESEL","PETROL","9","10");fuel.saveDay(today,0,"1100",2,0,true,OWNER);assertEquals(new BigDecimal("21.00"),fuel.usage(today,today).get(today).generatorCost());assertEquals(new BigDecimal("19.20"),fuel.usage(today,today).get(today).carCost());
+        assertEquals(2,fuel.audit(today.minusDays(1)).size());assertEquals("1050.0",fuel.audit(today.minusDays(1)).get(0).get("old_odometer"));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);var restarted=fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);assertEquals(new BigDecimal("19.20"),restarted.usage(today,today).get(today).carCost());
+    }
+    @Test void fuelUnusualAndInvalidReadingsRequireExplicitConfirmation() {
+        var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var today=DashboardService.today();seedFuelParameters(today.minusDays(1));fuel.saveDay(today.minusDays(1),-1,"1000",0,0,false,OWNER);
+        assertThrows(IllegalArgumentException.class,()->fuel.saveDay(today,-1,"2500",17,0,false,OWNER));fuel.saveDay(today,-1,"2500",17,0,true,OWNER);
+        assertThrows(IllegalArgumentException.class,()->fuel.saveDay(today,0,"-1",1,0,true,OWNER));assertThrows(IllegalArgumentException.class,()->fuel.saveDay(today.plusDays(1),-1,"2500",0,0,false,OWNER));assertThrows(IllegalArgumentException.class,()->fuel.saveParameters(UUID.randomUUID(),today.minusDays(1),"8","1","DIESEL","PETROL","6","6"));
+    }
+    @Test void fuelEstimatedCostAndPurchaseSpendingAreNotCountedTwiceAndLegacyOverridesSurvive() {
+        var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var dash=app.context().getBean(DashboardService.class);var today=DashboardService.today();seedFuelParameters(today.minusDays(1));fuel.saveDay(today.minusDays(1),-1,"1000",0,0,false,OWNER);fuel.saveDay(today,-1,"1100",1,30,false,OWNER);
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"10","",false,false,"GENERATOR","PETROL",null),OWNER);
+        assertEquals(new BigDecimal("63.75"),dash.summary(today,"day","actual").fuel());assertEquals(new BigDecimal("60.00"),fuel.totals(today,today).purchases());assertEquals(new BigDecimal("8.000"),fuel.totals(today,today).carLitres());
+        dash.saveFuel(today,-1,new BigDecimal("8"),new BigDecimal("6"),new BigDecimal("50"),new BigDecimal("50"),null);assertEquals(new BigDecimal("39.75"),dash.summary(today,"day","actual").fuel());
+        dash.saveFuel(today,0,new BigDecimal("8"),new BigDecimal("6"),BigDecimal.ZERO,BigDecimal.ZERO,new BigDecimal("12"));assertEquals(new BigDecimal("12.00"),dash.summary(today,"day","actual").fuel());
+        assertEquals(new BigDecimal("15.75"),dash.summary(today,"day","plan").fuel());
+    }
+    @Test void fuelFullToFullIncludesPartialPurchasesButExcludesOpeningFill() {
+        var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var today=DashboardService.today();seedFuelParameters(today.minusDays(10));
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today.minusDays(1),0,"30","1000",true,false,"CAR","DIESEL",null),OWNER);
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"3","1050",false,false,"CAR","DIESEL",null),OWNER);
+        var token=UUID.randomUUID();var input=purchaseInput(token,today,1,"7","1100",true,true,"CAR","DIESEL",null);long ending=fuel.savePurchase(input,OWNER);assertEquals(ending,fuel.savePurchase(input,OWNER));assertEquals(3,fuel.purchases(today.minusDays(1),today).size());
+        var comparison=fuel.comparisons(today).get(0);assertTrue(comparison.complete());assertEquals(new BigDecimal("10.000"),comparison.litres());assertEquals(new BigDecimal("10.000"),comparison.actualRate());assertEquals(new BigDecimal("8.000"),comparison.expectedLitres());assertEquals(new BigDecimal("25.00"),comparison.percent());
+        assertThrows(IllegalArgumentException.class,()->fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,2,"5","900",true,true,"CAR","DIESEL",null),OWNER));
+    }
+    @Test void fuelMissingLitresTypesAndUnconfirmedRecordsDoNotClaimMeasuredConsumption() {
+        var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var today=DashboardService.today();seedFuelParameters(today.minusDays(10));
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today.minusDays(1),0,"30","1000",true,false,"CAR","DIESEL",null),OWNER);
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"","",false,false,"CAR","DIESEL",null),OWNER);fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,1,"10","1100",true,true,"CAR","DIESEL",null),OWNER);
+        assertFalse(fuel.comparisons(today).get(0).complete());assertNull(fuel.comparisons(today).get(0).actualRate());assertEquals(new BigDecimal("120.00"),fuel.totals(today,today).purchases());
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,2,"10","1200",true,false,"CAR","DIESEL",null),OWNER);assertFalse(fuel.comparisons(today).get(0).complete());
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,3,"10","1300",true,true,"CAR","PETROL",null),OWNER);assertFalse(fuel.comparisons(today).get(0).complete());
+        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,4,"10","",false,false,"SHARED","PETROL",null),OWNER);assertEquals(3,fuel.comparisons(today).size());
+    }
+    @Test void fuelReceiptsValidateBytesStayPrivateAndSurviveRestartAndReplacement() throws Exception {
+        var receipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var today=DashboardService.today();
+        assertThrows(IllegalArgumentException.class,()->receipts.upload(new org.springframework.mock.web.MockMultipartFile("image","fake.jpg","image/jpeg","not an image".getBytes())));
+        assertThrows(IllegalArgumentException.class,()->receipts.upload(new org.springframework.mock.web.MockMultipartFile("image","huge.jpg","image/jpeg",new byte[8*1024*1024+1])));
+        var image=new java.awt.image.BufferedImage(8,8,java.awt.image.BufferedImage.TYPE_INT_RGB);var bytes=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(image,"png",bytes);
+        UUID id=receipts.upload(new org.springframework.mock.web.MockMultipartFile("image","../../receipt.exe","text/plain",bytes.toByteArray()));assertTrue(receipts.image(id).length>0);
+        var anonymous=app.browser();assertEquals(302,anonymous.get("/fuel/receipts/"+id).statusCode());anonymous.login();var picture=anonymous.get("/fuel/receipts/"+id);assertEquals(200,picture.statusCode());assertEquals("image/jpeg",picture.headers().firstValue("content-type").orElseThrow());assertTrue(picture.headers().firstValue("cache-control").orElseThrow().contains("no-store"));
+        long purchase=fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"","",false,false,"SHARED","PETROL",id),OWNER);receipts.discard(id);assertTrue(receipts.image(id).length>0,"Linked image cannot be discarded");
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);var restartedReceipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);var restartedFuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);assertTrue(restartedReceipts.image(id).length>0);
+        restartedFuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(purchase,0,UUID.randomUUID(),today.atStartOfDay(),"SHARED","PETROL","65","","",false,"",false,"Korekta",null),OWNER);assertThrows(org.springframework.web.server.ResponseStatusException.class,()->restartedReceipts.image(id));
+        assertThrows(IllegalArgumentException.class,()->restartedFuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(purchase,0,UUID.randomUUID(),today.atStartOfDay(),"SHARED","PETROL","65","","",false,"",false,"Korekta",null),OWNER));
+    }
+    @Test void fuelFormsRenderAndFailedDayOrPurchasePreserveInputs() throws Exception {
+        var browser=app.browser();browser.login();var today=DashboardService.today();seedFuelParameters(today.minusDays(1));
+        assertEquals(200,browser.get("/fuel?date="+today).statusCode());assertEquals(200,browser.get("/dashboard?date="+today).statusCode());
+        var invalid=browser.settings("/fuel/day",Map.of("day",today,"version",-1,"odometer","1234","hours",24,"minutes",1),true);assertEquals(400,invalid.statusCode());assertTrue(invalid.body().contains("value=\"1234\""));assertTrue(invalid.body().contains("value=\"24\""));
+        var purchase=new LinkedHashMap<String,Object>();purchase.put("purchased_at",today.atStartOfDay());purchase.put("version",-1);purchase.put("request_token",UUID.randomUUID());purchase.put("amount","123");purchase.put("target","GENERATOR");purchase.put("fuel_type","PETROL");purchase.put("full_tank","on");purchase.put("note","Zachowaj dane rachunku");
+        var error=browser.settings("/fuel/purchases",purchase,true);assertEquals(400,error.statusCode());assertTrue(error.body().contains("Zachowaj dane rachunku"));assertTrue(error.body().contains("value=\"123\""));
     }
 
     private record RunningApp(ConfigurableApplicationContext context, URI base) implements AutoCloseable {

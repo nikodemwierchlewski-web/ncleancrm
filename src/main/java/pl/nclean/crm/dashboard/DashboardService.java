@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class DashboardService {
     private final JdbcTemplate db;
-    public DashboardService(JdbcTemplate db){this.db=db;}
+    private final pl.nclean.crm.fuel.FuelJournalService journal;
+    public DashboardService(JdbcTemplate db,pl.nclean.crm.fuel.FuelJournalService journal){this.db=db;this.journal=journal;}
     public static LocalDate today(){return LocalDate.now(ZoneId.of("Europe/Warsaw"));}
     public record Period(LocalDate start,LocalDate end,String range){
         public LocalDate previous(){return switch(range){case "week"->start.minusWeeks(1);case "month"->start.minusMonths(1);default->start.minusDays(1);};}
@@ -57,11 +58,21 @@ public class DashboardService {
         var months=new HashMap<LocalDate,Boolean>();for(var row:db.queryForList("SELECT * FROM dashboard_month WHERE month BETWEEN ? AND ?",p.start().withDayOfMonth(1),p.end().withDayOfMonth(1)))months.put(((java.sql.Date)row.get("month")).toLocalDate(),(Boolean)row.get("configured"));
         var monthly=db.queryForList("SELECT month,category,SUM(amount) amount FROM dashboard_month_cost WHERE month BETWEEN ? AND ? GROUP BY month,category",p.start().withDayOfMonth(1),p.end().withDayOfMonth(1));
         var missingMonths=new HashSet<YearMonth>();
+        var journalUsage=journal.usage(p.start(),p.end());
+        var journalEnabledFrom=db.queryForObject("SELECT min(effective_day) FROM fuel_parameters",java.sql.Date.class);
         for(LocalDate day=p.start();!day.isAfter(p.end());day=day.plusDays(1)){
             var f=fuels.get(day);String kmKey=mode.equals("plan")?"planned_km":"actual_km";
-            if(f==null||(mode.equals("plan")||f.get("actual_cost")==null)&&f.get(kmKey)==null)missingFuel++;
-            else if(mode.equals("actual")&&f.get("actual_cost")!=null)fuel=fuel.add((BigDecimal)f.get("actual_cost"));
-            else fuel=fuel.add(money(((BigDecimal)f.get(kmKey)).multiply((BigDecimal)f.get("consumption")).multiply((BigDecimal)f.get("litre_price")).divide(new BigDecimal("100"))));
+            var measured=journalUsage.get(day);
+            if(mode.equals("actual")&&f!=null&&f.get("actual_cost")!=null)fuel=fuel.add((BigDecimal)f.get("actual_cost"));
+            else {
+                boolean known=true;
+                if(f!=null&&f.get(kmKey)!=null)fuel=fuel.add(money(((BigDecimal)f.get(kmKey)).multiply((BigDecimal)f.get("consumption")).multiply((BigDecimal)f.get("litre_price")).divide(new BigDecimal("100"))));
+                else if(measured!=null&&measured.carKnown())fuel=fuel.add(measured.carCost());
+                else known=false;
+                if(measured!=null)fuel=fuel.add(measured.generatorCost());
+                else if(journalEnabledFrom!=null&&!day.isBefore(journalEnabledFrom.toLocalDate()))known=false;
+                if(!known)missingFuel++;
+            }
             if(!Boolean.TRUE.equals(months.get(day.withDayOfMonth(1))))missingMonths.add(YearMonth.from(day));
             else for(var row:monthly)if(((java.sql.Date)row.get("month")).toLocalDate().equals(day.withDayOfMonth(1))){var share=allocated((BigDecimal)row.get("amount"),day);if(row.get("category").equals("MARKETING"))marketing=marketing.add(share);else fixed=fixed.add(share);}
         }

@@ -11,6 +11,10 @@ server:
 spring:
   application:
     name: nclean-crm
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 9MB
   datasource:
     url: ${CRM_DB_URL}
     username: ${CRM_DB_USERNAME}
