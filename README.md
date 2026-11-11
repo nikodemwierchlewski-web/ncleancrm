@@ -1,4 +1,4 @@
-# ncLEAN CRM — lokalny kalendarz
+# ncLEAN CRM — wersja 0.1
 
 Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn i stały panel dnia, a na telefonie kompaktowy pasek tygodnia i plan wybranego dnia. Formularz zachowuje usługi z kilku kategorii i podpowiada klienta w jednym polu. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
 
@@ -10,7 +10,9 @@ Dashboard dnia, tygodnia i miesiąca, plan/wykonanie, paliwo i koszty miesięczn
 
 Licznik samochodu, czas agregatu i tankowania ze zdjęciami: [docs/PALIWO-I-AGREGAT.md](docs/PALIWO-I-AGREGAT.md).
 
-Opis codziennej obsługi: [docs/KALENDARZ.md](docs/KALENDARZ.md).
+Wersja 0.1: [dzień pracy, wykonanie, wpłaty, analiza i PWA](docs/WERSJA-0.1.md), [wyniki weryfikacji](docs/WERYFIKACJA-0.1.md). Ekran startowy: Dzisiaj.
+
+Opis dotychczasowej obsługi kalendarza: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
 
@@ -46,7 +48,7 @@ Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruc
 - Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
 - Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
 - Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
-- Flyway uruchamia migracje V1–V8 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. V7 dodaje koszty dashboardu i historyczne wyceny rzeczywistych pomiarów. V8 dodaje dziennik licznika/agregatu, tankowania, prywatne zdjęcia rachunków i audyt korekt. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Flyway uruchamia migracje V1–V9 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. V7 dodaje koszty dashboardu i historyczne wyceny rzeczywistych pomiarów. V8 dodaje dziennik licznika/agregatu, tankowania, prywatne zdjęcia rachunków i audyt korekt. V9 dodaje wykonanie, cenę końcową, czas, audyt zlecenia i rejestr wpłat. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
 - Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
 
 Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.
@@ -71,6 +73,10 @@ scripts/                   inicjalizator sekretów i skrypty Windows
 src/main/java/pl/nclean/crm/
   calendar/                kontroler, serwis, encje i repozytoria
   security/                logowanie i uprawnienia
+  records/                 klienci, cennik, zlecenia, chemia
+  dashboard/               koszty i podsumowania
+  fuel/                    licznik, agregat, tankowania i zdjęcia
+  work/                    dzień pracy, wykonanie, wpłaty i eksport
 src/main/resources/
   application.yml, application-local.yml, application-prod.yml
   db/migration/V1__calendar.sql, V2__multiple_day_areas.sql

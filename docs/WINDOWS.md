@@ -49,3 +49,41 @@ Przy `verify` Docker Desktop musi działać. Baza testowa jest tworzona automaty
 Gdy port 55433 jest zajęty, zatrzymaj aplikację, która go używa, i ponów start. Profil `local` wymaga pliku `.local/application-local.properties`; brak tego pliku oznacza konieczność pierwszej inicjalizacji. Profil ustawia lokalny adres bazy i konto `crm_dev`. Skrypt odrzuca zewnętrzne `SPRING_DATASOURCE_URL` oraz osobne `SPRING_FLYWAY_URL`. Jeśli masz ustawione zmienne `CRM_DB_PASSWORD`, `CRM_ADMIN_*` lub inne `SPRING_DATASOURCE_*` z innego środowiska, usuń te nadpisania z bieżącego terminala przed startem — mogą zastąpić lokalne hasła i dane logowania.
 
 Skrypty PowerShell przygotowano dla Windows; ich uruchomienie na rzeczywistym Windows wymaga osobnej weryfikacji. Wyniki testów wykonanych w środowisku roboczym są opisane w Pull Request.
+
+## Wersja 0.1: dzień pracy i migracja
+
+Po uruchomieniu dotychczasowymi skryptami wejdź na `http://127.0.0.1:8081`. Po zalogowaniu startuje **Dzisiaj**. Flyway zastosuje V9; nie kasuj wolumenu ani migracji. Wykonaj kopię przed aktualizacją. Obsługa: [WERSJA-0.1.md](WERSJA-0.1.md).
+
+## Kopia zapasowa i odtworzenie do osobnej bazy
+
+Przy działającym lokalnym PostgreSQL, z katalogu projektu:
+
+```powershell
+.\scripts\Backup-Local.ps1
+# Lub wskaż nowy plik poza repozytorium:
+.\scripts\Backup-Local.ps1 -Destination 'D:\KopieCRM\nclean-2026-11-11.dump'
+```
+
+Skrypt używa `pg_dump` z lokalnego kontenera Compose i kopiuje plik przez `docker compose cp`, nie przekierowuje binarnego strumienia przez PowerShell. Hasło nie jest podawane w argumentach ani zapisywane w Git. Backup zawiera bazę, audyt, wpłaty i prywatne zdjęcia. Istniejący plik nie jest nadpisywany. Skrypt wypisuje SHA-256. Przechowuj kopie z ograniczonym dostępem, również na osobnym nośniku; nie polegaj na pojedynczym pliku na dysku aplikacji.
+
+Próba odtworzenia wymaga nowej nazwy zaczynającej się od `nclean_restore_`:
+
+```powershell
+.\scripts\Restore-Local-Test.ps1 -Backup 'D:\KopieCRM\nclean-2026-11-11.dump' -TargetDatabase nclean_restore_proba1
+```
+
+Skrypt tworzy osobną bazę dla `crm_dev`. Istniejący cel jest odrzucany; nie używa `--clean` i nigdy nie nadpisuje `nclean_crm`. Niepełne odtworzenie pozostawia osobny cel do diagnostyki. Po sukcesie pokazuje liczbę zleceń, wpłat i zdjęć.
+
+Aby sprawdzić odtworzoną bazę w aplikacji, uruchom **oddzielny proces** na innym porcie (zachowując lokalne sekrety i tę samą nazwę bazy w obu adresach):
+
+```powershell
+.\mvnw.cmd spring-boot:run '-Dspring-boot.run.profiles=local' '-Dspring-boot.run.arguments=--server.port=8082 --spring.datasource.url=jdbc:postgresql://127.0.0.1:55433/nclean_restore_proba1 --spring.flyway.url=jdbc:postgresql://127.0.0.1:55433/nclean_restore_proba1'
+```
+
+Otwórz `http://127.0.0.1:8082`, sprawdź klienta, zlecenie, wpłaty, pomiary i zdjęcie. Nie zmieniaj konfiguracji zwykłego `Start-Local.ps1`, aby przypadkowo nie przełączyć codziennej pracy na kopię. Zatrzymanie procesu przez Ctrl+C zachowuje obie bazy.
+
+Test automatyczny w środowisku Linux potwierdza działanie równoważnych poleceń `pg_dump/pg_restore` oraz start aplikacji na odtworzonej bazie. Skrypty PowerShell nie były wykonywane w tej sesji, ponieważ nie ma runtime PowerShell/Windows. To ograniczenie weryfikacji, a nie deklaracja testu na Windowsie.
+
+## PWA na telefonie
+
+W obsługiwanej przeglądarce opcja instalacji może pojawić się w Więcej. Dostęp z telefonu do adresu LAN po zwykłym HTTP nie zapewnia wymaganego bezpiecznego kontekstu. Zdalne wdrożenie wymaga HTTPS z zaufanym certyfikatem, zabezpieczonego dostępu i osobnego przygotowania serwera. Nie wyłączaj logowania/CSRF ani nie wystawiaj lokalnego PostgreSQL do internetu. PWA nie zapisuje danych CRM offline.

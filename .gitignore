@@ -4,3 +4,8 @@
 .env.*
 !.env.example
 *.log
+/backups/
+/exports/
+*.dump
+*.backup
+*.csv
