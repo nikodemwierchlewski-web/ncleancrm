@@ -3,6 +3,7 @@
  <p th:if="${order.status != 'DONE'}">Oznacz zlecenie jako wykonane, aby wpisać faktyczne zużycie. Prognozy nie są danymi rzeczywistymi.</p>
  <div th:if="${order.status == 'DONE'}">
   <p>Ilości dotyczą całej pozycji zlecenia. Podpowiedź z prognozy wymaga sprawdzenia: zapis potwierdza ją jako faktyczne zużycie. Puste pole oznacza brak danych, 0 oznacza rzeczywisty brak zużycia.</p>
+  <p class="field-help">Nowy lub dotąd niewyceniony pomiar zapisuje bieżącą cenę środka. Korekta ilości zachowuje wcześniej zapisaną cenę.</p>
   <form class="actual-usage-form" th:attr="data-booking-id=${order.id}" th:each="item:${lines.get(order.id)}" th:action="@{/orders/{id}/items/{position}/actual(id=${order.id},position=${item.position})}" method="post" th:with="key=|${order.id}:${item.position}|,values=${actualFields.get(key)}">
    <h4 th:text="|${item.name} · ${item.quantity} ${item.unit}|"></h4>
    <p class="field-help actual-state" th:text="${item.actual_defined ? 'Zapisane rzeczywiste ilości' : 'Nie uzupełniono rzeczywistego zużycia'}"></p>

@@ -158,5 +158,6 @@
   window.visualViewport?.addEventListener('resize', updateHeight);
   updateHeight();
   select(selected, false);
+  if(new URLSearchParams(location.search).get('add')==='true'){ $('#booking-form [name=day]').value=selected;open($('#booking-editor')); }
   if ($('#calendar-status').textContent) setTimeout(() => { $('#calendar-status').textContent = ''; }, 4000);
 })();

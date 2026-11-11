@@ -1,6 +1,10 @@
 package pl.nclean.crm.calendar;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import pl.nclean.crm.dashboard.DashboardService;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.URI;
@@ -61,6 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
         jdbc.update("DELETE FROM booking_actual_chemical");jdbc.update("DELETE FROM booking_chemical");jdbc.update("DELETE FROM booking_item");jdbc.update("DELETE FROM booking");jdbc.update("DELETE FROM crm_customer");
         jdbc.update("DELETE FROM service_chemical");jdbc.update("UPDATE service_definition SET chemistry_defined=FALSE");jdbc.update("DELETE FROM chemical");
         jdbc.update("DELETE FROM weekly_area");jdbc.update("DELETE FROM weekly_area_plan");jdbc.update("DELETE FROM day_area_override");
@@ -78,7 +83,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -103,7 +108,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -223,7 +228,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(6, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -535,6 +540,96 @@ class CalendarPostgresIT {
     private static void assertHtmlBadRequest(HttpResponse<String> response) {
         assertEquals(400, response.statusCode());
         assertTrue(response.headers().firstValue("Content-Type").orElse("").contains("text/html"));
+    }
+
+
+    @Test
+    void dashboardUsesSnapshotsAndSeparatesPlanActualCancellationAndMissingData() {
+        var dashboard=app.context().getBean(DashboardService.class);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
+        var date=DashboardService.today();long service=estimateService("Dashboard fotel");long liquid=chemistry.saveMaterial(null,0,"Płukanka dashboard","l","1","50");
+        chemistry.saveRecipe(service,0,true,Map.of(liquid,new BigDecimal("100")));
+        long first=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of());
+        long second=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("300")),Map.of());
+        long cancelled=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE));
+        data.reschedule(first,0,date,java.time.LocalTime.NOON,"DONE");data.reschedule(cancelled,0,date,java.time.LocalTime.NOON,"CANCELLED");
+        dashboard.saveMonth(YearMonth.from(date),-1,List.of(new DashboardService.Cost("Reklama","MARKETING",new BigDecimal("300")),new DashboardService.Cost("Telefon","PHONE",new BigDecimal("150"))));
+        dashboard.saveFuel(date,-1,new BigDecimal("8"),new BigDecimal("6"),new BigDecimal("100"),new BigDecimal("50"),null);
+        var plan=dashboard.summary(date,"day","plan");assertEquals(new BigDecimal("500.00"),plan.revenue());assertEquals(new BigDecimal("10.00"),plan.chemistry());assertEquals(new BigDecimal("48.00"),plan.fuel());assertEquals(1,plan.planned());assertEquals(1,plan.done());assertEquals(1,plan.cancelled());assertTrue(plan.complete());
+        var unknown=dashboard.summary(date,"day","actual");assertEquals(1,unknown.missingChemistry());assertFalse(unknown.complete());assertEquals(new BigDecimal("200.00"),unknown.revenue());
+        actual.record(first,0,0,Map.of(liquid,new BigDecimal("120")));chemistry.saveMaterial(liquid,0,"Płukanka dashboard","l","1","100");
+        var done=dashboard.summary(date,"day","actual");assertTrue(done.complete());assertEquals(new BigDecimal("6.00"),done.chemistry());assertEquals(new BigDecimal("24.00"),done.fuel());
+        actual.record(first,0,1,Map.of(liquid,new BigDecimal("140")));assertEquals(new BigDecimal("7.00"),dashboard.summary(date,"day","actual").chemistry(),"Editing quantity preserves price snapshot");
+        actual.record(first,0,2,Map.of(liquid,BigDecimal.ZERO));assertTrue(dashboard.summary(date,"day","actual").complete());assertEquals(new BigDecimal("0.00"),dashboard.summary(date,"day","actual").chemistry());
+        dashboard.saveFuel(date,0,new BigDecimal("8"),new BigDecimal("6"),new BigDecimal("100"),new BigDecimal("50"),new BigDecimal("12"));assertEquals(new BigDecimal("12.00"),dashboard.summary(date,"day","actual").fuel());
+        assertEquals(new BigDecimal("500.00"),dashboard.summary(date,"day","plan").revenue());assertEquals(new BigDecimal("10.00"),dashboard.summary(date,"day","plan").chemistry());
+    }
+
+    @Test
+    void dashboardMonthAllocationPersistsAndRejectsStaleAndClosedMonthChanges() {
+        var dashboard=app.context().getBean(DashboardService.class);var date=DashboardService.today();var month=YearMonth.from(date);
+        dashboard.saveMonth(month,-1,List.of(new DashboardService.Cost("Marketing","MARKETING",new BigDecimal("100.01")),new DashboardService.Cost("Stałe","OTHER",new BigDecimal("200.02"))));
+        var summary=dashboard.summary(date,"month","actual");assertEquals(new BigDecimal("100.01"),summary.marketing());assertEquals(new BigDecimal("200.02"),summary.fixed());assertEquals(new BigDecimal("-300.03"),summary.remaining());assertEquals(month.lengthOfMonth(),summary.missingFuel());
+        var initialDashboard=dashboard;assertThrows(IllegalArgumentException.class,()->initialDashboard.saveMonth(month,-1,List.of()));assertThrows(IllegalArgumentException.class,()->initialDashboard.saveMonth(month.minusMonths(1),-1,List.of()));
+        dashboard.saveFuel(date,-1,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,null);assertThrows(IllegalArgumentException.class,()->initialDashboard.saveFuel(date,-1,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO,null));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);dashboard=app.context().getBean(DashboardService.class);
+        assertEquals(new BigDecimal("100.01"),dashboard.summary(date,"month","actual").marketing());assertEquals(new BigDecimal("0.00"),dashboard.summary(date,"day","actual").fuel());
+    }
+
+    @Test
+    void dashboardHandlesCrossMonthWeekMissingPricesAndEmptyPeriods() {
+        var dashboard=app.context().getBean(DashboardService.class);
+        var empty=dashboard.summary(LocalDate.of(2028,2,10),"day","plan");assertTrue(empty.orders().isEmpty());assertEquals(new BigDecimal("0.00"),empty.costs());assertFalse(empty.complete());
+        jdbc.update("INSERT INTO dashboard_month(month,configured) VALUES ('2026-12-01',TRUE),('2027-01-01',TRUE)");
+        jdbc.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES ('2026-12-01','Grudzień','MARKETING',310),('2027-01-01','Styczeń','OTHER',620)");
+        var week=dashboard.summary(LocalDate.of(2026,12,31),"week","plan");assertEquals(new BigDecimal("40.00"),week.marketing());assertEquals(new BigDecimal("60.00"),week.fixed());assertEquals(0,week.missingMonths());
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Bez historycznej wyceny");var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);long chemical=chemistry.saveMaterial(null,0,"Stary pomiar","ml","1000","50");
+        long id=data.book(UUID.randomUUID(),LocalDate.of(2028,2,10),java.time.LocalTime.NOON,null,"Klient próbny","500000095","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(id,0,LocalDate.of(2028,2,10),java.time.LocalTime.NOON,"DONE");
+        jdbc.update("UPDATE booking_item SET actual_defined=TRUE WHERE booking_id=?",id);jdbc.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity) VALUES (?,0,?,'Stary pomiar','ml',100)",id,chemical);
+        assertEquals(1,dashboard.summary(LocalDate.of(2028,2,10),"day","actual").missingChemistry());
+    }
+
+    @Test
+    void dashboardHttpRendersAndInvalidSavePreservesFormAndCsrf() throws Exception {
+        var browser=app.browser();browser.login();var date=DashboardService.today();
+        assertEquals(200,browser.get("/dashboard?date="+date).statusCode());assertEquals(200,browser.get("/dashboard?date="+date+"&range=month&mode=actual").statusCode());
+        var costs=browser.get("/settings/costs?day="+date+"&month="+YearMonth.from(date));assertEquals(200,costs.statusCode());assertTrue(costs.body().contains("name=\"_csrf\""));
+        var form=new LinkedHashMap<String,Object>();form.put("month",YearMonth.from(date));form.put("day",date);form.put("version",-1);form.put("name_0","Zapamiętaj reklamę");form.put("category_0","MARKETING");form.put("amount_0","-12");
+        assertEquals(403,browser.settings("/settings/costs/month",form,false).statusCode());var invalid=browser.settings("/settings/costs/month",form,true);assertEquals(400,invalid.statusCode());assertTrue(invalid.body().contains("Zapamiętaj reklamę"));assertTrue(invalid.body().contains("value=\"-12\""));
+        form.put("amount_0","300");assertEquals(302,browser.settings("/settings/costs/month",form,true).statusCode());assertEquals(400,browser.settings("/settings/costs/month",form,true).statusCode());assertEquals(400,browser.get("/dashboard?range=year").statusCode());
+    }
+
+
+    @Test
+    void dashboardV7UpgradesOldMeasurementsOnlyWithMatchingHistoricalPrices() {
+        String schema="dashboard_v6_upgrade";String url=POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema;
+        var source=new DriverManagerDataSource(url,POSTGRES.getUsername(),POSTGRES.getPassword());var old=new JdbcTemplate(source);
+        try {
+            Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("6").load().migrate();
+            long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Test migracji','+48500000099') RETURNING id",Long.class);
+            long service=old.queryForObject("SELECT min(id) FROM service_definition",Long.class);
+            long material=old.queryForObject("INSERT INTO chemical(name,package_unit,package_quantity,package_price) VALUES ('Stara chemia','l',1,900) RETURNING id",Long.class);
+            long booking=old.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,status) VALUES (?,?,CURRENT_DATE,'10:00','Test migracji','+48500000099','Adres',100,'DONE') RETURNING id",Long.class,UUID.randomUUID(),person);
+            for(int i=0;i<3;i++){
+                old.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount,suggested_price,actual_defined) VALUES (?,?,?,'Fotel','szt.',1,100,100,100,TRUE)",booking,i,service);
+                old.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity) VALUES (?,?,?,'Stara chemia','ml',120)",booking,i,material);
+            }
+            old.update("INSERT INTO booking_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) VALUES (?,0,?,'Stara chemia','ml',100,0.05,5),(?,1,?,'Stara chemia','g',100,0.05,5)",booking,material,booking,material);
+            Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
+            assertEquals(new BigDecimal("6.00"),old.queryForObject("SELECT amount FROM booking_actual_chemical WHERE item_position=0",BigDecimal.class));
+            assertNull(old.queryForObject("SELECT amount FROM booking_actual_chemical WHERE item_position=1",BigDecimal.class));assertNull(old.queryForObject("SELECT amount FROM booking_actual_chemical WHERE item_position=2",BigDecimal.class));
+            assertEquals(new BigDecimal("900.00"),old.queryForObject("SELECT package_price FROM chemical",BigDecimal.class));
+        }finally{jdbc.execute("DROP SCHEMA IF EXISTS "+schema+" CASCADE");}
+    }
+
+    @Test
+    void dashboardPartialMeasurementsAndInvalidCostsRemainExplicit() {
+        var dashboard=app.context().getBean(DashboardService.class);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);var date=DashboardService.today();
+        long service=estimateService("Częściowy pomiar");long a=chemistry.saveMaterial(null,0,"Środek A","l","1","50"),b=chemistry.saveMaterial(null,0,"Środek B","l","1","50");chemistry.saveRecipe(service,0,true,Map.of(a,new BigDecimal("100"),b,new BigDecimal("100")));
+        long booking=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient próbny","500000099","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(booking,0,date,java.time.LocalTime.NOON,"DONE");actual.record(booking,0,0,Map.of(a,new BigDecimal("100")));
+        assertEquals(1,dashboard.summary(date,"day","actual").missingChemistry());actual.record(booking,0,1,Map.of(a,new BigDecimal("100"),b,BigDecimal.ZERO));assertEquals(0,dashboard.summary(date,"day","actual").missingChemistry());
+        assertThrows(IllegalArgumentException.class,()->dashboard.saveMonth(YearMonth.from(date),-1,List.of(new DashboardService.Cost("Zły koszt",null,BigDecimal.ONE))));assertEquals(-1,dashboard.monthVersion(YearMonth.from(date)));
+        assertThrows(IllegalArgumentException.class,()->dashboard.saveFuel(date,-1,new BigDecimal("-1"),BigDecimal.ONE,null,null,null));assertEquals(-1,((Number)dashboard.fuel(date).get("version")).longValue());
+        dashboard.saveMonth(YearMonth.from(date),-1,List.of());dashboard.saveFuel(date,-1,BigDecimal.ONE,BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ZERO,null);assertTrue(dashboard.summary(date,"day","actual").complete());
     }
 
     private record RunningApp(ConfigurableApplicationContext context, URI base) implements AutoCloseable {

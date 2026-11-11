@@ -6,6 +6,8 @@ Nowe opcje: tygodniowy plan obszarów z wyjątkami, ceny uzgadniane w rezerwacji
 
 Rzeczywiste ilości po wykonaniu zlecenia i propozycje standardów z mediany: [docs/RZECZYWISTE-ZUZYCIE-I-PROPOZYCJE.md](docs/RZECZYWISTE-ZUZYCIE-I-PROPOZYCJE.md).
 
+Dashboard dnia, tygodnia i miesiąca, plan/wykonanie, paliwo i koszty miesięczne: [docs/DASHBOARD.md](docs/DASHBOARD.md).
+
 Opis codziennej obsługi: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
@@ -42,7 +44,7 @@ Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruc
 - Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
 - Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
 - Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
-- Flyway uruchamia migracje V1–V6 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Flyway uruchamia migracje V1–V7 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. V7 dodaje koszty dashboardu i historyczne wyceny rzeczywistych pomiarów. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
 - Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
 
 Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.
@@ -82,6 +84,6 @@ src/test/java/pl/nclean/crm/calendar/
 
 Początkowe obszary są przykładowymi strefami operacyjnymi; nazwa jest wyświetlana razem z kolorem. W ustawieniach można dodać własne obszary, edytować ich nazwy i kolory HEX oraz je dezaktywować. Dezaktywacja zachowuje istniejące przypisania; nieaktywny obszar można pozostawić przy danym dniu lub go odznaczyć, ale nie przypisywać do kolejnych dni. Zmiana nazwy lub koloru aktualizuje etykiety istniejących przypisań.
 
-Przypisanie obszarów nie rezerwuje terminu. Zlecenia, kartoteka klientów i cennik są opisane w [docs/KLIENT-CENNIK.md](docs/KLIENT-CENNIK.md). Nie ma SMS, finansów, GPS ani inteligentnego dobierania terminów.
+Przypisanie obszarów nie rezerwuje terminu. Zlecenia, kartoteka klientów i cennik są opisane w [docs/KLIENT-CENNIK.md](docs/KLIENT-CENNIK.md). Podsumowanie kosztów i przychodów opisano w [docs/DASHBOARD.md](docs/DASHBOARD.md). Nie ma SMS, księgowości, GPS ani inteligentnego dobierania terminów.
 
 To lokalne środowisko deweloperskie. Publiczne wdrożenie, HTTPS, kopie zapasowe i konta użytkowników w bazie pozostają osobnymi zadaniami. Profil `prod` nie jest kompletną konfiguracją wdrożenia. Dokumenty historyczne: [audyt CMS](AUDYT-NcleanCMS.md) i [plan CRM](PLAN-CRM.md).

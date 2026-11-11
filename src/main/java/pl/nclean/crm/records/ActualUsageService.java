@@ -32,10 +32,16 @@ public class ActualUsageService {
             normalized.put(entry.getKey(),ChemistryService.quantity(entry.getValue().toPlainString(),false));
         }
         CrmRecords.changed(db.update("UPDATE booking_item SET actual_defined=?,actual_version=actual_version+1 WHERE booking_id=? AND position=? AND actual_version=?",!normalized.isEmpty(),booking,position,version));
+        var previous=new HashMap<Long,Map<String,Object>>();
+        for(var row:db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position))previous.put(((Number)row.get("chemical_id")).longValue(),row);
         db.update("DELETE FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position);
         for(var entry:normalized.entrySet()){
             var material=materials.get(entry.getKey());
-            db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity) VALUES (?,?,?,?,?,?)",booking,position,material.id(),material.name(),material.unit(),entry.getValue());
+            var old=previous.get(material.id());
+            var cost=old!=null && material.unit().equals(old.get("unit")) && old.get("unit_cost")!=null ? (BigDecimal)old.get("unit_cost") : material.unitCost();
+            var amount=cost.multiply(entry.getValue()).setScale(2,RoundingMode.HALF_UP);
+            if(amount.compareTo(new BigDecimal("999999999999.99"))>0)throw new IllegalArgumentException("Koszt zużycia jest zbyt duży.");
+            db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) VALUES (?,?,?,?,?,?,?,?)",booking,position,material.id(),material.name(),material.unit(),entry.getValue(),cost,amount);
         }
     }
 

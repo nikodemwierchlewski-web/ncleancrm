@@ -3,6 +3,7 @@
 <header class="app-header" th:fragment="header(active)">
   <a class="brand" href="/calendar" aria-label="ncLEAN CRM — kalendarz"><span>NCLEAN</span><b>CRM</b></a>
   <nav class="record-nav" aria-label="Główna nawigacja">
+    <a href="/dashboard" th:attr="aria-current=${active == 'dashboard' ? 'page' : null}">Podsumowanie</a>
     <a href="/calendar" th:attr="aria-current=${active == 'calendar' ? 'page' : null}">Kalendarz</a>
     <a href="/customers" th:attr="aria-current=${active == 'customers' ? 'page' : null}">Klienci</a>
     <a href="/settings" th:attr="aria-current=${active == 'settings' ? 'page' : null}">Ustawienia</a>
