@@ -50,3 +50,5 @@ Polecenia PostgreSQL i scenariusz odtworzenia zostały wykonane w Linux. Skrypty
 - Brak księgowości/podatków/faktur, nadpłat i automatycznego podziału kosztów wspólnych na usługi. Korekta wpłaty jest jawnym zapisem przeciwnym, a nie integracją bankową.
 - Wcześniejsze wykonane zlecenia wymagają potwierdzenia ceny końcowej, czasu i wpłat; migracja nie tworzy tych danych.
 - Publiczne wdrożenie HTTPS, testy fizycznych telefonów i wykonanie skryptów w Windows pozostają osobnym odbiorem środowiska docelowego.
+
+GitHub API odrzuca w tej sesji zarówno listę PR, jak i utworzenie PR (`Forbidden`). Nie potwierdzono zatem stanu istniejących PR. Gałąź integracyjna jest wypchnięta, a gotowy opis i porównanie do `main` przygotowane do ręcznego utworzenia PR.
