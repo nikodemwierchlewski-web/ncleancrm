@@ -28,6 +28,8 @@ public class DashboardService {
                           BigDecimal revenue,BigDecimal chemistry,BigDecimal fuel,BigDecimal marketing,BigDecimal fixed,
                           BigDecimal costs,BigDecimal remaining,int missingChemistry,int missingFuel,int missingMonths,List<Slice> slices){
         public boolean complete(){return missingChemistry+missingFuel+missingMonths==0;}
+        public long unconfirmedPrices(){return mode.equals("actual")?orders.stream().filter(o->"DONE".equals(o.get("status"))&&o.get("final_total")==null).count():0;}
+        public boolean financialComplete(){return complete()&&unconfirmedPrices()==0;}
     }
     private static BigDecimal money(BigDecimal n){return n.setScale(2,RoundingMode.HALF_UP);}
     public static BigDecimal allocated(BigDecimal amount,LocalDate day){

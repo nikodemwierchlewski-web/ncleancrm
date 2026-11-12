@@ -1,5 +1,9 @@
-# Deployment is a separate future task. Requires HTTPS reverse proxy review.
+# Same-host HTTPS reverse proxy only. The app and database remain private.
 server:
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      internal-proxies: '127\.0\.0\.1|0:0:0:0:0:0:0:1|::1'
   servlet:
     session:
       cookie:

@@ -14,7 +14,7 @@ try {
     & docker compose cp "postgres:$containerFile" $destinationPath
     if ($LASTEXITCODE -ne 0) { throw 'Could not copy backup.' }
     Get-FileHash -Algorithm SHA256 -LiteralPath $destinationPath | Format-List
-    Write-Host "Backup saved: $destinationPath. It includes private receipts; keep it outside Git and protect access."
+    Write-Host "Backup saved: $destinationPath. It includes customer data, service photos and private receipts; keep it outside Git and protect access."
 } finally {
     & docker compose exec -T postgres rm '-f' $containerFile
     Pop-Location

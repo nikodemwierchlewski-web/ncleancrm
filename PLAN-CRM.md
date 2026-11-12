@@ -1,3 +1,5 @@
+> Dokument historyczny planowania. Aktualny stan aplikacji, testy i warunki wdrożenia: [audyt gotowości](docs/AUDYT-GOTOWOSCI.md). Wzmianki o niedostępnej Javie/Maven i braku uruchomienia dotyczą pierwotnego etapu.
+
 # ncLEAN CRM — ustalenia i plan realizacji
 
 Data: 28 października 2026. Zakres: osobna aplikacja webowa dla właściciela ncLEAN, wygodna na telefonie i komputerze. Bez zmian strony produkcyjnej, inteligentnego proponowania terminów i GPS w tle.

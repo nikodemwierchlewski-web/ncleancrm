@@ -15,7 +15,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not copy backup into container.' }
     & docker compose exec -T postgres pg_restore '-U' 'crm_bootstrap' '--role=crm_dev' '--no-owner' '--no-acl' '--exit-on-error' '--single-transaction' '-d' $TargetDatabase $containerFile
     if ($LASTEXITCODE -ne 0) { throw 'Restore failed. The separately created target database is left for inspection.' }
-    & docker compose exec -T postgres psql '-U' 'crm_bootstrap' '-d' $TargetDatabase '-v' 'ON_ERROR_STOP=1' '-c' 'SELECT (SELECT count(*) FROM booking) AS orders, (SELECT count(*) FROM booking_payment) AS payments, (SELECT count(*) FROM fuel_receipt) AS receipts;'
+    & docker compose exec -T postgres psql '-U' 'crm_bootstrap' '-d' $TargetDatabase '-v' 'ON_ERROR_STOP=1' '-c' 'SELECT (SELECT count(*) FROM booking) AS orders, (SELECT count(*) FROM booking_payment) AS payments, (SELECT count(*) FROM fuel_receipt) AS receipts, (SELECT count(*) FROM booking_photo) AS service_photos, (SELECT count(*) FROM day_review) AS day_reviews;'
     if ($LASTEXITCODE -ne 0) { throw 'Restore verification failed.' }
     Write-Host "Restored to isolated test database: $TargetDatabase. The regular CRM database was not modified."
 } finally {

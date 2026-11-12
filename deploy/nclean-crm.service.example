@@ -1,0 +1,24 @@
+[Unit]
+Description=ncLEAN CRM (separate from public CMS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nclean-crm
+Group=nclean-crm
+WorkingDirectory=/opt/nclean-crm
+ExecStart=/usr/bin/java -Duser.timezone=Europe/Warsaw -jar /opt/nclean-crm/current/nclean-crm.jar --spring.profiles.active=prod --spring.config.import=file:/etc/nclean-crm/secrets.properties
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

@@ -126,13 +126,18 @@
     }
   }
 
+  const address=$('#booking-address');
+  let suggestedAddress=address.value;
   function pick(person) {
     clearTimeout(timer);
     sequence++;
     customer.value = person.id;
     contactName.value = person.name;
     phone.value = person.phone;
-    $('#booking-address').value = person.address;
+    if (!address.value.trim() || address.value === suggestedAddress) {
+      address.value = person.address;
+      suggestedAddress = person.address;
+    }
     $('#selected-customer-label').textContent = `${person.name} · ${person.phone}`;
     $('#selected-customer').hidden = false;
     $('#customer-picker').hidden = true;

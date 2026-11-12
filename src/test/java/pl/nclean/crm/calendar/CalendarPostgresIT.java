@@ -843,6 +843,32 @@ class CalendarPostgresIT {
         try{var close=pool.submit(()->{gate.await();try{review.close(day,fingerprint,OWNER);}catch(IllegalArgumentException expected){assertTrue(expected.getMessage().contains("innym oknie"));}return true;});var upload=pool.submit(()->{gate.await();photos.upload(id,"AFTER",UUID.randomUUID(),image,OWNER,version);return true;});gate.countDown();assertTrue(close.get(20,java.util.concurrent.TimeUnit.SECONDS));assertTrue(upload.get(20,java.util.concurrent.TimeUnit.SECONDS));assertFalse(review.review(day).closed());}finally{pool.shutdownNow();}
         var future=day.plusDays(1);assertThrows(IllegalArgumentException.class,()->review.close(future,review.review(future).fingerprint(),OWNER));
     }
+
+    @Test void auditGenericCancellationCannotHideExistingPayments() {
+        var day=DashboardService.today();long id=workBooking("Anulowanie z wpłatą",day);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long payment=work.pay(id,UUID.randomUUID(),day,"50","TRANSFER","");
+        assertThrows(IllegalArgumentException.class,()->records.reschedule(id,0,day,java.time.LocalTime.NOON,"CANCELLED"));assertEquals("PLANNED",work.order(id).get("status"));assertEquals(new BigDecimal("50.00"),work.paid(id));
+        work.reverse(id,payment,UUID.randomUUID(),day,"Rozliczenie wpłaty");records.reschedule(id,0,day,java.time.LocalTime.NOON,"CANCELLED");assertEquals("CANCELLED",work.order(id).get("status"));
+    }
+    @Test void auditConcurrentBookingReplayReturnsSameIdAndOneCustomer() throws Exception {
+        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Jedna rezerwacja");var token=UUID.randomUUID();var day=DashboardService.today();var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        try{java.util.concurrent.Callable<Long> create=()->{gate.await();return data.book(token,day,java.time.LocalTime.NOON,null,"Próba równoczesna","500000096","Adres",Map.of(service,BigDecimal.ONE));};var a=pool.submit(create);var b=pool.submit(create);gate.countDown();assertEquals(a.get(20,java.util.concurrent.TimeUnit.SECONDS),b.get(20,java.util.concurrent.TimeUnit.SECONDS));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));}finally{pool.shutdownNow();}
+    }
+    @Test void auditKnownCostsDoNotConfirmUnconfirmedFinalPrice() {
+        var day=DashboardService.today();long id=workBooking("Cena niepotwierdzona",day);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);records.reschedule(id,0,day,java.time.LocalTime.NOON,"DONE");app.context().getBean(pl.nclean.crm.records.ActualUsageService.class).zero(id,0,0);
+        var dashboard=app.context().getBean(DashboardService.class);dashboard.saveMonth(YearMonth.from(day),-1,List.of());dashboard.saveFuel(day,-1,BigDecimal.ONE,BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+        var s=dashboard.summary(day,"day","actual");assertTrue(s.complete());assertFalse(s.financialComplete());assertEquals(1,s.unconfirmedPrices());
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);work.complete(id,1,"100","60","",Map.of(),Map.of(),List.of(),OWNER);assertTrue(dashboard.summary(day,"day","actual").financialComplete());
+    }
+    @Test void auditExplicitNoChemistryHasKnownZeroServiceCost() {
+        long id=workBooking("Jawne zero chemii",DashboardService.today());var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var f=reviewFields(id);f.put("final_total","120");review.save(id,DashboardService.today(),f,OWNER);var analytics=app.context().getBean(pl.nclean.crm.work.WorkService.class).analytics(DashboardService.today(),DashboardService.today());assertEquals(new BigDecimal("120.00"),analytics.get(0).get("net"));assertEquals(0,((BigDecimal)analytics.get(0).get("chemical_cost")).signum());
+    }
+    @Test void auditSecurityHeadersProtectAuthenticatedViewsAndLogin() throws Exception {
+        var browser=app.browser();var login=browser.get("/login");assertTrue(login.headers().firstValue("Content-Security-Policy").orElse("").contains("frame-ancestors 'none'"));assertEquals("same-origin",login.headers().firstValue("Referrer-Policy").orElse(""));browser.login();var page=browser.get("/calendar");assertEquals("DENY",page.headers().firstValue("X-Frame-Options").orElse(""));assertEquals("nosniff",page.headers().firstValue("X-Content-Type-Options").orElse(""));assertTrue(page.headers().firstValue("Cache-Control").orElse("").contains("no-store"));
+    }
+
+    @Test void auditOrdinaryPriceCorrectionPreservesExplicitNoNotes() {
+        var day=DashboardService.today();long id=workBooking("Korekta bez uwag",day);app.context().getBean(pl.nclean.crm.work.DayReviewService.class).save(id,day,reviewFields(id),OWNER);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);work.complete(id,1,"100","","",Map.of(),Map.of(),List.of(),OWNER);assertTrue((Boolean)work.order(id).get("completion_no_notes"));work.complete(id,2,"100","","Nowa uwaga",Map.of(),Map.of(),List.of(),OWNER);assertFalse((Boolean)work.order(id).get("completion_no_notes"));assertEquals("Nowa uwaga",work.order(id).get("completion_note"));
+    }
     private static final class Browser {
         private final URI base;
         private final HttpClient http;

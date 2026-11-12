@@ -1,0 +1,15 @@
+{
+  "database": "temporary synthetic source and separately restored database",
+  "migration_count": 11,
+  "matching_customer_and_booking_rows": true,
+  "payment_rows": 1,
+  "closed_day_rows": 1,
+  "matching_photo_and_receipt_hashes": true,
+  "https_certificate_verified": true,
+  "secure_session_cookie": true,
+  "hsts_csp_frame_nosniff_no_store": true,
+  "csrf_enforced": true,
+  "login_limit_http429": true,
+  "restored_application_login_and_views": true,
+  "backup_sha256": "1e6698655d3c4e2fde1c4b0f4f9e91f3b230f96ba1e1c2ee9c25f152a3a7ede3"
+}

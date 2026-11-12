@@ -1,0 +1,25 @@
+# Include in nginx's http context. Initial bind is loopback only.
+# After VPN/firewall review, replace it with the server's actual VPN IP:443.
+# Use a separate vhost; do not replace the nclean.pl CMS configuration.
+log_format crm_minimal '$remote_addr $request_method $uri $status $request_time';
+limit_req_zone $binary_remote_addr zone=crm_login:10m rate=5r/m;
+server {
+    listen 127.0.0.1:8443 ssl;
+    server_name crm.nclean.pl localhost 127.0.0.1;
+    if ($host !~ ^(crm\.nclean\.pl|localhost|127\.0\.0\.1)$) { return 444; }
+    ssl_certificate /etc/nclean-crm/tls/fullchain.pem;
+    ssl_certificate_key /etc/nclean-crm/tls/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 9m;
+    access_log /dev/stdout crm_minimal;
+    error_log /dev/stderr warn;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    location = /login {
+        limit_req zone=crm_login burst=5 nodelay;
+        limit_req_status 429;
+        include /etc/nginx/snippets/nclean-crm-proxy.conf;
+    }
+    location / {
+        include /etc/nginx/snippets/nclean-crm-proxy.conf;
+    }
+}

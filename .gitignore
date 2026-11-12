@@ -9,3 +9,6 @@
 *.dump
 *.backup
 *.csv
+
+/deploy/secrets.properties
+/deploy/tls/

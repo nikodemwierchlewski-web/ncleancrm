@@ -10,13 +10,15 @@ Dashboard dnia, tygodnia i miesiąca, plan/wykonanie, paliwo i koszty miesięczn
 
 Licznik samochodu, czas agregatu i tankowania ze zdjęciami: [docs/PALIWO-I-AGREGAT.md](docs/PALIWO-I-AGREGAT.md).
 
-Wersja 0.1: [dzień pracy, wykonanie, wpłaty, analiza i PWA](docs/WERSJA-0.1.md), [wyniki weryfikacji](docs/WERYFIKACJA-0.1.md). Ekran startowy: Dzisiaj.
+Wersja 0.1: [dzień pracy, wykonanie, wpłaty, analiza i PWA](docs/WERSJA-0.1.md), [wyniki weryfikacji](docs/WERYFIKACJA-0.1.md). Ekran startowy: Kalendarz.
 
 Źródło klienta, notatki wizyt, zdjęcia przed/po z czasem, wyszukiwanie i ponowny kontakt: [docs/ZDJECIA-I-KONTAKT.md](docs/ZDJECIA-I-KONTAKT.md).
 
 Opis dotychczasowej obsługi kalendarza: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/Hibernate, PostgreSQL 17 i Flyway. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
+
+Aktualny audyt i warunki wdrożenia: [docs/AUDYT-GOTOWOSCI.md](docs/AUDYT-GOTOWOSCI.md).
 
 ## Windows — pierwsze uruchomienie
 

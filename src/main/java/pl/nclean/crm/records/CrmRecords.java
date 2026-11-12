@@ -72,6 +72,7 @@ public class CrmRecords {
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
+  db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var existing=db.queryForList("SELECT id FROM booking WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return existing.get(0);
   address=text(address,240,true);source=pl.nclean.crm.context.ContextService.source(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
@@ -103,6 +104,7 @@ public class CrmRecords {
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new IllegalArgumentException("Nieznane zlecenie.");
+  if(status.equals("CANCELLED")&&db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia. Anulowanie nie usuwa należności ani historii wpłat.");
   changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
   boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
   boolean stopped=before.get(0).get("timer_started")!=null&&!status.equals("PLANNED");
