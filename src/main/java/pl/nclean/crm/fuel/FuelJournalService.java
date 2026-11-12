@@ -39,8 +39,8 @@ public class FuelJournalService {
         lock();var old=daily(date);if(((Number)old.get("version")).longValue()!=version)throw new IllegalArgumentException("Wpis zmienił się w innym oknie. Odśwież formularz.");
         var prev=previous(date);var following=next(date);
         if(!prev.isEmpty()&&km.compareTo(n(prev,"odometer"))<0||!following.isEmpty()&&km.compareTo(n(following,"odometer"))>0)throw new IllegalArgumentException("Licznik musi mieścić się pomiędzy poprzednim i następnym odczytem.");
-        var purchaseBefore=db.queryForObject("SELECT max(odometer) FROM fuel_purchase WHERE target='CAR' AND purchased_at<?",BigDecimal.class,date.plusDays(1).atStartOfDay());
-        var purchaseAfter=db.queryForObject("SELECT min(odometer) FROM fuel_purchase WHERE target='CAR' AND purchased_at>=?",BigDecimal.class,date.plusDays(1).atStartOfDay());
+        var purchaseBefore=db.queryForObject("SELECT max(odometer) FROM fuel_purchase WHERE NOT cancelled AND target='CAR' AND purchased_at<?",BigDecimal.class,date.plusDays(1).atStartOfDay());
+        var purchaseAfter=db.queryForObject("SELECT min(odometer) FROM fuel_purchase WHERE NOT cancelled AND target='CAR' AND purchased_at>=?",BigDecimal.class,date.plusDays(1).atStartOfDay());
         if(purchaseBefore!=null&&km.compareTo(purchaseBefore)<0||purchaseAfter!=null&&km.compareTo(purchaseAfter)>0)throw new IllegalArgumentException("Odczyt końca dnia jest sprzeczny z licznikiem zapisanym przy tankowaniu.");
         boolean unusual=hours*60+minutes>960;
         if(!prev.isEmpty()){long days=java.time.temporal.ChronoUnit.DAYS.between(day(prev),date);unusual|=km.subtract(n(prev,"odometer")).compareTo(BigDecimal.valueOf(days*1000))>0;}
@@ -75,7 +75,7 @@ public class FuelJournalService {
         for(var date=start;!date.isAfter(end);date=date.plusDays(1)){var u=usages.get(date);if(u==null){missing++;continue;}gl=gl.add(u.generatorLitres());gc=gc.add(u.generatorCost());if(u.carKnown()){cl=cl.add(u.carLitres());cc=cc.add(u.carCost());}else gaps++;}
         generatorMinutes=db.queryForObject("SELECT COALESCE(SUM(generator_minutes),0) FROM fuel_day WHERE day BETWEEN ? AND ?",Integer.class,start,end);
         for(var u:usages.values())if(u.carKnown())kilometres=kilometres.add(u.kilometres());
-        var spend=db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM fuel_purchase WHERE purchased_at>=? AND purchased_at<?",BigDecimal.class,start.atStartOfDay(),end.plusDays(1).atStartOfDay());
+        var spend=db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM fuel_purchase WHERE NOT cancelled AND purchased_at>=? AND purchased_at<?",BigDecimal.class,start.atStartOfDay(),end.plusDays(1).atStartOfDay());
         return new Totals(kilometres,generatorMinutes,cl.setScale(3,RoundingMode.HALF_UP),gl.setScale(3,RoundingMode.HALF_UP),rounded(cc),rounded(gc),rounded(spend),missing,gaps);
     }
     public List<Map<String,Object>> purchases(LocalDate start,LocalDate end){return db.queryForList("SELECT * FROM fuel_purchase WHERE purchased_at>=? AND purchased_at<? ORDER BY purchased_at DESC,id DESC",start.atStartOfDay(),end.plusDays(1).atStartOfDay());}
@@ -90,27 +90,29 @@ public class FuelJournalService {
         if(p.full()&&(!"CAR".equals(p.target())||odo==null))throw new IllegalArgumentException("Tankowanie do pełna wymaga samochodu i odczytu licznika.");
         if(p.note()==null||p.note().length()>1000)throw new IllegalArgumentException("Notatka może mieć do 1000 znaków.");
         lock();if(p.id()==null){var replay=db.queryForList("SELECT id FROM fuel_purchase WHERE request_token=?",p.token());if(!replay.isEmpty())return ((Number)replay.get(0).get("id")).longValue();}
-        var old=p.id()==null?null:purchase(p.id());if(old!=null&&((Number)old.get("version")).longValue()!=p.version())throw new IllegalArgumentException("Tankowanie zmieniło się w innym oknie. Odśwież formularz.");
+        var old=p.id()==null?null:purchase(p.id());if(old!=null&&(Boolean)old.get("cancelled"))throw new IllegalArgumentException("Tankowanie jest anulowane i pozostaje w historii.");if(old!=null&&((Number)old.get("version")).longValue()!=p.version())throw new IllegalArgumentException("Tankowanie zmieniło się w innym oknie. Odśwież formularz.");
         if(p.receipt()!=null&&db.queryForObject("SELECT count(*) FROM fuel_receipt WHERE id=?",Integer.class,p.receipt())!=1)throw new IllegalArgumentException("Zdjęcie wygasło lub nie istnieje. Prześlij je ponownie.");
-        if(p.receipt()!=null&&db.queryForObject("SELECT count(*) FROM fuel_purchase WHERE receipt_id=? AND id<>?",Integer.class,p.receipt(),p.id()==null?-1:p.id())>0)throw new IllegalArgumentException("Zdjęcie jest już przypisane do innego rachunku.");
+        if(p.receipt()!=null&&db.queryForObject("SELECT (SELECT count(*) FROM fuel_purchase WHERE receipt_id=? AND id<>?)+(SELECT count(*) FROM cost_entry WHERE receipt_id=?)",Integer.class,p.receipt(),p.id()==null?-1:p.id(),p.receipt())>0)throw new IllegalArgumentException("Zdjęcie jest już przypisane do innego rachunku.");
         if("CAR".equals(p.target())&&odo!=null){
             var prior=previous(p.time().toLocalDate());
             var later=db.queryForList("SELECT odometer FROM fuel_day WHERE day>=? ORDER BY day LIMIT 1",p.time().toLocalDate());
             if(!prior.isEmpty()&&odo.compareTo(n(prior,"odometer"))<0||!later.isEmpty()&&odo.compareTo(n(later.get(0),"odometer"))>0)throw new IllegalArgumentException("Licznik tankowania jest sprzeczny z odczytami końca dnia.");
-            var before=db.queryForList("SELECT odometer FROM fuel_purchase WHERE target='CAR' AND odometer IS NOT NULL AND id<>? AND (purchased_at<? OR (purchased_at=? AND id<?)) ORDER BY purchased_at DESC,id DESC LIMIT 1",p.id()==null?-1:p.id(),p.time(),p.time(),p.id()==null?Long.MAX_VALUE:p.id());
-            var after=db.queryForList("SELECT odometer FROM fuel_purchase WHERE target='CAR' AND odometer IS NOT NULL AND id<>? AND (purchased_at>? OR (purchased_at=? AND id>?)) ORDER BY purchased_at,id LIMIT 1",p.id()==null?-1:p.id(),p.time(),p.time(),p.id()==null?Long.MAX_VALUE:p.id());
+            var before=db.queryForList("SELECT odometer FROM fuel_purchase WHERE NOT cancelled AND target='CAR' AND odometer IS NOT NULL AND id<>? AND (purchased_at<? OR (purchased_at=? AND id<?)) ORDER BY purchased_at DESC,id DESC LIMIT 1",p.id()==null?-1:p.id(),p.time(),p.time(),p.id()==null?Long.MAX_VALUE:p.id());
+            var after=db.queryForList("SELECT odometer FROM fuel_purchase WHERE NOT cancelled AND target='CAR' AND odometer IS NOT NULL AND id<>? AND (purchased_at>? OR (purchased_at=? AND id>?)) ORDER BY purchased_at,id LIMIT 1",p.id()==null?-1:p.id(),p.time(),p.time(),p.id()==null?Long.MAX_VALUE:p.id());
             if(!before.isEmpty()&&odo.compareTo(n(before.get(0),"odometer"))<0||!after.isEmpty()&&odo.compareTo(n(after.get(0),"odometer"))>0)throw new IllegalArgumentException("Licznik tankowania jest sprzeczny z sąsiednimi tankowaniami.");
         }
         String beforeJson=old==null?null:db.queryForObject("SELECT to_jsonb(p)::text FROM fuel_purchase p WHERE id=?",String.class,p.id());long id;
         if(old==null)id=db.queryForObject("INSERT INTO fuel_purchase(request_token,purchased_at,target,fuel_type,amount,litres,litre_price,full_tank,odometer,records_complete,note,receipt_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,p.token(),p.time(),p.target(),p.fuel(),amount,litres,price,p.full(),odo,p.complete(),p.note().strip(),p.receipt());
         else{changed(db.update("UPDATE fuel_purchase SET purchased_at=?,target=?,fuel_type=?,amount=?,litres=?,litre_price=?,full_tank=?,odometer=?,records_complete=?,note=?,receipt_id=?,version=version+1 WHERE id=? AND version=?",p.time(),p.target(),p.fuel(),amount,litres,price,p.full(),odo,p.complete(),p.note().strip(),p.receipt(),p.id(),p.version()));id=p.id();}
         db.update("INSERT INTO fuel_audit(kind,record_key,before_data,after_data,actor) SELECT 'PURCHASE',?,?::jsonb,to_jsonb(p),? FROM fuel_purchase p WHERE id=?",Long.toString(id),beforeJson,actor,id);
-        if(old!=null&&old.get("receipt_id")!=null&&!Objects.equals(old.get("receipt_id"),p.receipt()))db.update("DELETE FROM fuel_receipt WHERE id=? AND NOT EXISTS(SELECT 1 FROM fuel_purchase WHERE receipt_id=?)",old.get("receipt_id"),old.get("receipt_id"));
         return id;
+    }
+    @Transactional public void cancelPurchase(long id,long version,String reason,String actor){
+        reason=reason==null?"":reason.strip();if(reason.isBlank()||reason.length()>300)throw new IllegalArgumentException("Podaj powód anulowania do 300 znaków.");lock();var old=purchase(id);if(((Number)old.get("version")).longValue()!=version||(Boolean)old.get("cancelled"))throw new IllegalArgumentException("Tankowanie zmieniło się lub jest już anulowane.");String before=db.queryForObject("SELECT to_jsonb(p)::text FROM fuel_purchase p WHERE id=?",String.class,id);changed(db.update("UPDATE fuel_purchase SET cancelled=TRUE,cancel_reason=?,version=version+1 WHERE id=? AND version=?",reason,id,version));db.update("INSERT INTO fuel_audit(kind,record_key,before_data,after_data,actor) SELECT 'PURCHASE',?,?::jsonb,to_jsonb(p),? FROM fuel_purchase p WHERE id=?",Long.toString(id),before,actor,id);
     }
     public record Comparison(long ending,LocalDateTime start,LocalDateTime end,BigDecimal kilometres,BigDecimal litres,BigDecimal actualRate,BigDecimal expectedLitres,BigDecimal difference,BigDecimal percent,boolean complete,String note){}
     public List<Comparison> comparisons(LocalDate end){
-        var rows=db.queryForList("SELECT * FROM fuel_purchase WHERE target='CAR' AND purchased_at<? ORDER BY purchased_at,id",end.plusDays(1).atStartOfDay());var result=new ArrayList<Comparison>();Map<String,Object> first=null;var interval=new ArrayList<Map<String,Object>>();
+        var rows=db.queryForList("SELECT * FROM fuel_purchase WHERE NOT cancelled AND target='CAR' AND purchased_at<? ORDER BY purchased_at,id",end.plusDays(1).atStartOfDay());var result=new ArrayList<Comparison>();Map<String,Object> first=null;var interval=new ArrayList<Map<String,Object>>();
         for(var row:rows){if(first!=null)interval.add(row);if(!(Boolean)row.get("full_tank"))continue;if(first!=null){
             var start=((java.sql.Timestamp)first.get("purchased_at")).toLocalDateTime();var finish=((java.sql.Timestamp)row.get("purchased_at")).toLocalDateTime();var km=n(row,"odometer").subtract(n(first,"odometer"));boolean valid=km.signum()>0&&(Boolean)row.get("records_complete");BigDecimal litres=BigDecimal.ZERO;
             for(var part:interval)if(part.get("litres")==null||!part.get("fuel_type").equals(first.get("fuel_type")))valid=false;else litres=litres.add(n(part,"litres"));

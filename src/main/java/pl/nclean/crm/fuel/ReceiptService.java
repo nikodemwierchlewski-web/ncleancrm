@@ -19,7 +19,7 @@ public class ReceiptService {
     public ReceiptService(JdbcTemplate db){this.db=db;}
     @Transactional public UUID upload(MultipartFile file){
         byte[] image=normalize(file);db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);UUID id=UUID.randomUUID();db.update("INSERT INTO fuel_receipt(id,image) VALUES (?,?)",id,image);
-        db.update("DELETE FROM fuel_receipt r WHERE created_at<CURRENT_TIMESTAMP-INTERVAL '24 hours' AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id)");return id;
+        db.update("DELETE FROM fuel_receipt r WHERE created_at<CURRENT_TIMESTAMP-INTERVAL '24 hours' AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id) AND NOT EXISTS(SELECT 1 FROM cost_entry e WHERE e.receipt_id=r.id) AND NOT EXISTS(SELECT 1 FROM fuel_audit a WHERE a.before_data->>'receipt_id'=r.id::text OR a.after_data->>'receipt_id'=r.id::text) AND NOT EXISTS(SELECT 1 FROM cost_audit a WHERE a.before_data->>'receipt_id'=r.id::text OR a.after_data->>'receipt_id'=r.id::text)");return id;
     }
     public byte[] normalize(MultipartFile file){
         if(file==null||file.isEmpty()||file.getSize()>MAX_BYTES)throw new IllegalArgumentException("Wybierz zdjęcie JPEG lub PNG do 8 MB.");
@@ -35,5 +35,5 @@ public class ReceiptService {
         }catch(IOException ex){throw new IllegalArgumentException("Nie udało się odczytać zdjęcia. Wybierz poprawny plik JPEG lub PNG.");}
     }
     public byte[] image(UUID id){return db.query("SELECT image FROM fuel_receipt WHERE id=?",(rs,n)->rs.getBytes(1),id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
-    @Transactional public void discard(UUID id){db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);db.update("DELETE FROM fuel_receipt r WHERE id=? AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id)",id);}
+    @Transactional public void discard(UUID id){db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);db.update("DELETE FROM fuel_receipt r WHERE id=? AND NOT EXISTS(SELECT 1 FROM fuel_purchase p WHERE p.receipt_id=r.id) AND NOT EXISTS(SELECT 1 FROM cost_entry e WHERE e.receipt_id=r.id) AND NOT EXISTS(SELECT 1 FROM fuel_audit a WHERE a.before_data->>'receipt_id'=r.id::text OR a.after_data->>'receipt_id'=r.id::text) AND NOT EXISTS(SELECT 1 FROM cost_audit a WHERE a.before_data->>'receipt_id'=r.id::text OR a.after_data->>'receipt_id'=r.id::text)",id);}
 }

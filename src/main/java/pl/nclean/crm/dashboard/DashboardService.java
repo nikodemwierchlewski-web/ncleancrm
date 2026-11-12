@@ -12,8 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class DashboardService {
     private final JdbcTemplate db;
+    private final pl.nclean.crm.costs.CostService entries;
     private final pl.nclean.crm.fuel.FuelJournalService journal;
-    public DashboardService(JdbcTemplate db,pl.nclean.crm.fuel.FuelJournalService journal){this.db=db;this.journal=journal;}
+    public DashboardService(JdbcTemplate db,pl.nclean.crm.fuel.FuelJournalService journal,pl.nclean.crm.costs.CostService entries){this.entries=entries;this.db=db;this.journal=journal;}
     public static LocalDate today(){return LocalDate.now(ZoneId.of("Europe/Warsaw"));}
     public record Period(LocalDate start,LocalDate end,String range){
         public LocalDate previous(){return switch(range){case "week"->start.minusWeeks(1);case "month"->start.minusMonths(1);default->start.minusDays(1);};}
@@ -26,7 +27,7 @@ public class DashboardService {
     public record Slice(String name,String color,BigDecimal amount,BigDecimal percentage){}
     public record Summary(Period period,String mode,List<Map<String,Object>> orders,int planned,int done,int cancelled,
                           BigDecimal revenue,BigDecimal chemistry,BigDecimal fuel,BigDecimal marketing,BigDecimal fixed,
-                          BigDecimal costs,BigDecimal remaining,int missingChemistry,int missingFuel,int missingMonths,List<Slice> slices){
+                          BigDecimal costs,BigDecimal remaining,int missingChemistry,int missingFuel,int missingMonths,List<Slice> slices,BigDecimal operating,BigDecimal investments){
         public boolean complete(){return missingChemistry+missingFuel+missingMonths==0;}
         public long unconfirmedPrices(){return mode.equals("actual")?orders.stream().filter(o->"DONE".equals(o.get("status"))&&o.get("final_total")==null).count():0;}
         public boolean financialComplete(){return complete()&&unconfirmedPrices()==0;}
@@ -78,10 +79,10 @@ public class DashboardService {
             if(!Boolean.TRUE.equals(months.get(day.withDayOfMonth(1))))missingMonths.add(YearMonth.from(day));
             else for(var row:monthly)if(((java.sql.Date)row.get("month")).toLocalDate().equals(day.withDayOfMonth(1))){var share=allocated((BigDecimal)row.get("amount"),day);if(row.get("category").equals("MARKETING"))marketing=marketing.add(share);else fixed=fixed.add(share);}
         }
-        chem=money(chem);fuel=money(fuel);marketing=money(marketing);fixed=money(fixed);var total=chem.add(fuel).add(marketing).add(fixed);var slices=new ArrayList<Slice>();
-        String[] names={"Chemia","Paliwo","Marketing","Koszty stałe"},colors={"#218DCA","#F1AA42","#9D77CA","#42AC93"};BigDecimal[] amounts={chem,fuel,marketing,fixed};
-        for(int i=0;i<4;i++)slices.add(new Slice(names[i],colors[i],amounts[i],total.signum()==0?BigDecimal.ZERO:amounts[i].multiply(new BigDecimal("100")).divide(total,2,RoundingMode.HALF_UP)));
-        return new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices);
+        chem=money(chem);fuel=money(fuel);marketing=money(marketing);fixed=money(fixed);var additionalMarketing=money(entries.operatingMarketing(p.start(),p.end()));marketing=marketing.add(additionalMarketing);var operating=money(entries.operating(p.start(),p.end()).subtract(additionalMarketing));var investments=money(entries.investments(p.start(),p.end()));var total=chem.add(fuel).add(marketing).add(fixed).add(operating);var slices=new ArrayList<Slice>();
+        String[] names={"Chemia","Paliwo","Marketing","Koszty stałe","Utrzymanie i inne"},colors={"#218DCA","#F1AA42","#9D77CA","#42AC93","#637bb9"};BigDecimal[] amounts={chem,fuel,marketing,fixed,operating};
+        for(int i=0;i<amounts.length;i++)slices.add(new Slice(names[i],colors[i],amounts[i],total.signum()==0?BigDecimal.ZERO:amounts[i].multiply(new BigDecimal("100")).divide(total,2,RoundingMode.HALF_UP)));
+        return new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices,operating,investments);
     }
     public List<Map<String,Object>> monthCosts(YearMonth month){return db.queryForList("SELECT * FROM dashboard_month_cost WHERE month=? ORDER BY id",month.atDay(1));}
     public long monthVersion(YearMonth month){var rows=db.queryForList("SELECT version FROM dashboard_month WHERE month=?",month.atDay(1));return rows.isEmpty()?-1:((Number)rows.get(0).get("version")).longValue();}
@@ -97,6 +98,7 @@ public class DashboardService {
         if(month.getYear()<2000||month.getYear()>2100||month.isBefore(YearMonth.from(today())))throw new IllegalArgumentException("Zamkniętych miesięcy nie można zmieniać. Wybierz bieżący lub przyszły miesiąc.");
         if(costs.size()>50)throw new IllegalArgumentException("Dodaj maksymalnie 50 kosztów.");
         for(var c:costs)if(c.name()==null||c.name().isBlank()||c.name().length()>120||c.category()==null||!Set.of("MARKETING","LEASE","INSURANCE","ACCOUNTING","PHONE","SOFTWARE","OTHER").contains(c.category())||c.amount()==null||c.amount().signum()<0||c.amount().scale()>2||c.amount().compareTo(new BigDecimal("9999999999.99"))>0)throw new IllegalArgumentException("Sprawdź nazwę, kategorię i kwotę kosztu.");
+        entries.checkMonthCategories(month,costs.stream().map(Cost::category).collect(java.util.stream.Collectors.toSet()));
         if(version==-1)changed(db.update("INSERT INTO dashboard_month(month,configured) VALUES (?,TRUE) ON CONFLICT DO NOTHING",month.atDay(1)));
         else changed(db.update("UPDATE dashboard_month SET configured=TRUE,version=version+1 WHERE month=? AND version=?",month.atDay(1),version));
         db.update("DELETE FROM dashboard_month_cost WHERE month=?",month.atDay(1));

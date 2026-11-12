@@ -65,7 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
-        jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
+        jdbc.update("DELETE FROM cost_audit");jdbc.update("DELETE FROM cost_entry");jdbc.update("DELETE FROM equipment_item");jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
@@ -86,7 +86,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -111,7 +111,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -231,7 +231,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(12, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(13, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -692,7 +692,7 @@ class CalendarPostgresIT {
         var anonymous=app.browser();assertEquals(302,anonymous.get("/fuel/receipts/"+id).statusCode());anonymous.login();var picture=anonymous.get("/fuel/receipts/"+id);assertEquals(200,picture.statusCode());assertEquals("image/jpeg",picture.headers().firstValue("content-type").orElseThrow());assertTrue(picture.headers().firstValue("cache-control").orElseThrow().contains("no-store"));
         long purchase=fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"","",false,false,"SHARED","PETROL",id),OWNER);receipts.discard(id);assertTrue(receipts.image(id).length>0,"Linked image cannot be discarded");
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);var restartedReceipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);var restartedFuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);assertTrue(restartedReceipts.image(id).length>0);
-        restartedFuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(purchase,0,UUID.randomUUID(),today.atStartOfDay(),"SHARED","PETROL","65","","",false,"",false,"Korekta",null),OWNER);assertThrows(org.springframework.web.server.ResponseStatusException.class,()->restartedReceipts.image(id));
+        restartedFuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(purchase,0,UUID.randomUUID(),today.atStartOfDay(),"SHARED","PETROL","65","","",false,"",false,"Korekta",null),OWNER);assertTrue(restartedReceipts.image(id).length>0,"Replaced receipt stays available through audit history");
         assertThrows(IllegalArgumentException.class,()->restartedFuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(purchase,0,UUID.randomUUID(),today.atStartOfDay(),"SHARED","PETROL","65","","",false,"",false,"Korekta",null),OWNER));
     }
     @Test void fuelFormsRenderAndFailedDayOrPurchasePreserveInputs() throws Exception {
@@ -891,6 +891,38 @@ class CalendarPostgresIT {
     @Test void concurrentNoteCreationIsIdempotentAndEditorsCannotOverwriteActions() throws Exception {
         var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var token=UUID.randomUUID();var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
         try{java.util.concurrent.Callable<Long> save=()->{gate.await();return notes.save(null,0,token,"TASK","Jedno zadanie","",null,true,List.of());};var a=pool.submit(save);var b=pool.submit(save);gate.countDown();long id=a.get(20,java.util.concurrent.TimeUnit.SECONDS);assertEquals(id,b.get(20,java.util.concurrent.TimeUnit.SECONDS));notes.action(id,0,"done",null,false);assertThrows(IllegalArgumentException.class,()->notes.save(id,0,token,"TASK","Stary edytor","",null,true,List.of()));assertTrue(notes.get(id).completed());assertEquals(1,notes.list("done","",false,0).total());}finally{pool.shutdownNow();}
+    }
+
+    private Map<String,String> expense(String category,String title,String amount){var p=new LinkedHashMap<String,String>();p.put("token",UUID.randomUUID().toString());p.put("version","0");p.put("category",category);p.put("title",title);p.put("amount",amount);p.put("spent_on",DashboardService.today().toString());return p;}
+    @Test void costBookReusesFuelAndSeparatesInvestmentFromOperatingCosts() {
+        var day=DashboardService.today();var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",null),OWNER);
+        var repair=expense("CAR_REPAIR","Hamulce","200");repair.put("odometer","120000");long id=costs.save(repair,OWNER);assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM fuel_day",Integer.class));assertEquals(2,costs.entries(day,day,"car","",false,0).size());assertEquals(new BigDecimal("60.00"),costs.totals(day,day).get("fuel"));assertEquals(new BigDecimal("260.00"),costs.totals(day,day).get("all"));
+        var equipment=expense("EQUIPMENT_PURCHASE","Ekstraktor","1000");equipment.put("quantity","2");long purchase=costs.save(equipment,OWNER);assertEquals(purchase,costs.save(equipment,OWNER));assertEquals(1,costs.assets().size());assertEquals(new BigDecimal("1000.00"),costs.investments(day,day));assertEquals(new BigDecimal("200.00"),costs.operating(day,day));var summary=app.context().getBean(DashboardService.class).summary(day,"day","actual");assertEquals(new BigDecimal("200.00"),summary.operating());assertEquals(new BigDecimal("1000.00"),summary.investments());assertEquals(new BigDecimal("-200.00"),summary.remaining());assertEquals(5,summary.slices().size());
+        repair.put("id",Long.toString(id));repair.put("amount","250");costs.save(repair,OWNER);assertEquals(new BigDecimal("250.00"),costs.operating(day,day));costs.cancel(id,1,"Błędny rachunek",OWNER);assertEquals(0,costs.operating(day,day).signum());assertEquals(0,app.context().getBean(DashboardService.class).summary(day,"day","actual").remaining().signum());assertTrue((Boolean)costs.entry(id).get("cancelled"));assertEquals(3,costs.audit(id).size());
+    }
+    @Test void chemistryPurchasesDoNotChangeHistoricalCostsOrCatalogue() {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var chem=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);long liquid=chem.saveMaterial(null,0,"Płyn","l","1","40");long id=workBooking("Pomiar",DashboardService.today());var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);work.complete(id,0,"200","60","",Map.of(),Map.of(),List.of(new pl.nclean.crm.work.WorkService.Measurement(0,0,Map.of(liquid,new BigDecimal("100")))),OWNER);var p=expense("CHEMISTRY","Nowa butelka","80");p.put("chemical_id",Long.toString(liquid));p.put("quantity","2");costs.save(p,OWNER);assertEquals(new BigDecimal("40.00"),chem.materials().get(0).packagePrice());assertEquals(new BigDecimal("4.00"),app.context().getBean(DashboardService.class).summary(DashboardService.today(),"day","actual").chemistry());assertEquals(new BigDecimal("80.00"),costs.totals(DashboardService.today(),DashboardService.today()).get("chemistry"));assertEquals(0,costs.operating(DashboardService.today(),DashboardService.today()).signum());assertEquals(1,costs.usage(DashboardService.today(),DashboardService.today()).size());
+    }
+    @Test void monthlyReceiptDoesNotDuplicateCostAndCannotLoseItsLink() {
+        var day=DashboardService.today();var dashboard=app.context().getBean(DashboardService.class);var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);dashboard.saveMonth(YearMonth.from(day),-1,List.of(new DashboardService.Cost("Reklama","MARKETING",new BigDecimal("300"))));var p=expense("MARKETING","Rachunek za reklamę","300");p.put("covered","on");p.put("covered_month",YearMonth.from(day).toString());p.put("covered_category","MARKETING");long id=costs.save(p,OWNER);assertEquals(0,costs.operating(day,day).signum());assertEquals(new BigDecimal("300.00"),costs.totals(day,day).get("all"));assertEquals(new BigDecimal("300.00"),dashboard.summary(day,"month","actual").marketing());assertThrows(IllegalArgumentException.class,()->dashboard.saveMonth(YearMonth.from(day),0,List.of()));var once=expense("MARKETING","Ulotki","50");costs.save(once,OWNER);assertEquals(new BigDecimal("350.00"),dashboard.summary(day,"month","actual").marketing());assertEquals(0,dashboard.summary(day,"month","actual").operating().signum());
+        costs.cancel(id,0,"Duplikat dokumentu",OWNER);dashboard.saveMonth(YearMonth.from(day),0,List.of());assertEquals(new BigDecimal("50.00"),dashboard.summary(day,"month","actual").marketing());
+    }
+    @Test void assetHistoryAndReceiptSurviveCorrectionsCancellationAndRestart() throws Exception {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var receipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);UUID picture=receipts.upload(serviceImage("rachunek.jpg"));var p=expense("EQUIPMENT_PURCHASE","Agregat","2000");p.put("receipt_id",picture.toString());long id=costs.save(p,OWNER);long asset=((Number)costs.entry(id).get("asset_id")).longValue();var service=expense("EQUIPMENT_SERVICE","Wymiana oleju agregatu","100");service.put("asset_id",Long.toString(asset));costs.save(service,OWNER);assertEquals(2,costs.assetHistory(asset).size());receipts.discard(picture);assertTrue(receipts.image(picture).length>0);
+        p.put("id",Long.toString(id));p.put("receipt_id","");costs.save(p,OWNER);jdbc.update("UPDATE fuel_receipt SET created_at=CURRENT_TIMESTAMP-INTERVAL '2 days' WHERE id=?",picture);receipts.upload(serviceImage("nowe.jpg"));receipts.discard(picture);assertTrue(receipts.image(picture).length>0,"Historical expense receipt must not be purged");
+        var fields=new LinkedHashMap<String,String>();fields.put("name","Agregat po serwisie");fields.put("category","Agregaty");costs.editAsset(asset,0,fields,OWNER);assertFalse((Boolean)costs.asset(asset).get("active"));assertEquals(2,costs.assetHistory(asset).size());var stale=expense("EQUIPMENT_SERVICE","Nowy serwis","1");stale.put("asset_id",Long.toString(asset));assertThrows(IllegalArgumentException.class,()->costs.save(stale,OWNER));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(2,app.context().getBean(pl.nclean.crm.costs.CostService.class).assetHistory(asset).size());assertTrue(app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class).image(picture).length>0);
+    }
+    @Test void cancelledFuelIsExcludedEverywhereButHistoryAndReceiptRemain() throws Exception {
+        var day=DashboardService.today();var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var receipt=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);UUID image=receipt.upload(serviceImage("paliwo.jpg"));long id=fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",image),OWNER);fuel.cancelPurchase(id,0,"Pomyłka",OWNER);assertEquals(0,fuel.totals(day,day).purchases().signum());assertEquals(0,app.context().getBean(pl.nclean.crm.costs.CostService.class).totals(day,day).get("all").signum());assertEquals(1,fuel.purchases(day,day).size());assertTrue((Boolean)fuel.purchase(id).get("cancelled"));receipt.discard(image);assertTrue(receipt.image(image).length>0);assertTrue(fuel.comparisons(day).isEmpty());
+    }
+    @Test void expenseValidationVersionPrivacyAndAllViewsRender() throws Exception {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var bad=expense("CAR_REPAIR","Naprawa","-1");assertThrows(IllegalArgumentException.class,()->costs.save(bad,OWNER));var p=expense("CAR_SERVICE","Wymiana oleju","150");long id=costs.save(p,OWNER);p.put("id",Long.toString(id));costs.save(p,OWNER);assertThrows(IllegalArgumentException.class,()->costs.save(p,OWNER));var browser=app.browser();browser.login();for(String view:List.of("overview","car","equipment","chemistry","fixed","all"))assertEquals(200,browser.get("/costs?view="+view).statusCode(),view);assertEquals(200,browser.get("/costs?range=year").statusCode());assertEquals(200,browser.get("/costs/editor?id="+id).statusCode());assertEquals(403,browser.settings("/costs/"+id+"/cancel",Map.of("version",1,"reason","Test"),false).statusCode());assertEquals(302,app.browser().get("/costs").statusCode());assertEquals(0,costs.totals(DashboardService.today().minusYears(1),DashboardService.today().minusYears(1)).get("all").signum());
+    }
+
+    @Test void expenseDateCorrectionsShiftPeriodsAndReceiptsCannotBeDoubleLinked() throws Exception {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var receipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var day=DashboardService.today();UUID image=receipts.upload(serviceImage("koszt.jpg"));var p=expense("CAR_PARTS","Część","10");p.put("receipt_id",image.toString());long id=costs.save(p,OWNER);assertThrows(IllegalArgumentException.class,()->fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",image),OWNER));p.put("id",Long.toString(id));var earlier=day.minusMonths(1);p.put("spent_on",earlier.toString());costs.save(p,OWNER);assertEquals(0,costs.totals(day.withDayOfMonth(1),YearMonth.from(day).atEndOfMonth()).get("all").signum());assertEquals(new BigDecimal("10.00"),costs.totals(earlier.withDayOfYear(1),earlier.withMonth(12).withDayOfMonth(31)).get("all"));
+        var future=expense("OTHER","Przyszły rachunek","5");future.put("spent_on",day.plusDays(1).toString());assertThrows(IllegalArgumentException.class,()->costs.save(future,OWNER));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));
     }
     private static final class Browser {
         private final URI base;
