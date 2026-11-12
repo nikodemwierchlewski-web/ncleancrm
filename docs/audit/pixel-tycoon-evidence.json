@@ -4,7 +4,7 @@
   "base_commit": "44effb9",
   "default_theme": "classic",
   "activation": "local,tycoon / Start-Local.ps1 -PixelTycoon",
-  "artifact_sha256": "970d3b9768beab2e834997b9b99e8369d02f9a5d9af506e12d87136d4cc792ea",
+  "artifact_sha256": "5b3e2b346362b2e1c41d7e3a673f442c9ecf5d8723c0baaddc624fbb64f6dacb",
   "maven": {
     "surefire-reports": {
       "tests": 26,
@@ -36,10 +36,30 @@
   "html_preview": {
     "views": 60,
     "simulated_storage": "memory only",
+    "compact_toolbar": true,
     "classic_switch_keeps_form": true,
     "switch_persists_across_navigation": true,
-    "nested_sandbox_verified": true
+    "nested_sandbox_verified": true,
+    "independent_nested_save_trials_passed": 3,
+    "native_file_url_in_managed_chrome": "blocked by administrator; tested via loopback HTTP and opaque iframe"
   },
   "physical_phone_windows_tested": false,
-  "production_connected": false
+  "production_connected": false,
+  "audit_rounds": {
+    "before_fixes_screen_width_pairs": 44,
+    "after_fixes_screen_width_pairs": 44,
+    "final_component_checks": 8,
+    "cta_contrast_before": 4.4807,
+    "cta_contrast_after": 5.1358,
+    "input_contrast": 11.0915,
+    "date_font_px": 20,
+    "date_padding_px": 4,
+    "first_card_y_normal_phone": 435,
+    "first_card_y_extreme_labels_phone": 573,
+    "desktop_tablet_banner_height_px": 160,
+    "decorative_line_display": "none",
+    "js_errors": [],
+    "failed_http": []
+  },
+  "runtime_resources_match_source": true
 }

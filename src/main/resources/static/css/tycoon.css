@@ -230,3 +230,66 @@ progress::-webkit-progress-value { background: #64a991; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .button:active, .icon-button:active, .settings-links .card:hover, .equipment-card:hover { transform: none !important; }
 }
+
+/* A clearer game world, while the day plan remains close to the first screen. */
+:root { --canvas: #edf3ef; --surface: #fffef6; --pixel-side: #a9c0af; }
+.app-header { border-bottom-color: #123b4a; }
+.card, .settings-card, .metric, .cost-card, .action-card, .memo-card,
+.expense-row, .equipment-card, .cost-kpis > section, .journal-card {
+  border-color: #92b1a9;
+  box-shadow: 3px 5px 0 #b6c9b8, inset 0 2px 0 #fffef8;
+}
+.daily .calendar-day { border: 1px solid #8eada5; box-shadow: 2px 4px 0 #b0c5b2; }
+.daily .calendar-spacer { background: transparent; }
+.daily > .daily-heading { background: transparent; }
+.tycoon-base {
+  min-height: 160px; margin: 0 0 18px; padding: 10px 28px;
+  grid-template-columns: minmax(0,1fr) minmax(260px,480px);
+  background: radial-gradient(ellipse at 80% 5%, #fafde7, transparent 55%), #dceee8;
+  border: 2px solid #7fa49a;
+  box-shadow: 0 5px 0 #a3bda8, inset 0 3px 0 #f9fce8;
+}
+.tycoon-base::after { content: ''; position: absolute; width: 48px; height: 4px; left: 28px; bottom: 20px; background: #87b8a1; box-shadow: 8px -4px 0 #b1d2b2; }
+.tycoon-base strong { font-size: 40px; color: #204c60; }
+.tycoon-base small { display: block; color: #557970; font-size: 12px; margin-top: 8px; }
+.tycoon-base img { height: 176px; }
+.dashboard > .tycoon-base { margin-bottom: 24px; }
+@media (max-width:900px) {
+  .daily > .tycoon-base { width: 100%; min-height: 94px; margin: 0 0 8px; }
+}
+@media (max-width:767px) {
+  .tycoon-base { min-height: 98px; padding: 8px 12px; grid-template-columns: minmax(88px,1fr) minmax(0,230px); margin-bottom: 14px; }
+  .tycoon-base img { height: 98px; }
+  .tycoon-base strong { font-size: 27px; line-height: 1; }
+  .tycoon-base-kicker { font-size: 8px; letter-spacing: 1px; }
+  .tycoon-base small { display: none; }
+  .tycoon-base::after { left: 12px; bottom: 12px; width: 24px; height: 3px; }
+  .dashboard > .tycoon-base { margin-bottom: 16px; }
+  .daily > .daily-heading { top: 0; background: #edf3ef; }
+  .daily .date-heading { overflow: visible; justify-content: flex-start; }
+  .daily .date-heading #selected-date-label { white-space: nowrap; }
+}
+
+/* Audit fixes: normal-size CTA contrast and safe pixel-glyph bearings. */
+:root { --action: #0874aa; }
+.button.primary, .primary, .add-booking { background-color: #0874aa; }
+.tycoon-base-kicker { color: #3d655e; }
+.tycoon-base small { color: #435f57; }
+@media (max-width:900px) {
+  .daily .date-heading { font-size: 20px !important; padding-inline: 4px; }
+}
+@media (max-width:767px) {
+  .dashboard .tycoon-base { min-height: 88px; margin-bottom: 0; }
+  .dashboard .tycoon-base img { height: 84px; }
+}
+@media (min-width:768px) {
+  .tycoon-base img { height: 136px; }
+}
+@media (max-width:767px) {
+  .tycoon-base::after { display: none; }
+}
+/* No decorative line may intersect copy at intermediate tablet widths. */
+.tycoon-base::after { display: none; }
+@media (min-width:768px) and (max-width:900px) {
+  .tycoon-base strong { font-size: 32px; }
+}

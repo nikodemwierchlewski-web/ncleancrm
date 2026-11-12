@@ -111,3 +111,5 @@ Koszty i inwestycje, książeczka samochodu i historia sprzętu: [obsługa, zasa
 Diagnoza wersji, naprawy formularzy i pełna weryfikacja: [docs/DIAGNOZA-I-NAPRAWY.md](docs/DIAGNOZA-I-NAPRAWY.md).
 
 Opcjonalny eksperyment wizualny, domyślnie wyłączony: [ncLEAN Pixel Tycoon — test i powrót do klasycznego wyglądu](docs/PIXEL-TYCOON-TEST.md).
+
+Prompt zastosowanego audytu motywu: [PIXEL-TYCOON-AUDIT-PROMPT.md](docs/PIXEL-TYCOON-AUDIT-PROMPT.md).

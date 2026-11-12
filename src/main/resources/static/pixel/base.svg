@@ -2,19 +2,20 @@
   <title>Izometryczna baza firmy ncLEAN</title>
   <ellipse cx="284" cy="226" rx="210" ry="14" fill="#244B58" opacity=".08"/>
   <!-- Floating tile and its 2:1 isometric grid. -->
-  <path d="m40 128 244-112 244 112-244 112z" fill="#E5E5C9"/>
-  <path d="m40 128 244 112v8L40 136z" fill="#A9BDAA"/>
-  <path d="m284 240 244-112v8L284 248z" fill="#819F99"/>
-  <path d="m40 128 244-112 244 112-244 112z" stroke="#628C8D" stroke-width="2"/>
-  <g stroke="#C6D6BF" stroke-width="2"><path d="m100 100 244 112M160 72l244 112M222 44l244 112M100 156 344 44M162 184 406 72M222 212l244-112"/></g>
+  <path d="m40 128 244-112 244 112-244 112z" fill="#BEDA99"/>
+  <path d="m40 128 244 112v8L40 136z" fill="#7FA971"/>
+  <path d="m284 240 244-112v8L284 248z" fill="#557F68"/>
+  <path d="m40 128 244-112 244 112-244 112z" stroke="#678E73" stroke-width="2"/>
+  <g stroke="#9DC483" stroke-width="2"><path d="m100 100 244 112M160 72l244 112M222 44l244 112M100 156 344 44M162 184 406 72M222 212l244-112"/></g>
+  <path d="m84 128 200-92 200 92-200 92z" fill="#E5DCC3" stroke="#B6C4A4" stroke-width="2"/>
   <!-- Workshop, stepped roof, shutters and sign. -->
   <path d="m126 74 142 66v60l-142-66z" fill="#C0D8D9"/>
   <path d="m268 140 112-52v60l-112 52z" fill="#8EB7BB"/>
-  <path d="m118 66 112-52 158 74-112 52z" fill="#567C99"/>
+  <path d="m118 66 112-52 158 74-112 52z" fill="#2879A8"/>
   <path d="m118 66 158 74v10L118 76z" fill="#304E6E"/>
   <path d="m276 140 112-52v10l-112 52z" fill="#243F5E"/>
-  <path d="m140 62 90-42 136 64-90 42z" fill="#6C9DB1"/>
-  <path d="m160 54 136 64M180 44l136 64M200 36l136 64M220 26l136 64" stroke="#557F99" stroke-width="3"/>
+  <path d="m140 62 90-42 136 64-90 42z" fill="#52A9CA"/>
+  <path d="m160 54 136 64M180 44l136 64M200 36l136 64M220 26l136 64" stroke="#3277A4" stroke-width="3"/>
   <path d="m142 92 46 21v30l-46-21z" fill="#ECF8EE" stroke="#527D95" stroke-width="3"/>
   <path d="m146 98 38 17v20l-38-17z" fill="#8DD8E4"/>
   <path d="m165 107 1 20M146 110l38 17" stroke="#F0FCF4" stroke-width="3"/>
@@ -64,6 +65,9 @@
   <path d="m318 191 10-5 10 5v19l-10 5-10-5z" fill="#E8C36F"/>
   <path d="m318 191 10 5v19l-10-5z" fill="#C59057"/>
   <path d="m321 186 7-3 7 3v5l-7 3-7-3z" fill="#597D81"/>
+  <!-- Original pixel worker, cleaning a sofa. -->
+  <g><path d="M180 169h10v7h-10z" fill="#234954"/><path d="M182 175h8v8h-8z" fill="#E4B48B"/><path d="M178 183h14v13h-14z" fill="#148AC0"/><path d="M176 185h4v10h-4zm16 0h4v8h-4z" fill="#E4B48B"/><path d="M179 196h5v8h-5zm8 0h5v8h-5z" fill="#285574"/><path d="M177 204h7v3h-7zm10 0h7v3h-7z" fill="#23414B"/><path d="M179 169h12v3h-12z" fill="#F0F4DE"/></g>
+  <g fill="#FFFDF0"><path d="M102 118h4v4h-4zm9-7h3v3h-3zm-15-7h3v3h-3z"/><path d="M113 109v8m-4-4h8" stroke="#FAFCED" stroke-width="2"/></g>
   <!-- Plants, path and clean sparkle. -->
   <path d="m432 91 12-6 12 6v14l-12 6-12-6z" fill="#B7A17A"/>
   <path d="m437 66 12-6 12 6v22l-12 6-12-6z" fill="#65B393"/>
