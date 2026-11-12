@@ -778,13 +778,17 @@ class CalendarPostgresIT {
 
     private record RunningApp(ConfigurableApplicationContext context, URI base) implements AutoCloseable {
         static RunningApp start() {
+            return start(false);
+        }
+
+        static RunningApp start(boolean pixelTycoon) {
             // Do not inherit database URLs, active profiles, or config files from the caller.
             var environment = new StandardEnvironment();
             environment.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
             environment.getPropertySources().remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
             environment.getPropertySources().addFirst(new MapPropertySource("isolated-integration-test", Map.ofEntries(
                 Map.entry("spring.config.location", "classpath:/application.yml"),
-                Map.entry("spring.profiles.active", "integration"),
+                Map.entry("spring.profiles.active", pixelTycoon ? "integration,tycoon" : "integration"),
                 Map.entry("spring.datasource.url", POSTGRES.getJdbcUrl()),
                 Map.entry("spring.datasource.username", POSTGRES.getUsername()),
                 Map.entry("spring.datasource.password", POSTGRES.getPassword()),
@@ -962,6 +966,30 @@ class CalendarPostgresIT {
         assertEquals(beforeBooking,old.queryForMap("SELECT * FROM booking WHERE id=?",booking));assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
         assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(13,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+    }
+
+    @Test
+    void tycoonExperimentIsOptInAndSwitchingBackPreservesDataAndSecurity() throws Exception {
+        long booking=workBooking("Motyw nie zmienia danych",DashboardService.today());
+        var original=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking);
+        var classic=app.browser();classic.login();
+        assertFalse(classic.get("/calendar").body().contains("/css/tycoon.css"));
+        assertFalse(classic.get("/dashboard").body().contains("/pixel/base.svg"));
+        app.close();app=RunningApp.start(true);jdbc=app.context().getBean(JdbcTemplate.class);
+        assertEquals(302,app.browser().get("/calendar").statusCode());
+        var experiment=app.browser();experiment.login();
+        for(String path:List.of("/calendar","/today","/customers","/settings","/settings/areas","/settings/services","/settings/costs","/dashboard","/fuel","/costs","/notes","/day-closeout","/work/"+booking)){
+            var page=experiment.get(path);assertEquals(200,page.statusCode(),path);
+            assertTrue(page.body().contains("/css/tycoon.css"),path);assertTrue(page.body().contains("/js/tycoon.js"),path);
+            assertTrue(page.body().contains("TYCOON · TEST"),path);
+        }
+        assertTrue(experiment.get("/dashboard").body().contains("/pixel/base.svg"));
+        assertEquals(200,experiment.get("/pixel/base.svg").statusCode());
+        assertEquals(403,experiment.settings("/customers",Map.of("name","Bez CSRF","phone","500000099"),false).statusCode());
+        assertEquals(original,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        var restored=app.browser();restored.login();assertFalse(restored.get("/calendar").body().contains("/css/tycoon.css"));
+        assertEquals(original,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking));
     }
 
     private static final class Browser {

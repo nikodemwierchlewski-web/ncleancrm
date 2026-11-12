@@ -1,0 +1,12 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><head>
+<th:block th:fragment="assets" th:if="${pixelTycoon}">
+  <link rel="stylesheet" href="/css/tycoon.css">
+  <script src="/js/tycoon.js" defer></script>
+</th:block>
+</head><body>
+<figure th:fragment="base" th:if="${pixelTycoon}" class="tycoon-base" aria-hidden="true">
+  <div><span class="tycoon-base-kicker">NCLEAN TYCOON</span><strong>Twoja baza.<br>Dobry plan na dzień.</strong></div>
+  <img src="/pixel/base.svg" width="560" height="248" alt="">
+  <figcaption>Wersja testowa interfejsu</figcaption>
+</figure>
+</body></html>

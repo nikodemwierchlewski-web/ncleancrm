@@ -1,0 +1,232 @@
+/* Optional ncLEAN Pixel Tycoon experiment. Included only when explicitly enabled. */
+@font-face {
+  font-family: Pixelify;
+  src: url('/font/PixelifySans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+:root {
+  --ink: #213f4b;
+  --muted: #536d74;
+  --canvas: #f4f3e9;
+  --surface: #fffef7;
+  --line: #b5c9c7;
+  --action: #087eb8;
+  --radius: 4px;
+  --pixel-edge: #345b68;
+  --pixel-side: #c4d2c6;
+  --pixel-shadow: 3px 4px 0 var(--pixel-side);
+  background: var(--canvas);
+}
+body {
+  background: radial-gradient(#53778213 1px, transparent 1px) 0 0 / 12px 12px, var(--canvas);
+  color: var(--ink);
+}
+h1, .desktop-title, .date-heading, .brand > span, .tycoon-base strong {
+  font-family: Pixelify, ui-monospace, monospace !important;
+  font-weight: 600;
+  letter-spacing: .1px !important;
+}
+h1 { font-size: 34px !important; line-height: 1.1; }
+h2 { letter-spacing: -.2px; }
+:focus-visible { outline: 3px solid #be6521; outline-offset: 4px; }
+/* The top HUD and bottom phone controls keep the existing navigation. */
+.app-header {
+  background: #214652;
+  color: #fffef1;
+  border-bottom: 4px solid #153542;
+  box-shadow: 0 3px 0 #b2c7b6;
+  gap: 22px;
+}
+.app-header .brand { position: relative; align-items: center; gap: 8px; padding-bottom: 10px; }
+.app-header .brand > span { color: #eef8e7; font-size: 32px; line-height: 1; }
+.app-header .brand > b { color: #17455c; background: #8ed5d0; border-radius: 2px; font-size: 9px; padding: 4px; }
+.tycoon-edition { position: absolute; left: 0; bottom: -2px; white-space: nowrap; font-size: 8px; font-weight: 600; letter-spacing: 1.4px; color: #acd6c9; }
+.app-header .record-nav a { border: 1px solid transparent; color: #c7e0da; border-radius: 3px; }
+.app-header .record-nav a:hover { background: #315866; }
+.app-header .record-nav a[aria-current] { background: #85d1c3; color: #183e4a; border-color: #bce8cf; box-shadow: 0 3px 0 #102f39; }
+.app-header .global-search, .app-header .icon-button { border: 1px solid #72989c; color: #fffef2; background: #315765; border-radius: 3px; }
+/* Raised controls; movement is deliberately small and never changes layout. */
+.button, .icon-button, .date-heading, .category-tabs button {
+  border: 2px solid var(--pixel-edge);
+  border-radius: 4px !important;
+  box-shadow: 0 3px 0 #afc5bd !important;
+  min-height: 44px;
+  transition: transform 100ms ease, box-shadow 100ms ease, background-color 120ms ease;
+}
+.button.primary, .primary, .add-booking {
+  color: #fff !important;
+  background: #087eb8;
+  border-color: #155575;
+  box-shadow: 0 4px 0 #124661, inset 0 2px 0 #4eb1d6 !important;
+}
+.button.primary:hover { background: #066eaa; }
+.button.secondary, .button.subtle, .icon-button {
+  color: var(--ink);
+  background: #fffef7;
+  border-color: #9bb5b5;
+}
+.button:active:not(:disabled), .icon-button:active:not(:disabled), .category-tabs button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #829f9e !important;
+}
+.button:disabled, button:disabled { opacity: .65; cursor: default; }
+.records input, .records select, .records textarea, .form-field input,
+.period-navigation input, #jump-month {
+  background-color: #fffefb;
+  border: 2px solid #b7c9c4;
+  border-radius: 3px;
+  box-shadow: inset 0 2px 0 #e7ede1;
+}
+.records input:focus, .records select:focus, .records textarea:focus { border-color: #1183af; }
+input[type=checkbox], input[type=radio] { accent-color: #087eb8; box-shadow: none; }
+/* The same physical tiles are used throughout existing business modules. */
+.card, .settings-card, .result-card, .metric, .cost-card, .action-card,
+.journal-card, .memo-card, .expense-row, .equipment-card, .cost-kpis > section,
+.review-editor, .review-hero, .day-plan, .car-summary, .cost-fixed, .chemistry-ledger,
+.asset-edit, .dashboard-review, .pinned-notes, .review-row {
+  background: var(--surface);
+  border: 2px solid #a4bfba;
+  border-radius: 5px;
+  box-shadow: var(--pixel-shadow);
+}
+.records .card { padding: 18px; }
+.settings-links .card, .equipment-card { transition: border-color 120ms, transform 120ms; }
+@media (hover: hover) {
+  .settings-links .card:hover, .equipment-card:hover { transform: translateY(-2px); border-color: #4e91a4; }
+}
+.settings-home > a.card { display: block; }
+.settings-home .settings-links > a { position: relative; padding-left: 78px; }
+.settings-home .settings-links > a::before {
+  content: ''; position: absolute; width: 44px; height: 44px; left: 18px; top: 20px;
+  background: url('/pixel/extractor.svg') center / contain no-repeat; image-rendering: pixelated;
+}
+.settings-home .settings-links > a[href='/fuel']::before { background-image: url('/pixel/van.svg'); }
+.settings-home .settings-links > a[href='/settings/services']::before { background-image: url('/pixel/sofa.svg'); }
+.settings-home .settings-links > a[href='/dashboard']::before { background-image: url('/pixel/coin.svg'); }
+.settings-home .settings-links > a[href='/settings/costs']::before { background-image: url('/pixel/coin.svg'); }
+.records details > summary::after { font-family: Pixelify, monospace; font-size: 22px; color: #648f93; }
+.records details[open] > summary { border-bottom: 1px dashed #becdc5; padding-bottom: 8px; }
+.notice, .visit-note, .cost-effect { border-radius: 3px; background: #edf5e4; border-color: #a8c8a9; }
+.cost-error, .form-errors, .offline-notice { border-radius: 3px; background: #fff0dc; }
+.period-tabs, .mode-tabs, .notes-tabs { border: 2px solid #b4c7bd; background: #dfe9dd; border-radius: 4px; padding: 4px; }
+.period-tabs a, .mode-tabs a, .notes-tabs a, .cost-tabs a, .category-tabs button { border-radius: 3px; }
+.period-tabs [aria-current], .mode-tabs [aria-current], .notes-tabs [aria-current], .cost-tabs [aria-current],
+.category-tabs button[aria-pressed=true] { background: #d2ecf0; color: #175770; border-color: #5596a7; box-shadow: inset 0 -3px 0 #a3cbd2; }
+/* Calendar board: the user's colors and the readable white order surface stay distinct. */
+.daily .planner { overflow: visible; }
+.daily .planner-toolbar { border: 2px solid #acc1bb; border-radius: 4px; background: #e6eddf; padding: 10px; }
+.daily .calendar-weekdays { padding: 14px 4px 8px; color: #4d6c6d; font-size: 11px; font-weight: 700; }
+.daily .calendar-grid { background: transparent; gap: 7px; padding: 2px 4px 7px 1px; }
+.daily .calendar-day {
+  min-height: 104px;
+  border: 1px solid #acc4bd;
+  border-radius: 3px;
+  background: #fffef7;
+  box-shadow: 2px 3px 0 #d0d9c9;
+}
+.daily .calendar-day::before { opacity: .18; }
+.daily .calendar-day.is-selected {
+  background: #f6fcf6;
+  border-color: #0c769d;
+  box-shadow: 0 0 0 2px #0c769d, 3px 4px 0 #9abdc3;
+}
+.daily .calendar-day.is-today .day-number { background: #087eb8; color: #fff; border-radius: 3px; }
+.daily .day-number { font-variant-numeric: tabular-nums; }
+.daily .day-areas .area-chip { border: 1px solid #cbd8cf; border-radius: 2px; color: #244653; background: #fffffff5; }
+.daily .booking-chip { background: #fffefa; border-color: #c4d3cf; border-left: 3px solid #1186b0; border-radius: 3px; }
+.daily .booking-chip.completed { background: #edf3ea; border-left-color: #69998b; }
+.daily .booking-chip.cancelled { background: #f0eee5; border-left-color: #ad9a88; }
+.daily .day-bookings .booking-chip { border-left-width: 2px; box-shadow: none; }
+.daily .more-bookings { border-radius: 2px; color: #126381; font-weight: 650; }
+#day-agenda { background: #fffef7; border: 2px solid #a5beb7; border-radius: 4px; box-shadow: var(--pixel-shadow); }
+#day-agenda > header { background: #e5efe3; border-bottom: 2px solid #c3d4c6; }
+#agenda-orders { padding: 4px 12px 8px; }
+#agenda-orders .booking-chip { box-shadow: 2px 3px 0 #d6dfd0; margin-bottom: 10px; }
+#agenda-orders .booking-chip time { color: #155d7c; }
+#agenda-orders .booking-chip strong { line-height: 1.45; }
+#week-strip > button { background: #fffdf4; border: 1px solid #b8cbbf; border-radius: 3px; box-shadow: 0 3px 0 #c8d5c6; }
+#week-strip > button.selected, #week-strip > button[aria-pressed=true] { background: #d3eaf0; border-color: #277e9c; color: #134f6e; box-shadow: 0 3px 0 #6b9ba6; }
+/* Forms remain familiar; decoration doesn't intercept their actions. */
+.daily-dialog, .cost-dialog, .note-dialog {
+  border: 2px solid #345e6c;
+  border-radius: 5px;
+  box-shadow: 6px 8px 0 #21465355, 0 16px 54px #173b5140;
+  background: #fffef7;
+}
+.daily-dialog::backdrop, .cost-dialog::backdrop, .note-dialog::backdrop { background: #193d4d91; }
+.dialog-heading, .cost-dialog > header, .note-dialog > header { background: #e7efdf; border-bottom: 2px solid #b5cabb; }
+.dialog-heading h2, .cost-dialog > header h2, .note-dialog > header h2 { font-family: Pixelify, monospace; font-size: 25px !important; font-weight: 600; }
+.category-tabs button { background: #f9f9ee; }
+.service-picker { background: #f3f5e9; border-color: #c1d3c6; border-radius: 3px; }
+.service-line { background: #fffef8; }
+.stepper { border-radius: 3px; }
+.quote, .booking-quote { background: #eaf3e5; border-radius: 3px; }
+.booking-submit, .cost-submit, .review-submit, .note-submit { background: #f7f8ed; border-top: 2px solid #bfd0bd; }
+/* Real metrics, without introducing fictional money or scores. */
+.result-card { border-top: 5px solid #549d8b; background: #f1f8e8; }
+.result-card > strong { color: #28664f; font-variant-numeric: tabular-nums; }
+.result-card.negative { border-top-color: #bd7956; background: #fff4e4; }
+.metric { border-top: 4px solid #69a9bb; }
+.metric strong, .cost-kpis strong { font-variant-numeric: tabular-nums; }
+.cost-track { border: 1px solid #c0d0c1; background: #edf1e3; border-radius: 1px; height: 9px; }
+.cost-track i { border-radius: 0; }
+.review-hero { background: #eff6e7; }
+.hero-orb { background: #daeecb; border: 2px solid #97baa4; border-radius: 4px; box-shadow: 4px 5px 0 #b1c6ae; }
+.review-hero.is-closed { border-color: #629e85; background: #e9f6df; }
+.review-row[aria-current] { border-color: #3585a4; box-shadow: 2px 3px 0 #a3c5c5; }
+progress { height: 10px; border: 1px solid #9ebaa5; border-radius: 1px; background: #dce8d7; }
+progress::-webkit-progress-bar { background: #dce8d7; }
+progress::-webkit-progress-value { background: #64a991; }
+/* Decorative original SVG, deliberately after the primary financial cards. */
+.tycoon-base {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 440px);
+  align-items: center; position: relative; margin: 0; padding: 12px 24px;
+  background: #e9efdf; border: 2px solid #b5c9b7; border-radius: 4px;
+  box-shadow: var(--pixel-shadow); overflow: hidden;
+}
+.tycoon-base-kicker { color: #547c76; font-size: 10px; font-weight: 700; letter-spacing: 1.7px; }
+.tycoon-base strong { display: block; font-size: 30px; line-height: 1.15; color: #28536a; margin-top: 8px; }
+.tycoon-base img { width: 100%; height: 176px; display: block; object-fit: contain; image-rendering: pixelated; pointer-events: none; }
+.tycoon-base figcaption { position: absolute; left: 24px; bottom: 12px; color: #5a756e; font-size: 10px; }
+.memo-pin { border-radius: 2px; border: 1px solid #b5ccad; background: #e4f0d6; color: #406b57; }
+.memo-kind { text-transform: uppercase; font-size: 10px; letter-spacing: .7px; }
+.tycoon-saved { animation: tycoon-confirm 240ms ease-out; }
+@keyframes tycoon-confirm { from { transform: translateY(3px); opacity: .4; } to { transform: translateY(0); opacity: 1; } }
+@media (max-width: 1100px) {
+  .app-header { gap: 14px; }
+  .app-header .record-nav a { padding: 9px 10px; }
+}
+@media (max-width: 767px) {
+  h1 { font-size: 30px !important; }
+  .main { padding-left: 14px; padding-right: 16px; }
+  .tycoon-base { grid-template-columns: minmax(0,1fr) 145px; min-height: 108px; padding: 12px; }
+  .tycoon-base img { height: 100px; }
+  .tycoon-base-kicker { font-size: 8px; letter-spacing: .8px; }
+  .tycoon-base strong { font-size: 22px; margin-top: 4px; }
+  .tycoon-base figcaption { position: static; grid-column: 1 / -1; font-size: 9px; }
+  .daily .planner { border: none; }
+  #day-agenda { border: 0; box-shadow: none; background: transparent; }
+  #day-agenda > header { border-bottom: 1px dashed #b4c7b6; background: transparent; }
+  #agenda-orders { padding: 0 4px 4px 0; }
+  #agenda-orders .booking-chip { padding: 14px 12px; }
+  .daily .date-heading { background: transparent; box-shadow: none !important; border: 0; font-size: 26px; }
+  .daily .planner-toolbar { border: 0; background: transparent; }
+}
+@media (max-width: 600px) {
+  .app-header { min-height: 64px; padding: 8px 14px 7px; gap: 10px; }
+  .app-header .brand > span { font-size: 29px; }
+  .app-header .brand > b { display: none; }
+  .app-header .global-search { font-size: 12px; }
+  .app-header .record-nav { background: #f7f8ed; border-top: 2px solid #98b6ad; box-shadow: 0 -3px 0 #d7e3d5; }
+  .app-header .record-nav a { color: #466a70; font-size: 11px; padding: 8px 4px; }
+  .app-header .record-nav a[aria-current] { background: #cce9df; color: #1c535c; border: 1px solid #87b4ad; box-shadow: inset 0 -3px 0 #9ec8bb; }
+  .records input, .records select, .records textarea { font-size: 16px; }
+  .review-hero h2 { font-size: 21px !important; }
+  .tycoon-base strong { font-size: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .button:active, .icon-button:active, .settings-links .card:hover, .equipment-card:hover { transform: none !important; }
+}

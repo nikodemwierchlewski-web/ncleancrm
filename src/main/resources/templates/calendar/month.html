@@ -2,7 +2,7 @@
 <html lang="pl" xmlns:th="http://www.thymeleaf.org"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kalendarz · ncLEAN CRM</title>
 <link rel="stylesheet" href="/css/crm.css"><link rel="stylesheet" href="/css/records.css"><link rel="stylesheet" href="/css/daily.css">
-<script src="/js/records.js" defer></script><script src="/js/actual-usage.js" defer></script><script src="/js/forecast.js" defer></script><script src="/js/daily.js" defer></script><script src="/js/app.js" defer></script><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#208be3"><link rel="apple-touch-icon" href="/pwa/icon-192.png"><link rel="stylesheet" href="/css/interface.css"><script src="/js/interface.js" defer></script></head><body>
+<script src="/js/records.js" defer></script><script src="/js/actual-usage.js" defer></script><script src="/js/forecast.js" defer></script><script src="/js/daily.js" defer></script><script src="/js/app.js" defer></script><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#208be3"><link rel="apple-touch-icon" href="/pwa/icon-192.png"><link rel="stylesheet" href="/css/interface.css"><script src="/js/interface.js" defer></script><th:block th:replace="~{fragments/theme :: assets}"></th:block></head><body>
 <a class="skip-link" href="#main">Przejdź do kalendarza</a>
 <header th:replace="~{fragments/navigation :: header('calendar')}"></header>
 <main id="main" class="main daily" th:attr="data-month=${month},data-today=${today},data-selected=${selectedDate != null ? selectedDate : defaultDay},data-open=${dayEditorOpen}">

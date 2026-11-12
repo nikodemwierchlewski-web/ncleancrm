@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="68 110 120 85" shape-rendering="crispEdges" fill="none">  <!-- Sofa being cleaned. -->
+  <path d="m76 158 42-20 60 28-42 20z" fill="#274D56" opacity=".12"/>
+  <path d="m78 140 40-18 52 24-40 18z" fill="#9DCC9E"/>
+  <path d="m78 140 52 24v19l-52-24z" fill="#589A85"/>
+  <path d="m130 164 40-18v19l-40 18z" fill="#397F77"/>
+  <path d="m82 128 12-6 48 22v15l-12 6-48-22z" fill="#B6DEAE"/>
+  <path d="m94 122 12-6 47 22-11 6z" fill="#CEE8BC"/>
+  <path d="m88 146 20 9 12-5-20-9zm24 11 20 9 12-5-20-9z" fill="#C4E5B2"/>
+  <path d="m82 160 6 3v7l-6-3zM126 181l6 3v7l-6-3z" fill="#426B6D"/>
+</svg>

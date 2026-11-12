@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="330 85 145 120" shape-rendering="crispEdges" fill="none">  <!-- Blue company van. -->
+  <path d="m350 150 60-28 70 32-60 28z" fill="#184E68" opacity=".13"/>
+  <path d="m344 132 52-24 68 32-52 24z" fill="#F2FAEE"/>
+  <path d="m344 132 68 32v30l-68-32z" fill="#168EC5"/>
+  <path d="m412 164 52-24v30l-52 24z" fill="#086B9E"/>
+  <path d="m344 132 52-24v-18l-52 24z" fill="#DFF5EE"/>
+  <path d="m396 90 26 12 42 38-52 24-68-32v-18z" fill="#E2F4EC"/>
+  <path d="m402 101 17 8 28 26-35 16-29-14z" fill="#76CCD9"/>
+  <path d="m348 122 29 13 15-27-12-6-32 15z" fill="#A9E8E7"/>
+  <path d="m344 138 68 32v12l-68-32z" fill="#18A5D5"/>
+  <path d="m350 142 34 16v7l-34-16z" fill="#E9FAF0"/>
+  <path d="m358 162 12 6v12l-12-6zM394 179l12 6v12l-12-6z" fill="#203D50"/>
+  <path d="m361 166 6 3v6l-6-3zM397 183l6 3v6l-6-3z" fill="#94B9B9"/>
+  <path d="m420 174 11-5v7l-11 5zM448 161l10-5v7l-10 5z" fill="#FBE7A4"/>
+</svg>

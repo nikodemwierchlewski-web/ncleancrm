@@ -1,0 +1,4 @@
+# Optional visual experiment. No datasource, security or domain overrides.
+crm:
+  ui:
+    pixel-tycoon: true

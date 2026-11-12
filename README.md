@@ -109,3 +109,5 @@ Notatki, zadania i cele przypinane do dashboardu: [obsługa i weryfikacja](docs/
 Koszty i inwestycje, książeczka samochodu i historia sprzętu: [obsługa, zasady rozliczeń i testy](docs/KOSZTY-I-INWESTYCJE.md).
 
 Diagnoza wersji, naprawy formularzy i pełna weryfikacja: [docs/DIAGNOZA-I-NAPRAWY.md](docs/DIAGNOZA-I-NAPRAWY.md).
+
+Opcjonalny eksperyment wizualny, domyślnie wyłączony: [ncLEAN Pixel Tycoon — test i powrót do klasycznego wyglądu](docs/PIXEL-TYCOON-TEST.md).

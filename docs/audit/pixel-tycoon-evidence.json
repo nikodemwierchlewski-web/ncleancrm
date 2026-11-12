@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-12",
+  "branch": "experiment/pixel-tycoon",
+  "base_commit": "44effb9",
+  "default_theme": "classic",
+  "activation": "local,tycoon / Start-Local.ps1 -PixelTycoon",
+  "artifact_sha256": "970d3b9768beab2e834997b9b99e8369d02f9a5d9af506e12d87136d4cc792ea",
+  "maven": {
+    "surefire-reports": {
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failsafe-reports": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "browser_widths": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "postgresql": "isolated synthetic schemas",
+  "switch_off_data_equality": true,
+  "browser_scenarios": [
+    "calendar/eight orders/two categories/customer/address/reschedule",
+    "catalogue/chemistry/areas/weekly plan/history",
+    "photos/closeout/notes/restart/conflicts",
+    "costs/receipts/equipment/cancellation/retry"
+  ],
+  "html_preview": {
+    "views": 60,
+    "simulated_storage": "memory only",
+    "classic_switch_keeps_form": true,
+    "switch_persists_across_navigation": true,
+    "nested_sandbox_verified": true
+  },
+  "physical_phone_windows_tested": false,
+  "production_connected": false
+}
