@@ -65,7 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
-        jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
+        jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
@@ -86,7 +86,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -111,7 +111,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -231,7 +231,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(11, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(12, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -868,6 +868,29 @@ class CalendarPostgresIT {
 
     @Test void auditOrdinaryPriceCorrectionPreservesExplicitNoNotes() {
         var day=DashboardService.today();long id=workBooking("Korekta bez uwag",day);app.context().getBean(pl.nclean.crm.work.DayReviewService.class).save(id,day,reviewFields(id),OWNER);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);work.complete(id,1,"100","","",Map.of(),Map.of(),List.of(),OWNER);assertTrue((Boolean)work.order(id).get("completion_no_notes"));work.complete(id,2,"100","","Nowa uwaga",Map.of(),Map.of(),List.of(),OWNER);assertFalse((Boolean)work.order(id).get("completion_no_notes"));assertEquals("Nowa uwaga",work.order(id).get("completion_note"));
+    }
+
+    @Test void notesPersistAndPinsAreLimitedAndSharedAcrossPeriods() throws Exception {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var token=UUID.randomUUID();long id=notes.save(null,0,token,"NOTE","Luźna myśl","Treść\nDrugi wiersz",null,true,List.of());assertEquals(id,notes.save(null,0,token,"NOTE","Luźna myśl","Treść\nDrugi wiersz",null,true,List.of()));
+        for(int n=0;n<4;n++)notes.save(null,0,UUID.randomUUID(),"TASK","Zadanie "+n,"",DashboardService.today().plusDays(n),true,List.of());assertEquals(3,notes.pinned().size());assertEquals(5,notes.pinnedCount());assertEquals("TASK",notes.pinned().get(0).kind());
+        var browser=app.browser();browser.login();for(String range:List.of("day","week","month")){var response=browser.get("/dashboard?range="+range);assertEquals(200,response.statusCode());assertTrue(response.body().contains("Pokaż wszystkie przypięte (5)"));}
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);assertEquals("Treść\nDrugi wiersz",notes.get(id).content());assertEquals(5,notes.pinnedCount());
+    }
+    @Test void notesArchiveRestoreKeepCompletionAndDoNotChangeDayClosure() {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var day=DashboardService.today();review.close(day,review.review(day).fingerprint(),OWNER);long id=notes.save(null,0,UUID.randomUUID(),"TASK","Zadanie do odhaczenia","",null,true,List.of());notes.action(id,0,"done",null,false);assertTrue(notes.pinned().isEmpty());assertTrue(notes.get(id).completed());notes.action(id,1,"archive",null,false);notes.action(id,2,"restore",null,false);assertTrue(notes.get(id).completed());assertFalse(notes.get(id).archived());notes.action(id,3,"reopen",null,false);assertEquals(1,notes.pinnedCount());notes.action(id,4,"unpin",null,false);assertTrue(notes.pinned().isEmpty());assertEquals(1,notes.list("active","",false,0).total());assertTrue(review.review(day).closed());
+    }
+    @Test void goalsHaveManualCompletionAndVersionedSteps() {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var step=UUID.randomUUID();long id=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel","",DashboardService.today().minusDays(1),true,List.of(new pl.nclean.crm.notes.NoteService.Step(step,"Pierwszy krok",false)));assertTrue(notes.get(id).overdue());notes.action(id,0,"step",step,true);assertEquals(1,notes.get(id).doneSteps());assertFalse(notes.get(id).completed());assertThrows(IllegalArgumentException.class,()->notes.action(id,0,"done",null,false));notes.action(id,1,"done",null,false);assertTrue(notes.get(id).completed());assertFalse(notes.get(id).overdue());
+        long empty=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel bez kroków","",null,false,List.of());assertTrue(notes.get(empty).steps().isEmpty());
+        long memo=notes.save(null,0,UUID.randomUUID(),"NOTE","Data notatki","",DashboardService.today().minusDays(1),false,List.of());assertFalse(notes.get(memo).overdue());assertThrows(IllegalArgumentException.class,()->notes.action(memo,0,"done",null,false));
+    }
+    @Test void notesValidateEscapeAndPreserveStaleEditor() throws Exception {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var token=UUID.randomUUID();assertThrows(IllegalArgumentException.class,()->notes.save(null,0,token,"NOTE"," ","",null,false,List.of()));assertThrows(IllegalArgumentException.class,()->notes.save(null,0,token,"NOTE","Tytuł","x".repeat(5001),null,false,List.of()));var many=new ArrayList<pl.nclean.crm.notes.NoteService.Step>();for(int n=0;n<31;n++)many.add(new pl.nclean.crm.notes.NoteService.Step(UUID.randomUUID(),"Krok",false));assertThrows(IllegalArgumentException.class,()->notes.save(null,0,token,"GOAL","Cel","",null,false,many));
+        long id=notes.save(null,0,token,"NOTE","<script>alert(1)</script>","needle memo",null,false,List.of());notes.save(id,0,token,"NOTE","<script>alert(1)</script>","needle changed",null,false,List.of());assertThrows(IllegalArgumentException.class,()->notes.save(id,0,token,"NOTE","Stara karta","stare",null,false,List.of()));assertEquals("needle changed",notes.get(id).content());assertEquals(1,notes.list("active","NEEDLE",false,0).total());var browser=app.browser();browser.login();var response=browser.get("/notes");assertEquals(200,response.statusCode());assertTrue(response.body().contains("&lt;script&gt;alert(1)&lt;/script&gt;"));assertEquals(200,browser.get("/notes/editor?id="+id).statusCode());assertEquals(403,browser.settings("/notes/"+id+"/action",Map.of("version",1,"action","archive"),false).statusCode());assertEquals(302,app.browser().get("/notes").statusCode());
+    }
+    @Test void concurrentNoteCreationIsIdempotentAndEditorsCannotOverwriteActions() throws Exception {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var token=UUID.randomUUID();var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        try{java.util.concurrent.Callable<Long> save=()->{gate.await();return notes.save(null,0,token,"TASK","Jedno zadanie","",null,true,List.of());};var a=pool.submit(save);var b=pool.submit(save);gate.countDown();long id=a.get(20,java.util.concurrent.TimeUnit.SECONDS);assertEquals(id,b.get(20,java.util.concurrent.TimeUnit.SECONDS));notes.action(id,0,"done",null,false);assertThrows(IllegalArgumentException.class,()->notes.save(id,0,token,"TASK","Stary edytor","",null,true,List.of()));assertTrue(notes.get(id).completed());assertEquals(1,notes.list("done","",false,0).total());}finally{pool.shutdownNow();}
     }
     private static final class Browser {
         private final URI base;

@@ -1,0 +1,28 @@
+CREATE TABLE memo_entry (
+ id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ request_token UUID NOT NULL UNIQUE,
+ version BIGINT NOT NULL DEFAULT 0,
+ kind VARCHAR(8) NOT NULL CHECK(kind IN ('NOTE','TASK','GOAL')),
+ title VARCHAR(160) NOT NULL CHECK(length(trim(title))>0),
+ content VARCHAR(5000) NOT NULL DEFAULT '',
+ due DATE CHECK(due BETWEEN DATE '2000-01-01' AND DATE '2100-12-31'),
+ pinned BOOLEAN NOT NULL DEFAULT FALSE,
+ pinned_at TIMESTAMPTZ,
+ completed BOOLEAN NOT NULL DEFAULT FALSE,
+ archived BOOLEAN NOT NULL DEFAULT FALSE,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ CHECK(kind<>'NOTE' OR NOT completed)
+);
+CREATE TABLE memo_step (
+ entry_id BIGINT NOT NULL REFERENCES memo_entry(id),
+ id UUID NOT NULL,
+ position INTEGER NOT NULL CHECK(position BETWEEN 0 AND 29),
+ text VARCHAR(300) NOT NULL CHECK(length(trim(text))>0),
+ done BOOLEAN NOT NULL DEFAULT FALSE,
+ PRIMARY KEY(entry_id,id),
+ UNIQUE(entry_id,position)
+);
+CREATE INDEX memo_active_pins ON memo_entry(due,pinned_at DESC,id DESC) WHERE pinned AND NOT completed AND NOT archived;
+CREATE TABLE memo_write_guard(id INTEGER PRIMARY KEY CHECK(id=1));
+INSERT INTO memo_write_guard VALUES(1);
