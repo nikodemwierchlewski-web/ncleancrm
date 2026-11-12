@@ -924,6 +924,46 @@ class CalendarPostgresIT {
         var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var receipts=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var day=DashboardService.today();UUID image=receipts.upload(serviceImage("koszt.jpg"));var p=expense("CAR_PARTS","Część","10");p.put("receipt_id",image.toString());long id=costs.save(p,OWNER);assertThrows(IllegalArgumentException.class,()->fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",image),OWNER));p.put("id",Long.toString(id));var earlier=day.minusMonths(1);p.put("spent_on",earlier.toString());costs.save(p,OWNER);assertEquals(0,costs.totals(day.withDayOfMonth(1),YearMonth.from(day).atEndOfMonth()).get("all").signum());assertEquals(new BigDecimal("10.00"),costs.totals(earlier.withDayOfYear(1),earlier.withMonth(12).withDayOfMonth(31)).get("all"));
         var future=expense("OTHER","Przyszły rachunek","5");future.put("spent_on",day.plusDays(1).toString());assertThrows(IllegalArgumentException.class,()->costs.save(future,OWNER));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));
     }
+    @Test
+    void customerSearchKeepsFilterInUrlAndLegacyPostStillWorks() throws Exception {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        records.saveCustomer(null,0,"Klient Alfa","500000001","Adres Alfa","",true);
+        records.saveCustomer(null,0,"Klient Beta","500000002","Adres Beta","",true);
+        var browser=app.browser();browser.login();
+        var result=browser.get("/customers?query=Alfa");
+        assertEquals(200,result.statusCode());assertTrue(result.body().contains("Klient Alfa"));assertFalse(result.body().contains("Klient Beta"));
+        assertTrue(result.body().contains("value=\"Alfa\""));assertTrue(result.body().contains("method=\"get\""));
+        assertFalse(result.body().contains("action=\"/customers/search\""));
+        var reloaded=browser.get("/customers?query=Alfa");assertTrue(reloaded.body().contains("Klient Alfa"));assertFalse(reloaded.body().contains("Klient Beta"));
+        var legacy=browser.settings("/customers/search",Map.of("query","Klient Alfa"),true);
+        assertEquals(302,legacy.statusCode());assertEquals("/customers?query=Klient+Alfa",URI.create(legacy.headers().firstValue("Location").orElseThrow()).getPath()+"?"+URI.create(legacy.headers().firstValue("Location").orElseThrow()).getRawQuery());
+        assertEquals(400,browser.get("/customers?query="+"a".repeat(121)).statusCode());
+        var escaped=browser.get("/customers?query="+URLEncoder.encode("\"><script>alert(1)</script>",StandardCharsets.UTF_8));
+        assertEquals(200,escaped.statusCode());assertFalse(escaped.body().contains("<script>alert(1)</script>"));
+        assertTrue(browser.get("/customers?query=500000002").body().contains("Klient Beta"));
+    }
+
+    @Test
+    void v12CopyUpgradesWithoutChangingBookingsFuelImagesNotesOrMonthlyCosts() {
+        String schema="upgrade_v12_costs";
+        var source=new DriverManagerDataSource(POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema,POSTGRES.getUsername(),POSTGRES.getPassword());
+        var old=new JdbcTemplate(source);
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("12").load().migrate();
+        long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Kopia testowa','+48500000099') RETURNING id",Long.class);
+        long booking=old.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,DATE '2026-10-28',TIME '10:00','Kopia testowa','+48500000099','Historyczny adres',180) RETURNING id",Long.class,UUID.randomUUID(),person);
+        long service=old.queryForObject("SELECT min(id) FROM service_definition",Long.class);
+        old.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount,suggested_price) VALUES (?,0,?,'Historyczna usługa','szt.',1,180,180,180)",booking,service);
+        var receipt=UUID.randomUUID();byte[] image={1,2,3,4};old.update("INSERT INTO fuel_receipt(id,image) VALUES (?,?)",receipt,image);
+        long fuel=old.queryForObject("INSERT INTO fuel_purchase(request_token,purchased_at,target,fuel_type,amount,receipt_id) VALUES (?,TIMESTAMP '2026-10-28 10:00','CAR','DIESEL',200,?) RETURNING id",Long.class,UUID.randomUUID(),receipt);
+        old.update("INSERT INTO memo_entry(request_token,kind,title,pinned) VALUES (?,'NOTE','Historyczne memo',true)",UUID.randomUUID());
+        old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
+        var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
+        assertEquals(beforeBooking,old.queryForMap("SELECT * FROM booking WHERE id=?",booking));assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
+        assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(13,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+    }
+
     private static final class Browser {
         private final URI base;
         private final HttpClient http;

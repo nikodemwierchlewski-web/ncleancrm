@@ -1,0 +1,63 @@
+{
+  "base": "a979a27",
+  "branch": "fix/whole-crm-consistency",
+  "version": "0.0.1-SNAPSHOT",
+  "artifact_sha256": "be7c1f180a57defcb443d1f9eebf23da4c39e69da36d2624192507b49e3532aa",
+  "java": "17.0.20.1",
+  "spring_boot": "3.5.16",
+  "maven": "3.9.11",
+  "date": "2026-11-12",
+  "test_reports": {
+    "surefire-reports": {
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failsafe-reports": {
+      "tests": 70,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "baseline_clean_verify": {
+    "tests": 94,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "browser_regressions": [
+    "customer search and reload",
+    "remove/reuse monthly cost rows, including50",
+    "single concurrent POST,503 draft retention and retry"
+  ],
+  "browser_full": [
+    "booking and eight-entry calendar",
+    "client and visit history",
+    "catalogue and standards",
+    "area HEX/weekly plan/history",
+    "photos and time",
+    "closeout",
+    "dashboard and fuel",
+    "costs and investments",
+    "notes and goals",
+    "restart and version conflicts"
+  ],
+  "widths": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "html_preview": {
+    "views": 60,
+    "synthetic": true,
+    "storage": "memory only",
+    "nested_sandbox_verified": true,
+    "javascript_errors": []
+  },
+  "production_connected": false,
+  "main_remote": "7d26eb039bbf04e2481b8574040d214f377aefba",
+  "pr_api_read": "Forbidden"
+}

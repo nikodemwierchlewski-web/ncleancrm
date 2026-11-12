@@ -52,7 +52,7 @@ Skrypty PowerShell przygotowano dla Windows; ich uruchomienie na rzeczywistym Wi
 
 ## Wersja 0.1: dzień pracy i migracja
 
-Po uruchomieniu dotychczasowymi skryptami wejdź na `http://127.0.0.1:8081`. Po zalogowaniu startuje **Dzisiaj**. Flyway zastosuje V9; nie kasuj wolumenu ani migracji. Wykonaj kopię przed aktualizacją. Obsługa: [WERSJA-0.1.md](WERSJA-0.1.md).
+Po uruchomieniu dotychczasowymi skryptami wejdź na `http://127.0.0.1:8081`. Po zalogowaniu startuje **Kalendarz**. Flyway zastosuje brakujące migracje V1–V13; nie kasuj wolumenu ani migracji. Wykonaj kopię przed aktualizacją. Obsługa: [WERSJA-0.1.md](WERSJA-0.1.md).
 
 ## Kopia zapasowa i odtworzenie do osobnej bazy
 
@@ -87,3 +87,14 @@ Test automatyczny w środowisku Linux potwierdza działanie równoważnych polec
 ## PWA na telefonie
 
 W obsługiwanej przeglądarce opcja instalacji może pojawić się w Więcej. Dostęp z telefonu do adresu LAN po zwykłym HTTP nie zapewnia wymaganego bezpiecznego kontekstu. Zdalne wdrożenie wymaga HTTPS z zaufanym certyfikatem, zabezpieczonego dostępu i osobnego przygotowania serwera. Nie wyłączaj logowania/CSRF ani nie wystawiaj lokalnego PostgreSQL do internetu. PWA nie zapisuje danych CRM offline.
+
+## Aktualizacja sprawdzonej wersji
+
+Zatrzymaj poprzednią aplikację przez `Ctrl+C` przed budowaniem i upewnij się, że pracujesz na gałęzi zawierającej ostatnie moduły. Samo pobranie starego `main` nie dodaje funkcji z niescalonych gałęzi. Nie nadpisuj pliku JAR używanego przez działającą JVM.
+
+```powershell
+.\mvnw.cmd clean verify
+.\scripts\Start-Local.ps1
+```
+
+Nie kasuj `.local` ani wolumenu bazy. Instrukcja diagnozy, identyfikacji artefaktu i testów przeglądarkowych: [DIAGNOZA-I-NAPRAWY.md](DIAGNOZA-I-NAPRAWY.md).

@@ -1,5 +1,4 @@
 (() => {
-  document.querySelectorAll('.fuel-day-form,#fuel-purchase-form,#parameters form').forEach(form=>form.addEventListener('submit',()=>{form.querySelector('[type=submit]').disabled=true;}));
   document.querySelectorAll('.fuel-day-form').forEach(form=>{
     const field=form.querySelector('[name=odometer]'),message=form.querySelector('.reading-impact');
     field.addEventListener('input',()=>{const value=Number(field.value),old=Number(form.dataset.original);if(!form.dataset.original||field.value===''||value===old){message.textContent='';return;}const parts=[];if(form.dataset.previous)parts.push('od poprzedniego odczytu: '+(old-Number(form.dataset.previous)).toFixed(1)+' → '+(value-Number(form.dataset.previous)).toFixed(1)+' km');if(form.dataset.next)parts.push('do następnego odczytu: '+(Number(form.dataset.next)-old).toFixed(1)+' → '+(Number(form.dataset.next)-value).toFixed(1)+' km');message.textContent='Wpływ korekty: '+parts.join('; ')+'. Luki w dniach pozostaną bez automatycznego podziału.';});
