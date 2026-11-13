@@ -1,10 +1,11 @@
 {
-  "app_revision": "0e2275c",
-  "branch": "experiment/tycoon-interactions",
+  "app_revision": "ffabed1",
+  "branch": "ux/lean-workspace",
   "file": "nclean-pixel-tycoon-test.zip",
-  "sha256": "b64f70e8e228b2e178726b62f8625e51b3bcc2982c3db04f7b0f2133ec521201",
-  "bytes": 652530,
-  "html_sha256": "25a31bf938b186d8ff6af979da32786e4e14d339f5dd373915d170a3dd1377e3",
-  "runtime_sha256": "98a1c6c5abc1ae5872448e57b4b70496604aee91356cc90a84f8b7546291aa51",
+  "sha256": "305b12ad2e20d05c98ac6062575721cbe8301550396954fdbec2059f8ae3866b",
+  "bytes": 658381,
+  "html_sha256": "c1fc0aaece09ec52dafef5fb78c2a85c38a56275f48cbf8588ba62051646832b",
+  "runtime_sha256": "b753f107cf973cbd323d04b377afe6d672626070f927b94968974c62228e272d",
+  "default_theme": "classic",
   "standalone": "synthetic in-memory simulation, no PostgreSQL connection"
 }
