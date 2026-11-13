@@ -18,7 +18,8 @@
         const response = await fetch(form.action, {method: 'POST', body, headers: {Accept: 'application/json'}});
         const json = response.headers.get('content-type')?.includes('application/json');
         const result = json ? await response.json() : {};
-        if (!response.ok || !json) throw Error(result.message || 'Nie udało się zapisać. Sprawdź połączenie i zalogowanie, a potem spróbuj ponownie.');
+        if (!response.ok || !json || result.saved !== true) throw Error(result.message || 'Nie udało się zapisać. Sprawdź połączenie i zalogowanie, a potem spróbuj ponownie.');
+        window.NcleanMotion?.confirmed({kind:result.motion||'updated',id:result.id},true);
         onSaved();
       } catch (exception) {
         error.textContent = exception.message;
@@ -69,6 +70,7 @@
     for (const [id,item] of quoteItems) if(!current.has(id)){item.remove();quoteItems.delete(id);}
     $('#booking-empty').hidden = current.size > 0;
     $('#booking-total').textContent = money(cents / 100);
+    const count=$('#booking-selected-count');if(count)count.textContent=String(selected.length);
     form.dispatchEvent(new CustomEvent('booking:change',{detail:selected}));
   }
 

@@ -312,3 +312,27 @@ progress::-webkit-progress-value { background: #64a991; }
 
 .tycoon-motion-off *, .tycoon-motion-off *::before, .tycoon-motion-off *::after, .tycoon-hidden .tycoon-saved, .tycoon-hidden .tycoon-toast{animation:none!important;transition:none!important}
 .tycoon-toast img{flex-shrink:0;image-rendering:pixelated}.tycoon-toast>div{min-width:0;overflow-wrap:anywhere}
+
+/* Interaction vocabulary: quick feedback, stable layout, no business-state effects. */
+.tycoon-marked-nav{position:relative}
+.tycoon-nav-marker{position:absolute;top:0;left:0;height:3px;background:#42b4ba;pointer-events:none;z-index:2;box-shadow:0 1px 0 #126176}
+#booking-selected-count{display:inline-block;min-width:22px;text-align:center;padding:1px 5px;background:#d5e9df;border:1px solid #8fb5a3;font:inherit}
+.tycoon-native-progress{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.tycoon-progress-track{display:block;height:10px;max-width:600px;background:#dce8d7;border:1px solid #9ebaa5;overflow:hidden;margin:6px 0}
+.tycoon-progress-track>i{display:block;width:100%;height:100%;background:#64a991;transform-origin:left center}
+dialog{opacity:0;translate:0 6px;transition:opacity 160ms ease-out,translate 160ms ease-out,display 160ms allow-discrete,overlay 160ms allow-discrete}
+dialog[open]{opacity:1;translate:0 0}
+dialog:not([open]){pointer-events:none}
+@starting-style{dialog[open]{opacity:0;translate:0 6px}}
+form[aria-busy=true] :is(.save-error,#customer-search-status,.review-error,.note-error)::before{content:"";display:inline-block;vertical-align:middle;width:24px;height:20px;margin-right:6px;background:url('/pixel/loading.svg') center/contain no-repeat;animation:tycoon-pending 600ms steps(2,end) infinite}
+@keyframes tycoon-pending{50%{transform:translateY(-2px)}}
+.tycoon-world :is(.pixel-worker,.pixel-nozzle,.pixel-booked){transform-box:fill-box;transform-origin:center}
+.tycoon-toast img{animation:tycoon-badge-pop 350ms ease-out}
+.tycoon-toast::after{content:"";position:absolute;left:13px;top:5px;width:5px;height:5px;background:#e5bd56;box-shadow:37px 7px #5aaf9e,8px 44px #e5bd56,40px 39px #68b3bf;pointer-events:none;animation:tycoon-stars 550ms ease-out both}
+@keyframes tycoon-badge-pop{0%{transform:scale(.75) translateY(3px)}60%{transform:scale(1.08) translateY(-2px)}100%{transform:none}}
+@keyframes tycoon-stars{0%{opacity:0;transform:scale(.8)}45%{opacity:1}100%{opacity:0;transform:scale(1.15)}}
+.tycoon-base.tycoon-action-feedback{position:fixed;right:16px;top:80px;z-index:65;width:320px;max-width:calc(100vw - 32px);height:92px;min-height:0;margin:0;padding:10px;display:flex;gap:8px;align-items:center;pointer-events:none;animation:tycoon-confirm 180ms ease-out}
+.tycoon-action-feedback strong{font-family:Montserrat,system-ui,sans-serif;font-size:13px!important;line-height:1.5;min-width:0}
+.tycoon-base.tycoon-action-feedback :is(img,svg.tycoon-world){width:140px!important;height:62px!important;flex-shrink:0}
+@media(max-width:767px){.tycoon-base.tycoon-action-feedback{top:auto;bottom:calc(80px + env(safe-area-inset-bottom))}}
+.tycoon-motion-off :is(.button:active,.icon-button:active,.settings-links .card:hover,.equipment-card:hover){transform:none!important}

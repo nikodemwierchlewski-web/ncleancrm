@@ -20,6 +20,8 @@ Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/H
 
 Aktualny audyt i warunki wdrożenia: [docs/AUDYT-GOTOWOSCI.md](docs/AUDYT-GOTOWOSCI.md).
 
+Reakcje interfejsu na klikanie: [Cleaning Tycoon — interakcje](docs/TYCOON-INTERACTIONS.md).
+
 Eksperymentalny Cleaning Tycoon: [animacje, odznaki i postęp](docs/CLEANING-TYCOON-PROGRESS.md), [pobieralny podgląd](preview/README.md). Klasyczny wygląd pozostaje domyślny.
 
 ## Windows — pierwsze uruchomienie

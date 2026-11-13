@@ -1,6 +1,8 @@
 <!doctype html><html xmlns:th="http://www.thymeleaf.org"><head>
 <th:block th:fragment="assets" th:if="${pixelTycoon}">
   <link rel="stylesheet" href="/css/tycoon.css">
+  <meta name="crm-confirmed" th:if="${tycoonSignal != null}" th:attr="data-kind=${tycoonSignal.kind},data-order=${tycoonSignal.id}">
+  <script src="/js/tycoon-motion.js" defer></script>
   <script src="/js/tycoon.js" defer></script>
 </th:block>
 </head><body>

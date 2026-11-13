@@ -49,7 +49,8 @@ public class RecordsController {
   if(p.containsKey("repeat")){long source=Long.parseLong(p.get("repeat"));var previous=data.bookings(null,null).stream().filter(o->((Number)o.get("id")).longValue()==source).findFirst().orElseThrow(()->new IllegalArgumentException("Nieznane poprzednie zlecenie."));var person=data.customers("").stream().filter(c->c.get("id").equals(previous.get("customer_id"))&&Boolean.TRUE.equals(c.get("active"))).findFirst().orElseThrow(()->new IllegalArgumentException("Klient jest nieaktywny."));m.addAttribute("repeatPerson",person);m.addAttribute("repeatAddress",previous.get("address"));m.addAttribute("repeatItems",data.items(source));}
   m.addAttribute("day",day==null?LocalDate.now(ZoneId.of("Europe/Warsaw")):day);m.addAttribute("token",UUID.randomUUID());return "records/orders";
  }
- @PostMapping("/orders") String book(@RequestParam Map<String,String> p){
+ @PostMapping("/orders") String book(@RequestParam Map<String,String> p,org.springframework.web.servlet.mvc.support.RedirectAttributes redirect){long id=createBooking(p);redirect.addFlashAttribute("tycoonSignal",Map.of("kind","booked","id",id));return "redirect:/orders?day="+p.get("day");}
+ private long createBooking(Map<String,String> p){
   var quantities=new LinkedHashMap<Long,BigDecimal>();
   p.forEach((key,value)->{if(key.startsWith("qty_")&&!value.isBlank()){var q=new BigDecimal(value.replace(',','.'));if(q.signum()!=0)quantities.put(Long.parseLong(key.substring(4)),q);}});
   var prices=new LinkedHashMap<Long,BigDecimal>();var forecasts=new LinkedHashMap<Long,ChemistryService.Forecast>();
@@ -62,13 +63,14 @@ public class RecordsController {
     forecasts.put(service,new ChemistryService.Forecast(mode.equals("defined"),usage));
    }
   }
-  data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""));return "redirect:/orders?day="+p.get("day");
+  return data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""));
  }
  @PostMapping(value="/orders",params="calendar",produces="application/json") @ResponseBody
- Map<String,Boolean> calendarBook(@RequestParam Map<String,String> p){book(p);return Map.of("saved",true);}
+ Map<String,Object> calendarBook(@RequestParam Map<String,String> p){return Map.of("saved",true,"id",createBooking(p),"motion","booked");}
  @PostMapping(value="/orders/{id}",params="calendar",produces="application/json") @ResponseBody
- Map<String,Boolean> calendarUpdate(@PathVariable long id,@RequestParam Map<String,String> p){update(id,p);return Map.of("saved",true);}
- @PostMapping("/orders/{id}") String update(@PathVariable long id,@RequestParam Map<String,String> p){data.reschedule(id,version(p),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),p.get("status"));return "redirect:/orders?day="+p.get("day");}
+ Map<String,Object> calendarUpdate(@PathVariable long id,@RequestParam Map<String,String> p){reschedule(id,p);return Map.of("saved",true,"id",id,"motion",p.get("status").equals("DONE")?"completed":"updated");}
+ @PostMapping("/orders/{id}") String update(@PathVariable long id,@RequestParam Map<String,String> p,org.springframework.web.servlet.mvc.support.RedirectAttributes redirect){reschedule(id,p);redirect.addFlashAttribute("tycoonSignal",Map.of("kind",p.get("status").equals("DONE")?"completed":"updated","id",id));return "redirect:/orders?day="+p.get("day");}
+ private void reschedule(long id,Map<String,String> p){data.reschedule(id,version(p),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),p.get("status"));}
  @ExceptionHandler({IllegalArgumentException.class,DateTimeException.class,DataIntegrityViolationException.class}) @ResponseStatus(HttpStatus.BAD_REQUEST)
  Object invalid(Exception ex,Model model,jakarta.servlet.http.HttpServletRequest request){model.addAttribute("message",ex instanceof NumberFormatException||ex instanceof DateTimeException?"Sprawdź daty i wartości liczbowe.":ex instanceof DataIntegrityViolationException?"Zapis nie powiódł się. Sprawdź listę przed ponownym dodaniem.":ex.getMessage());if(request.getParameter("calendar")!=null)return org.springframework.http.ResponseEntity.badRequest().body(Map.of("message",model.getAttribute("message")));return "records/error";}
 }

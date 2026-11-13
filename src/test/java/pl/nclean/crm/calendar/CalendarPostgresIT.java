@@ -1074,6 +1074,30 @@ class CalendarPostgresIT {
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
     }
 
+    @Test void animationSignalsCarryTheCommittedBookingIdAndNeverAppearOnError() throws Exception {
+        var browser=app.browser();browser.login();long service=((Number)app.context().getBean(pl.nclean.crm.records.CrmRecords.class).services().get(0).get("id")).longValue();
+        var fields=new LinkedHashMap<String,Object>();fields.put("token",UUID.randomUUID());fields.put("day",DashboardService.today());fields.put("starts","09:30");fields.put("name","Klient reakcji");fields.put("phone","500000097");fields.put("address","Adres próbny");fields.put("qty_"+service,"1");fields.put("calendar","1");
+        var first=browser.settings("/orders",fields,true);assertEquals(200,first.statusCode());
+        long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,fields.get("token").toString());
+        assertTrue(first.body().contains("\"id\":"+id));assertTrue(first.body().contains("\"motion\":\"booked\""));
+        var retry=browser.settings("/orders",fields,true);assertEquals(200,retry.statusCode());assertTrue(retry.body().contains("\"id\":"+id));
+        var update=Map.of("calendar","1","version","0","day",DashboardService.today().toString(),"starts","11:00","status","CANCELLED");
+        var saved=browser.settings("/orders/"+id,update,true);assertEquals(200,saved.statusCode());assertTrue(saved.body().contains("\"motion\":\"updated\""));
+        var stale=browser.settings("/orders/"+id,update,true);assertEquals(400,stale.statusCode());assertFalse(stale.body().contains("\"motion\""));assertFalse(stale.body().contains("\"saved\":true"));
+    }
+
+    @Test void nativeCompletionUsesOneTimeServerFlashInsteadOfTrustingSavedQuery() throws Exception {
+        long id=workBooking("Animacja rzeczywistego wykonania",DashboardService.today());app.close();app=RunningApp.start(true);jdbc=app.context().getBean(JdbcTemplate.class);
+        var browser=app.browser();browser.login();String path="/work/"+id;
+        assertFalse(browser.get(path+"?saved=1").body().contains("name=\"crm-confirmed\""));
+        var bad=browser.settings(path+"/complete",Map.of("version","0","final_total","-1","minutes","30"),true);assertEquals(400,bad.statusCode());assertFalse(bad.body().contains("name=\"crm-confirmed\""));
+        assertEquals("PLANNED",jdbc.queryForObject("SELECT status FROM booking WHERE id=?",String.class,id));
+        var good=browser.settings(path+"/complete",Map.of("version","0","final_total","150","minutes","30"),true);assertEquals(302,good.statusCode());
+        var page=browser.get(path+"?saved=1");assertEquals(200,page.statusCode());assertTrue(page.body().contains("name=\"crm-confirmed\""));assertTrue(page.body().contains("data-kind=\"completed\""));assertTrue(page.body().contains("data-order=\""+id+"\""));
+        assertFalse(browser.get(path+"?saved=1").body().contains("name=\"crm-confirmed\""));
+        assertTrue(page.body().contains("/js/tycoon-motion.js"));
+    }
+
     private static final class Browser {
         private final URI base;
         private final HttpClient http;

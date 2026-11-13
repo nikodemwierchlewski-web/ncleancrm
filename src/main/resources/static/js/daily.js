@@ -43,7 +43,7 @@
     }
   }
   function select(day, updateUrl = true) {
-    selected = day;
+    const previous=selected;selected = day;
     const cell = cellFor(day);
     for (const item of cells) item.classList.toggle('is-selected', item === cell);
     const label = cell.dataset.dateLabel;
@@ -73,6 +73,7 @@
       url.searchParams.set('day', day);
       url.searchParams.delete('saved');
       history.replaceState(null, '', url);
+      document.dispatchEvent(new CustomEvent('crm:day',{detail:{day,previous}}));
     }
   }
   function choose(day) {

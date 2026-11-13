@@ -14,7 +14,7 @@
           <label><span class="service-description"><strong th:text="${service.name}"></strong><small th:text="|${service.price} zł / ${service.unit}|"></small></span><input type="number" min="0" max="10000" step="0.01" value="0" th:name="|qty_${service.id}|" th:attr="aria-label=|Ilość: ${service.name}|"></label>
         </div>
       </div>
-      <div class="selection-summary"><h4>Wybrane usługi</h4><p id="booking-empty">Wybierz usługę przyciskiem + lub wpisz ilość.</p><ul id="booking-summary" aria-label="Wybrane pozycje"></ul></div>
+      <div class="selection-summary"><h4>Wybrane usługi <span id="booking-selected-count">0</span></h4><p id="booking-empty">Wybierz usługę przyciskiem + lub wpisz ilość.</p><ul id="booking-summary" aria-label="Wybrane pozycje"></ul></div>
     </section>
     <details id="chemistry-forecast" class="forecast-section"><summary>Ile chemii przewidujesz zużyć? <span id="forecast-total">Nie określono</span></summary><p class="field-help">Sprawdź lub popraw podpowiedź. To przewidywany koszt chemii, bez pozostałych kosztów wykonania.</p><div id="forecast-items"></div></details>
     <section class="booking-contact" aria-labelledby="contact-heading">

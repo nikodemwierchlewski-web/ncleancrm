@@ -1,5 +1,7 @@
 # Cleaning Tycoon — animacje i rzeczywisty postęp (eksperyment)
 
+Nowsze rozszerzenie: [interakcje i reakcje na klikanie](TYCOON-INTERACTIONS.md).
+
 Gałąź `experiment/cleaning-tycoon-progress` rozwija istniejący `experiment/pixel-tycoon` wraz z niepołączonym jeszcze pełnym CRM. Klasyczny interfejs pozostaje domyślny. Nie zmieniono produkcji ani wykonanych migracji V1–V13.
 
 ## Obsługa
