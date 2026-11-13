@@ -1,6 +1,7 @@
 /* One vocabulary for hints and short, read-only tours. No customer data is stored here. */
 window.NcleanekContent={
  tips:[
+  ['#note-form','Notatka, zadanie lub cel','Memo służy luźnym ustaleniom, zadanie ma być wykonane, a cel może mieć kroki. Przypięty wpis zobaczysz w podsumowaniu. Ukończenie celu potwierdzasz świadomie.'],
   ['#booking-categories','Usługi z kilku kategorii','Zmiana kategorii zachowuje wybrane pozycje. Ilości i ceny wszystkich usług zobaczysz w podsumowaniu.'],
   ['#customer-search','Klient lub telefon','Wyszukaj kontakt albo wpisz nowy. Sam numer nie scala klientów. Wpisanych danych nie musisz powtarzać.'],
   ['#booking-address','Adres tej wizyty','Możesz poprawić adres dla tego zlecenia. Nie nadpisuje to adresu domyślnego w kartotece klienta.'],
