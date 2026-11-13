@@ -1,0 +1,11 @@
+{
+  "zip_sha256": "363a4e8a8d5ff2ce58c79c56a73e821da80ce0e5229eb0366441782858cf6bf9",
+  "download_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/release/tycoon-0.1/preview/nclean-tycoon-0.1-demo.zip",
+  "bytes": 657264,
+  "download_matches_committed_zip": true,
+  "downloaded_html_browser_booking": true,
+  "nested_sandbox_customers_settings": true,
+  "javascript_errors": [],
+  "codex_preview_panel": "unavailable",
+  "pr_creation": "GitHub GraphQL access rejected: Forbidden; no PR created"
+}

@@ -80,3 +80,9 @@ Próba panelu Codexa: środowisko zgłasza `capabilities: []`, brak narzędzia s
 OSV querybatch: proxy zwróciło **403 Forbidden**. [Raport zależności](audit/tycoon-0.1-dependencies.json) podaje zinwentaryzowane JAR/koordynaty i ograniczenie; brak odpowiedzi nie oznacza braku CVE. Nie instalowano ciężkiego skanera ani nie zmieniano frameworka na podstawie domysłów.
 
 Przed formalnym zamknięciem produkcyjnym: odbiór na Windows i fizycznym telefonie, ręczne pozycje dostępności, pełna analiza zależności, własny staging z HTTPS/reverse proxy oraz rzeczywista retencja/kopie poza serwerem. Nowe moduły i integracje z CMS pozostają poza tym zadaniem.
+
+### Wynik publikacji artefaktu
+
+Gałąź wysłano do GitHuba. `gh pr create --draft` odrzucono komunikatem `Post "https://api.github.com/graphql": Forbidden`; numer PR nie powstał. Gotowy opis: [TYCOON-0.1-PR.md](TYCOON-0.1-PR.md). [Porównanie i ręczne utworzenie PR](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/main...release/tycoon-0.1?expand=1).
+
+[Pobierz ZIP](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/release/tycoon-0.1/preview/nclean-tycoon-0.1-demo.zip). Pobrany plik miał 657264 B i SHA-256 zgodne z build.json. Otworzono HTML z pobranej paczki: dodano zlecenie, sprawdzono szerokości390/1440 oraz Klientów/Ustawienia w zagnieżdżonym sandboxie; bez błędów JS. [Dowód dostarczenia](audit/tycoon-0.1-delivery.json). Sam panel Codexa pozostaje niedostępny.
