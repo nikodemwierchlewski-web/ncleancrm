@@ -1,0 +1,21 @@
+{
+  "code_commit": "6b9285e05007f23c776b24072668d890f0cd7b3c",
+  "jar_sha256": "0dc6ce074df8d7c091a999fd6972f5013aec7cee874abf74eafe68bcb54f365f",
+  "zip_sha256": "032dd1888ec50ec451f009c9bafb12e60a6a665befd1b1cf4bac5df64bcfc89f",
+  "bytes": 674409,
+  "download_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/feature/ncleanek-guide/preview/ncleanek-demo.zip",
+  "download_hashes_match": true,
+  "downloaded_html_browser_verified": true,
+  "nested_opaque_sandbox_verified": true,
+  "checks": [
+    "tour",
+    "contextual help in real booking form",
+    "simulated booking save",
+    "helper preferences across screens",
+    "clients and settings"
+  ],
+  "javascript_errors": [],
+  "codex_preview_panel": "not available; environment capabilities empty",
+  "pr_created": false,
+  "pr_failure": "Post https://api.github.com/graphql: Forbidden"
+}

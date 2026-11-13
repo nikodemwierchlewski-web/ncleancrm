@@ -47,3 +47,9 @@ Wbudowany panel Codexa w tej sesji nie udostępnia przeglądarki użytkownikowi.
 Wynik przeglądarki: 11 scenariuszy pomocnika i 60 kombinacji tras/szerokości, bez błędów JS. Zmierzono zmianę transformacji chodzącej postaci, pauzę poza ekranem i powrót ruchu; ograniczenie systemowe i symulowane ukrycie karty zatrzymują ruch. Dodatkowo samouczek notatki zachował tytuł i pozwolił zapisać dokładnie jeden wpis. Krótki viewport 390×430 mieści panel pomocy.
 
 axe-core 4.10.3: 16 kombinacji przy 360/390/768/1440 px, zero zgłoszonych naruszeń. We wszystkich 16 są pozycje incomplete wymagające ręcznej oceny; nie uznano ich za zaliczone. [Raport dostępności](audit/ncleanek-accessibility.json) i [próby interfejsu](audit/ncleanek-browser.json).
+
+## Dostarczenie
+
+[Pobierz zweryfikowany ZIP](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/feature/ncleanek-guide/preview/ncleanek-demo.zip). Pobrano 674409 B, porównano SHA-256 ZIP/HTML z build.json i uruchomiono pobrany HTML w Chromium. Pomoc, samouczek, próbny zapis, Klienci/Ustawienia i preferencje między ekranami przeszły także w zagnieżdżonym sandboxie. [Dowód pobrania](audit/ncleanek-delivery.json).
+
+Gałąź: `feature/ncleanek-guide`, baza: `release/tycoon-0.1`. Utworzenie draft PR przez gh zostało odrzucone: `Post "https://api.github.com/graphql": Forbidden`. Nie powstał numer PR. [Opis PR](NCLEANEK-PR.md), [porównanie zmian](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/release/tycoon-0.1...feature/ncleanek-guide?expand=1). Nie scalano ani nie wdrażano aplikacji.
