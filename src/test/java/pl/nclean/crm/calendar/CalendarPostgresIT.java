@@ -981,7 +981,7 @@ class CalendarPostgresIT {
         for(String path:List.of("/calendar","/today","/customers","/settings","/settings/areas","/settings/services","/settings/costs","/dashboard","/fuel","/costs","/notes","/day-closeout","/work/"+booking)){
             var page=experiment.get(path);assertEquals(200,page.statusCode(),path);
             assertTrue(page.body().contains("/css/tycoon.css"),path);assertTrue(page.body().contains("/js/tycoon.js"),path);
-            assertTrue(page.body().contains("TYCOON"),path);
+            assertTrue(page.body().contains("ncLEANEK"),path);assertFalse(page.body().contains(">TYCOON<"),path);
         }
         assertTrue(experiment.get("/dashboard").body().contains("/pixel/base.svg"));
         assertEquals(200,experiment.get("/pixel/base.svg").statusCode());
@@ -1163,6 +1163,16 @@ class CalendarPostgresIT {
         assertEquals(50,records.customerPage("Klient",0,true).size());assertThrows(IllegalArgumentException.class,()->records.customerPage("x",-1,false));
         var browser=app.browser();browser.login();assertEquals(200,browser.get("/customers?page=2").statusCode());assertTrue(browser.get("/customers").body().contains("Następne"));
         long id=workBooking("Stronicowanie nie gubi historii",DashboardService.today());assertEquals(200,browser.get("/orders").statusCode());assertEquals(200,browser.get("/orders?repeat="+id).statusCode());
+    }
+
+    @Test void ncleanekTracksAuthoritativeClosedAndReopenedDaysWithoutChangingRecords() throws Exception {
+        var today=DashboardService.today();var yesterday=today.minusDays(1);long id=workBooking("Pomocnik",yesterday);
+        var days=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var guide=app.context().getBean(pl.nclean.crm.help.GuideService.class);
+        assertEquals(yesterday,days.latestOpenBefore(today).orElseThrow().day());var before=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);
+        var browser=app.browser();browser.login();var response=browser.get("/help/context?date="+yesterday+"&order="+id);assertEquals(200,response.statusCode());assertTrue(response.body().contains("potwierdź"));assertEquals(before,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id));
+        var form=reviewFields(id);days.save(id,yesterday,form,OWNER);days.close(yesterday,days.review(yesterday).fingerprint(),OWNER);assertTrue(days.latestOpenBefore(today).isEmpty());assertFalse(guide.context(yesterday,id).containsKey("reminder"));
+        jdbc.update("UPDATE booking SET version=version+1 WHERE id=?",id);assertEquals(yesterday,days.latestOpenBefore(today).orElseThrow().day());assertTrue(guide.context(yesterday,id).containsKey("reminder"));assertEquals(404,browser.get("/help/context?date="+today+"&order="+id).statusCode());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(yesterday,app.context().getBean(pl.nclean.crm.work.DayReviewService.class).latestOpenBefore(today).orElseThrow().day());
     }
 
     private static final class Browser {

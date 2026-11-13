@@ -34,7 +34,7 @@ public class DayReviewService {
         var fingerprint=fingerprint(day);var saved=db.queryForList("SELECT * FROM day_review WHERE day=?",day);boolean closed=!saved.isEmpty()&&fingerprint.equals(saved.get(0).get("fingerprint"))&&complete==orders.size();
         return new Review(day,orders,moves,complete,fingerprint,closed,!saved.isEmpty()&&!closed);
     }
-    private String fingerprint(LocalDate day){return db.queryForObject("""
+    private static final String FINGERPRINT_SQL="""
         SELECT md5(jsonb_build_array(
           (SELECT COALESCE(jsonb_agg(to_jsonb(b) ORDER BY id),'[]') FROM booking b WHERE day=?),
           (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE day=?)),
@@ -42,7 +42,14 @@ public class DayReviewService {
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE day=?)),
           (SELECT COALESCE(jsonb_agg(to_jsonb(m) ORDER BY id),'[]') FROM booking_move m WHERE from_day=?)
         )::text)
-        """,String.class,day,day,day,day,day);}
+        """;
+    private String fingerprint(LocalDate day){return db.queryForObject(FINGERPRINT_SQL,String.class,day,day,day,day,day);}
+    /** Uses the same canonical fingerprint as closing a day; payments deliberately do not affect it. */
+    public Optional<Review> latestOpenBefore(LocalDate day){
+        DashboardService.period(day,"day");
+        var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
+        return dates.isEmpty()?Optional.empty():Optional.of(review(dates.get(0).toLocalDate()));
+    }
     @Transactional public void close(LocalDate day,String expected,String actor){
         if(day.isAfter(DashboardService.today()))throw new IllegalArgumentException("Dzień możesz zamknąć najwcześniej w dniu pracy.");
         // Prevent a new booking or photo/measurement write between validation and closure.

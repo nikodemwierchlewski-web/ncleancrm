@@ -116,6 +116,6 @@ Koszty i inwestycje, książeczka samochodu i historia sprzętu: [obsługa, zasa
 
 Diagnoza wersji, naprawy formularzy i pełna weryfikacja: [docs/DIAGNOZA-I-NAPRAWY.md](docs/DIAGNOZA-I-NAPRAWY.md).
 
-Cleaning Tycoon jest domyślnym, wspólnym wyglądem wszystkich ekranów, bez flag startowych. Aktualny stan wydania: [TYCOON-0.1.md](docs/TYCOON-0.1.md). Starsze instrukcje eksperymentalnego motywu są archiwalne.
+Pomoc kontekstową i krótkie samouczki obsługuje **ncLEANEK**. Grafika pozostaje wspólna dla całej aplikacji. [Obsługa pomocnika i wyniki testów](docs/NCLEANEK.md). Starsze audyty opisują historyczne nazewnictwo.
 
 Prompt zastosowanego audytu motywu: [PIXEL-TYCOON-AUDIT-PROMPT.md](docs/PIXEL-TYCOON-AUDIT-PROMPT.md).

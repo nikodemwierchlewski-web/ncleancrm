@@ -60,7 +60,7 @@
   }
   function confirmed(signal,carry=false,source){
     // Decoration must never turn a successful save into a client-side error.
-    try{if(!allowed.has(signal?.kind))return;if(carry){const id=Number(signal.id);put('nclean.motion.saved',{kind:signal.kind,id:Number.isSafeInteger(id)?id:0,at:Date.now()});}else apply(signal,source);}catch{}
+    try{if(!allowed.has(signal?.kind))return;document.dispatchEvent(new CustomEvent('nclean:committed',{detail:{kind:signal.kind}}));if(carry){const id=Number(signal.id);put('nclean.motion.saved',{kind:signal.kind,id:Number.isSafeInteger(id)?id:0,at:Date.now()});}else apply(signal,source);}catch{}
   }
   function progress(node,key){
     if(!node||!node.max)return;

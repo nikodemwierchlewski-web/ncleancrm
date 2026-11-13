@@ -15,7 +15,7 @@ Pierwszy skrypt poprosi dwukrotnie o własne hasło konta `local-owner`: minimum
 
 Drugi skrypt uruchomi izolowany PostgreSQL, poczeka na jego gotowość i uruchomi CRM z profilem `local`. Argumenty startowe wymuszają lokalny adres zarówno dla aplikacji, jak i Flyway, z pierwszeństwem przed zmiennymi środowiska Spring. Baza `nclean_crm` jest dostępna tylko pod `127.0.0.1:55433`. Konto aplikacji `crm_dev` nie jest superużytkownikiem. Ta konfiguracja nie korzysta z produkcyjnej bazy nclean.pl.
 
-Po pojawieniu się komunikatu o uruchomieniu aplikacji wejdź na **http://127.0.0.1:8081**, zaloguj się jako `local-owner` i wpisz wybrane wcześniej hasło. Kalendarz jest dostępny pod `/calendar`. Cleaning Tycoon działa od razu; parametr `-PixelTycoon` i profil `tycoon` nie są potrzebne. Starszy parametr pozostaje zgodnym aliasem.
+Po pojawieniu się komunikatu o uruchomieniu aplikacji wejdź na **http://127.0.0.1:8081**, zaloguj się jako `local-owner` i wpisz wybrane wcześniej hasło. Kalendarz jest dostępny pod `/calendar`. Interfejs graficzny i pomoc ncLEANEK działają od razu; dodatkowy parametr wyglądu nie jest potrzebny.
 
 ## Sprawdzenie zapisu po restarcie
 
