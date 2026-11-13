@@ -1144,6 +1144,7 @@ class CalendarPostgresIT {
         var wrong=reviewFields(other);wrong.put("date",day.toString());assertEquals(400,browser.settings("/day-closeout/"+other,wrong,true).statusCode());
         app.context().getBean(pl.nclean.crm.records.CrmRecords.class).reschedule(today,0,day.plusDays(1),java.time.LocalTime.NOON,"PLANNED");
         assertEquals(404,browser.get("/day-closeout?date="+day+"&order="+today).statusCode());assertEquals(404,browser.get("/work/999999999").statusCode());assertEquals(404,browser.get("/customers/999999999").statusCode());
+        assertEquals(404,browser.settings("/orders/999999999",Map.of("calendar","1","version","0","day",day,"starts","09:00","status","PLANNED"),true).statusCode());
     }
 
     @Test void sessionEndpointAndPublicThemeNeverExposePrivateData() throws Exception {
