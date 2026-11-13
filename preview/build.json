@@ -1,0 +1,8 @@
+{
+  "app_revision": "1f077f9",
+  "file": "nclean-pixel-tycoon-test.zip",
+  "sha256": "39724e18f7de7aa1baad0ed6296eba7222e2aaceaf20c561e9770e501f2c35e7",
+  "bytes": 645785,
+  "html_sha256": "58ed406f8958dd1f240a92e1a7ed1b9b4ad79170a43b972f9912a35f05157c65",
+  "standalone": "synthetic in-memory simulation, no PostgreSQL connection"
+}
