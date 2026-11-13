@@ -12,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class CrmRecords {
  private final JdbcTemplate db;
  private final ChemistryService chemistry;
- public CrmRecords(JdbcTemplate db,ChemistryService chemistry){this.db=db;this.chemistry=chemistry;}
+ private final pl.nclean.crm.tycoon.AchievementService achievements;
+ public CrmRecords(JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
  public List<ChemistryService.Material> materials(){return chemistry.materials();}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
  public Map<Long,BigDecimal> standardCosts(){return chemistry.standardCosts();}
@@ -111,5 +112,6 @@ public class CrmRecords {
   if(photoMoved)db.update("UPDATE booking SET work_minutes=NULL,work_started_at=NULL,work_finished_at=NULL,work_time_source='UNKNOWN' WHERE id=?",id);
   if(photoMoved||stopped){db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);if(stopped&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE id=?) WHERE booking_id=?",id,id);}
   db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE id=?",id,before.get(0).get("snapshot"),id);
+  if(status.equals("DONE"))achievements.performed(id);
  }
 }

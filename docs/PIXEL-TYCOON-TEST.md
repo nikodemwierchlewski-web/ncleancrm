@@ -1,5 +1,7 @@
 # ncLEAN Pixel Tycoon — eksperyment wizualny
 
+Nowszy etap z animacjami i zapisem osiągnięć: [Cleaning Tycoon](CLEANING-TYCOON-PROGRESS.md).
+
 **Wersja do oceny, bez akceptacji jako domyślny wygląd CRM.** Osobna gałąź `experiment/pixel-tycoon`, oparta na naprawionej wersji `fix/whole-crm-consistency` (`44effb9`). Nie scalano do main i nie wdrażano na produkcję.
 
 ## Jak włączyć i wrócić

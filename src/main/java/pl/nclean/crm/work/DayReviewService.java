@@ -13,7 +13,8 @@ import pl.nclean.crm.records.*;
 @Transactional(readOnly=true)
 public class DayReviewService {
     private final JdbcTemplate db; private final WorkService work; private final CrmRecords records; private final ActualUsageService actual;
-    public DayReviewService(JdbcTemplate db,WorkService work,CrmRecords records,ActualUsageService actual){this.db=db;this.work=work;this.records=records;this.actual=actual;}
+    private final pl.nclean.crm.tycoon.AchievementService achievements;
+    public DayReviewService(JdbcTemplate db,WorkService work,CrmRecords records,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.work=work;this.records=records;this.actual=actual;this.achievements=achievements;}
     public record Review(LocalDate day,List<Map<String,Object>> orders,List<Map<String,Object>> moves,int complete,String fingerprint,boolean closed,boolean changed){}
     public Review review(LocalDate day){
         DashboardService.period(day,"day");
@@ -50,6 +51,7 @@ public class DayReviewService {
         var review=review(day);if(!review.fingerprint.equals(expected))throw new IllegalArgumentException("Dane zmieniły się w innym oknie. Odśwież dzień i sprawdź zmiany.");
         if(review.complete!=review.orders.size())throw new IllegalArgumentException("Uzupełnij: "+review.orders.stream().filter(o->!Boolean.TRUE.equals(o.get("complete"))).map(o->o.get("customer_name")+": "+o.get("missing")).findFirst().orElse("brakujące dane"));
         db.update("INSERT INTO day_review(day,fingerprint,closed_by) VALUES (?,?,?) ON CONFLICT(day) DO UPDATE SET fingerprint=EXCLUDED.fingerprint,closed_by=EXCLUDED.closed_by,closed_at=CURRENT_TIMESTAMP",day,expected,actor);
+        achievements.dayClosed(day,review.orders.size());
     }
     @Transactional public void save(long id,LocalDate day,Map<String,String> p,String actor){
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);

@@ -18,7 +18,8 @@ public class NoteService {
     }
     public record Page(List<Entry> entries,long total,int page){public boolean more(){return (page+1L)*50<total;}}
     private final JdbcTemplate db;
-    public NoteService(JdbcTemplate db){this.db=db;}
+    private final pl.nclean.crm.tycoon.AchievementService achievements;
+    public NoteService(JdbcTemplate db,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.achievements=achievements;}
     public Entry draft(){return new Entry(null,0,UUID.randomUUID(),"NOTE","","",null,false,false,false,List.of());}
     private void lock(){db.queryForObject("SELECT id FROM memo_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
     private Entry read(Map<String,Object> r){long id=((Number)r.get("id")).longValue();var steps=db.query("SELECT * FROM memo_step WHERE entry_id=? ORDER BY position",(rs,n)->new Step(rs.getObject("id",UUID.class),rs.getString("text"),rs.getBoolean("done")),id);return new Entry(id,((Number)r.get("version")).longValue(),(UUID)r.get("request_token"),(String)r.get("kind"),(String)r.get("title"),(String)r.get("content"),r.get("due")==null?null:((java.sql.Date)r.get("due")).toLocalDate(),(Boolean)r.get("pinned"),(Boolean)r.get("completed"),(Boolean)r.get("archived"),steps);}
@@ -31,6 +32,7 @@ public class NoteService {
         var entries=db.queryForList("SELECT * FROM memo_entry"+filter+" ORDER BY pinned DESC,due NULLS LAST,updated_at DESC,id DESC LIMIT 50 OFFSET ?",parameters.toArray()).stream().map(this::read).toList();return new Page(entries,total,page);
     }
     public List<Entry> pinned(){return db.queryForList("SELECT * FROM memo_entry WHERE pinned AND NOT completed AND NOT archived ORDER BY due NULLS LAST,pinned_at DESC,id DESC LIMIT 3").stream().map(this::read).toList();}
+    public Entry pinnedGoal(){return db.queryForList("SELECT * FROM memo_entry WHERE kind='GOAL' AND pinned AND NOT completed AND NOT archived ORDER BY due NULLS LAST,pinned_at DESC,id DESC LIMIT 1").stream().findFirst().map(this::read).orElse(null);}
     public long pinnedCount(){return db.queryForObject("SELECT count(*) FROM memo_entry WHERE pinned AND NOT completed AND NOT archived",Long.class);}
     @Transactional public long save(Long id,long version,UUID token,String kind,String title,String content,LocalDate due,boolean pinned,List<Step> steps){
         if(token==null||!Set.of("NOTE","TASK","GOAL").contains(Objects.toString(kind,"")))throw new IllegalArgumentException("Wybierz rodzaj wpisu.");
@@ -56,6 +58,7 @@ public class NoteService {
             db.update("UPDATE memo_entry SET "+set+" WHERE id=?",id);
         }
         changed(db.update("UPDATE memo_entry SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND version=?",id,version));
+        if(action.equals("done")&&entry.kind.equals("GOAL"))achievements.goalCompleted(id);
     }
     private static void changed(int count){if(count!=1)throw conflict();}
     private static IllegalArgumentException conflict(){return new IllegalArgumentException("Wpis zmienił się w innym oknie. Twoje pola są zachowane. Sprawdź aktualny wpis przed ponownym zapisem.");}

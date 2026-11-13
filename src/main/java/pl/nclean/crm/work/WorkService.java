@@ -13,7 +13,8 @@ import pl.nclean.crm.records.ActualUsageService;
 @Transactional(readOnly=true)
 public class WorkService {
     private final JdbcTemplate db;private final ActualUsageService actual;
-    public WorkService(JdbcTemplate db,ActualUsageService actual){this.db=db;this.actual=actual;}
+    private final pl.nclean.crm.tycoon.AchievementService achievements;
+    public WorkService(JdbcTemplate db,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.actual=actual;this.achievements=achievements;}
     public static BigDecimal money(String value){return DashboardService.number(value,2,new BigDecimal("9999999999.99"),false);}
     public static Integer minutes(String value){if(value==null||value.isBlank())return null;try{int n=Integer.parseInt(value);if(n<0||n>10080)throw new NumberFormatException();return n;}catch(NumberFormatException ex){throw new IllegalArgumentException("Podaj czas od 0 do 10080 minut lub pozostaw brak danych.");}}
     private void guard(){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
@@ -47,7 +48,7 @@ public class WorkService {
         db.update("UPDATE booking_item SET final_amount=NULL,work_minutes=NULL WHERE booking_id=?",id);
         for(var e:allocations.entrySet())db.update("UPDATE booking_item SET final_amount=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
         for(var e:times.entrySet())db.update("UPDATE booking_item SET work_minutes=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
-        for(var m:measured)actual.record(id,m.position(),m.version(),m.values());audit(id,before,actor);
+        for(var m:measured)actual.record(id,m.position(),m.version(),m.values());audit(id,before,actor);achievements.performed(id);
     }
     public BigDecimal paid(long id){return db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id);}
     @Transactional public long pay(long id,UUID token,LocalDate date,String value,String method,String note){

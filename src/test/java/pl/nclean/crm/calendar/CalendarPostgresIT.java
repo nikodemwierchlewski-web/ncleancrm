@@ -65,7 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
-        jdbc.update("DELETE FROM cost_audit");jdbc.update("DELETE FROM cost_entry");jdbc.update("DELETE FROM equipment_item");jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
+        jdbc.update("DELETE FROM tycoon_award");jdbc.update("DELETE FROM cost_audit");jdbc.update("DELETE FROM cost_entry");jdbc.update("DELETE FROM equipment_item");jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
         jdbc.update("DELETE FROM dashboard_month_cost");jdbc.update("DELETE FROM dashboard_month");jdbc.update("DELETE FROM dashboard_fuel");
@@ -86,7 +86,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -111,7 +111,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -231,7 +231,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(13, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(14, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -965,7 +965,7 @@ class CalendarPostgresIT {
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
         assertEquals(beforeBooking,old.queryForMap("SELECT * FROM booking WHERE id=?",booking));assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(13,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(14,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -990,6 +990,88 @@ class CalendarPostgresIT {
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
         var restored=app.browser();restored.login();assertFalse(restored.get("/calendar").body().contains("/css/tycoon.css"));
         assertEquals(original,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking));
+    }
+
+    @Test void tycoonMilestonesFollowCommittedWorkAndKeepHistoryAfterCorrection() throws Exception {
+        var awards=app.context().getBean(pl.nclean.crm.tycoon.AchievementService.class);
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        var day=DashboardService.today();long id=workBooking("Pierwsza odznaka",day);
+        assertThrows(IllegalArgumentException.class,()->work.complete(id,0,"-1","60","",Map.of(),Map.of(),List.of(),OWNER));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        var tx=new org.springframework.transaction.support.TransactionTemplate(app.context().getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        tx.executeWithoutResult(t->{work.complete(id,0,"180","60","",Map.of(),Map.of(),List.of(),OWNER);t.setRollbackOnly();});
+        assertEquals("PLANNED",work.order(id).get("status"));assertEquals(0,awards.performedCount());
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        work.complete(id,0,"180","60","",Map.of(),Map.of(),List.of(),OWNER);awards.performed(id);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        assertEquals("EVENT",jdbc.queryForObject("SELECT origin FROM tycoon_award",String.class));
+        for(int n=1;n<10;n++){long next=workBooking("Licznik "+n,day);records.reschedule(next,0,day,java.time.LocalTime.NOON,"DONE");}
+        assertEquals(10,awards.performedCount());assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        long future=workBooking("Przyszłe",day.plusDays(1));jdbc.update("UPDATE booking SET status='DONE' WHERE id=?",future);awards.performed(future);
+        assertEquals(10,awards.performedCount());
+        records.reschedule(id,1,day,java.time.LocalTime.NOON,"CANCELLED");assertEquals(9,awards.performedCount());
+        assertTrue(awards.badges().stream().filter(b->b.get("code").equals("TEN_CLEAN")).allMatch(b->Boolean.TRUE.equals(b.get("earned"))&&b.get("current").equals(9L)));
+        var before=jdbc.queryForMap("SELECT * FROM tycoon_award WHERE code='TEN_CLEAN'");
+        app.close();app=RunningApp.start(true);jdbc=app.context().getBean(JdbcTemplate.class);
+        assertEquals(before,jdbc.queryForMap("SELECT * FROM tycoon_award WHERE code='TEN_CLEAN'"));
+        var browser=app.browser();browser.login();var read=browser.get("/tycoon/progress?date="+day);assertEquals(200,read.statusCode());assertTrue(read.body().contains("\"performed\":9"));
+        assertEquals(400,browser.get("/tycoon/progress?date=1900-01-01").statusCode());
+        assertEquals(403,browser.settings("/tycoon/achievements/TEN_CLEAN/ack",Map.of(),false).statusCode());
+        assertEquals(400,browser.settings("/tycoon/achievements/UNKNOWN/ack",Map.of(),true).statusCode());
+    }
+
+    @Test void tycoonNotificationIsClaimedOnceAcrossTabsAndRestart() throws Exception {
+        long id=workBooking("Jedna wiadomość",DashboardService.today());
+        app.context().getBean(pl.nclean.crm.work.WorkService.class).complete(id,0,"120","30","",Map.of(),Map.of(),List.of(),OWNER);
+        var awards=app.context().getBean(pl.nclean.crm.tycoon.AchievementService.class);
+        assertTrue(awards.badges().stream().anyMatch(b->Boolean.TRUE.equals(b.get("pending"))));
+        var pool=java.util.concurrent.Executors.newFixedThreadPool(2);var gate=new java.util.concurrent.CountDownLatch(1);
+        try{java.util.concurrent.Callable<Boolean> claim=()->{gate.await();return awards.acknowledge("FIRST_CLEAN");};var a=pool.submit(claim);var b=pool.submit(claim);gate.countDown();assertNotEquals(a.get(10,java.util.concurrent.TimeUnit.SECONDS),b.get(10,java.util.concurrent.TimeUnit.SECONDS));}finally{pool.shutdownNow();}
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertFalse(app.context().getBean(pl.nclean.crm.tycoon.AchievementService.class).acknowledge("FIRST_CLEAN"));
+        assertFalse(app.context().getBean(pl.nclean.crm.tycoon.AchievementService.class).badges().stream().anyMatch(b->Boolean.TRUE.equals(b.get("pending"))));
+    }
+
+    @Test void tycoonDayBadgeRequiresNonemptyValidCloseoutAndKeepsHistoricAward() {
+        var day=DashboardService.today();var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
+        review.close(day,review.review(day).fingerprint(),OWNER);assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        long id=workBooking("Tycoon dokumentacja",day);assertThrows(IllegalArgumentException.class,()->review.close(day,review.review(day).fingerprint(),OWNER));
+        review.save(id,day,reviewFields(id),OWNER);assertEquals(1,review.review(day).complete());
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
+        review.close(day,review.review(day).fingerprint(),OWNER);review.close(day,review.review(day).fingerprint(),OWNER);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
+        workBooking("Tycoon dodatkowa wizyta",day);assertFalse(review.review(day).closed());
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
+    }
+
+    @Test void tycoonGoalUsesExistingStepsAndExplicitCompletion() {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var step=UUID.randomUUID();
+        long id=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel z krokami","",null,true,List.of(new pl.nclean.crm.notes.NoteService.Step(step,"Krok",false)));
+        notes.action(id,0,"step",step,true);assertEquals(1,notes.pinnedGoal().doneSteps());
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        assertThrows(IllegalArgumentException.class,()->notes.action(id,0,"done",null,false));
+        notes.action(id,1,"done",null,false);assertNull(notes.pinnedGoal());
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_GOAL'",Integer.class));
+        notes.action(id,2,"reopen",null,false);assertEquals(id,notes.pinnedGoal().id());
+        notes.action(id,3,"done",null,false);assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        long task=notes.save(null,0,UUID.randomUUID(),"TASK","Zadanie","",null,true,List.of());notes.action(task,0,"done",null,false);
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+    }
+
+    @Test void v14RecognizesHistoricMilestonesWithoutPopupsOrChangingDomainData() {
+        String schema="upgrade_v14_tycoon";
+        var source=new DriverManagerDataSource(POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema,POSTGRES.getUsername(),POSTGRES.getPassword());
+        var old=new JdbcTemplate(source);Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("13").load().migrate();
+        long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Historyczny klient','500000099') RETURNING id",Long.class);
+        for(int i=0;i<50;i++)old.update("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,status) VALUES (?,?,CURRENT_DATE,TIME '10:00','Syntetyczny klient','500000099','Adres testowy',180,'DONE')",UUID.randomUUID(),person);
+        old.update("INSERT INTO memo_entry(request_token,kind,title,completed) VALUES (?,'GOAL','Historyczny cel',true)",UUID.randomUUID());
+        var before=old.queryForList("SELECT * FROM booking ORDER BY id");var goal=old.queryForMap("SELECT * FROM memo_entry");
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
+        assertEquals(before,old.queryForList("SELECT * FROM booking ORDER BY id"));assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
+        assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE origin='HISTORY' AND notified_at IS NOT NULL",Integer.class));
+        assertEquals(0,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
     }
 
     private static final class Browser {

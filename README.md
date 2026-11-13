@@ -20,6 +20,8 @@ Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, JPA/H
 
 Aktualny audyt i warunki wdrożenia: [docs/AUDYT-GOTOWOSCI.md](docs/AUDYT-GOTOWOSCI.md).
 
+Eksperymentalny Cleaning Tycoon: [animacje, odznaki i postęp](docs/CLEANING-TYCOON-PROGRESS.md), [pobieralny podgląd](preview/README.md). Klasyczny wygląd pozostaje domyślny.
+
 ## Windows — pierwsze uruchomienie
 
 Zainstaluj JDK 17, ustaw `JAVA_HOME` i uruchom Docker Desktop z kontenerami Linux oraz Compose v2. W PowerShell, w katalogu repozytorium:

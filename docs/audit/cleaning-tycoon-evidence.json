@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-13",
+  "branch": "experiment/cleaning-tycoon-progress",
+  "java": "17",
+  "database": "PostgreSQL 17, Testcontainers + disposable local Compose schemas",
+  "unit_mvc": {
+    "tests": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "integration": {
+    "tests": 76,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "browser_widths": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "real_app": [
+    "eight bookings",
+    "503 retry and preserved draft",
+    "two-tab conflicts",
+    "photos/time/chemistry",
+    "goals and steps",
+    "day closeout/reopen after correction",
+    "restart persistence",
+    "SVG/motion preference/OS",
+    "notification waits for modal",
+    "concurrent notification acknowledgement"
+  ],
+  "standalone_html": [
+    "60 actual rendered views; local simulation adapters",
+    "five badge images load",
+    "goal steps and day progress",
+    "synthetic closeout earns badge once",
+    "motion preference across views",
+    "four widths",
+    "classic switch",
+    "nested opaque iframe navigation and save"
+  ],
+  "migrations_unchanged": {
+    "V3__customers_catalog_bookings.sql": "39f6886fae3658801e3cf0b26be9b49dcee26096d70224f7b337a16f08c650ff",
+    "V5__service_prices_and_chemical_forecasts.sql": "4f03b9bcbefc6955bf885b48b40f4ab45daa933087301ed82c9737e32aa17e2d",
+    "V11__day_closeout.sql": "64dc14c9be34c1d96d20523576b16f47816888804252d0900a379693835f19e6",
+    "V6__actual_chemical_usage.sql": "ea3c52c41d7787abc62ec0eba599529e366a2ef1d117034f7b37f6cebddb9a8c",
+    "V1__calendar.sql": "0fe2c1b537568ad3536693e75034a8ae03e4ece372dcfe6225f5acdcc1f2beb9",
+    "V7__dashboard_costs.sql": "4d3b1c7b3dd1bd7224673cb9eb9745acf1555c42cfa33dcf856f8414dd9c5e82",
+    "V2__multiple_day_areas.sql": "6eb0012b7dc775ed7bd1031cc70c4a5b579156a6b1f3edaba90dc0cc60ea7d00",
+    "V9__workday_completion_and_payments.sql": "b5afb765872cb14fea7bc155e3cfe3af96132e13bcba6373adfa197521f91997",
+    "V4__weekly_area_plans.sql": "59de21c663fccb599320f1cbb6053ec64aa14e2b59bd4ef7be78823a78461fee",
+    "V8__fuel_journal_and_receipts.sql": "8a637c9cd1b0da0f350eed4ab6e21a5034a652e1ad9d2e224f202bb2b8cebced",
+    "V10__customer_context_and_service_photos.sql": "a0ccdd8bc7ca228a63bb95681dac06f9387263f2765630f293ba422e66fe174d",
+    "V12__notes_and_goals.sql": "2c4bd0ad588e044b5eb2099646460492c99c59e95bffa1fd2c62a4ea89b06e19",
+    "V13__costs_equipment_and_vehicle_book.sql": "c581c183b5a37480c72d5f9ec883d1776080687bdc104a1e9ff453bf8b812df4"
+  },
+  "production_access": false,
+  "native_codex_preview": false,
+  "ui_default": "classic",
+  "runtime_sha256": "5b70e53182425e5c6dfe76ae99e4199230c004ebc674b27d9319f96b49a0c050"
+}

@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--owner-file', type=Path, required=True)
     parser.add_argument('--port', type=int, default=18096)
     parser.add_argument('--chromium', default=shutil.which('chromium'))
+    parser.add_argument('--pixel-tycoon', action='store_true', help='Also verify experimental artwork, progress and motion settings.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     jar = root / 'target/nclean-crm-0.0.1-SNAPSHOT.jar'
@@ -63,7 +64,7 @@ def main():
         with (run_dir / 'app.log').open('wb') as log:
             process = subprocess.Popen([
                 java, '-jar', str(run_dir / 'app.jar'),
-                '--spring.profiles.active=local', '--server.address=127.0.0.1',
+                '--spring.profiles.active=' + ('local,tycoon' if args.pixel_tycoon else 'local'), '--server.address=127.0.0.1',
                 '--server.port=' + str(args.port), '--spring.datasource.url=' + url,
                 '--spring.flyway.url=' + url, '--spring.flyway.default-schema=' + schema,
                 '--spring.flyway.schemas=' + schema,
@@ -96,6 +97,36 @@ def main():
             page.locator('[name=password]').fill(owner['password'])
             with page.expect_navigation():
                 page.locator('button[type=submit]').click()
+            if args.pixel_tycoon:
+                for width in (360, 390, 768, 1440):
+                    page.set_viewport_size({'width': width, 'height': 844})
+                    for route in ('/calendar', '/dashboard', '/settings'):
+                        page.goto(base + route)
+                        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width, route)
+                        if route != '/settings':
+                            world = page.locator('svg.tycoon-world')
+                            expect(world).to_have_count(1)
+                            world.scroll_into_view_if_needed()
+                        if route == '/dashboard':
+                            expect(page.locator('[data-tycoon-summary] strong')).to_contain_text('zleceń uzupełnionych')
+                    page.locator('[data-motion-toggle]').click()
+                    expect(page.locator('[data-motion-toggle]')).to_have_attribute('aria-pressed', 'true')
+                    page.goto(base + '/calendar')
+                    expect(page.locator('svg.tycoon-world')).to_have_count(1)
+                    assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                    page.goto(base + '/settings')
+                    page.locator('[data-motion-toggle]').click()
+                page.emulate_media(reduced_motion='reduce')
+                page.goto(base + '/calendar')
+                expect(page.locator('svg.tycoon-world')).to_have_count(1)
+                assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                page.emulate_media(reduced_motion='no-preference')
+                page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.qaHidden});window.qaHidden=true;document.dispatchEvent(new Event('visibilitychange'));")
+                assert page.locator('html').evaluate("e=>e.classList.contains('tycoon-hidden')")
+                assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                page.evaluate("window.qaHidden=false;document.dispatchEvent(new Event('visibilitychange'));")
+                assert not page.locator('html').evaluate("e=>e.classList.contains('tycoon-hidden')")
+                print('PASS Pixel Tycoon: SVG, progress, four widths, motion preference/reload and OS reduced motion.', flush=True)
             page.goto(base + '/customers')
 
             for name, phone in [('Klient Alfa QA', '500000001'), ('Klient Beta QA', '500000002')]:

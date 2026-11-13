@@ -26,6 +26,7 @@
   <path d="m294 153 60-28M294 161l60-28M294 169l60-28" stroke="#B4CBC6" stroke-width="3"/>
   <path d="m146 76 52 24v16l-52-24z" fill="#087CC5"/>
   <path d="m152 83 4 2v6l-4-2zm8 4 4 2v6l-4-2zm8 4 4 2v6l-4-2zm8 4 4 2v6l-4-2zm8 4 4 2v6l-4-2z" fill="#E1FAEE"/>
+  <g class="pixel-van">
   <!-- Blue company van. -->
   <path d="m350 150 60-28 70 32-60 28z" fill="#184E68" opacity=".13"/>
   <path d="m344 132 52-24 68 32-52 24z" fill="#F2FAEE"/>
@@ -40,6 +41,7 @@
   <path d="m358 162 12 6v12l-12-6zM394 179l12 6v12l-12-6z" fill="#203D50"/>
   <path d="m361 166 6 3v6l-6-3zM397 183l6 3v6l-6-3z" fill="#94B9B9"/>
   <path d="m420 174 11-5v7l-11 5zM448 161l10-5v7l-10 5z" fill="#FBE7A4"/>
+  </g>
   <!-- Sofa being cleaned. -->
   <path d="m76 158 42-20 60 28-42 20z" fill="#274D56" opacity=".12"/>
   <path d="m78 140 40-18 52 24-40 18z" fill="#9DCC9E"/>
@@ -66,12 +68,12 @@
   <path d="m318 191 10 5v19l-10-5z" fill="#C59057"/>
   <path d="m321 186 7-3 7 3v5l-7 3-7-3z" fill="#597D81"/>
   <!-- Original pixel worker, cleaning a sofa. -->
-  <g><path d="M180 169h10v7h-10z" fill="#234954"/><path d="M182 175h8v8h-8z" fill="#E4B48B"/><path d="M178 183h14v13h-14z" fill="#148AC0"/><path d="M176 185h4v10h-4zm16 0h4v8h-4z" fill="#E4B48B"/><path d="M179 196h5v8h-5zm8 0h5v8h-5z" fill="#285574"/><path d="M177 204h7v3h-7zm10 0h7v3h-7z" fill="#23414B"/><path d="M179 169h12v3h-12z" fill="#F0F4DE"/></g>
-  <g fill="#FFFDF0"><path d="M102 118h4v4h-4zm9-7h3v3h-3zm-15-7h3v3h-3z"/><path d="M113 109v8m-4-4h8" stroke="#FAFCED" stroke-width="2"/></g>
+  <g class="pixel-worker"><path d="M180 169h10v7h-10z" fill="#234954"/><path d="M182 175h8v8h-8z" fill="#E4B48B"/><path d="M178 183h14v13h-14z" fill="#148AC0"/><path d="M176 185h4v10h-4zm16 0h4v8h-4z" fill="#E4B48B"/><path d="M179 196h5v8h-5zm8 0h5v8h-5z" fill="#285574"/><path d="M177 204h7v3h-7zm10 0h7v3h-7z" fill="#23414B"/><path d="M179 169h12v3h-12z" fill="#F0F4DE"/></g>
+  <g class="pixel-bubbles" fill="#FFFDF0"><path d="M102 118h4v4h-4zm9-7h3v3h-3zm-15-7h3v3h-3z"/><path d="M113 109v8m-4-4h8" stroke="#FAFCED" stroke-width="2"/></g>
   <!-- Plants, path and clean sparkle. -->
   <path d="m432 91 12-6 12 6v14l-12 6-12-6z" fill="#B7A17A"/>
   <path d="m437 66 12-6 12 6v22l-12 6-12-6z" fill="#65B393"/>
   <path d="m429 74 12-6 12 6v17l-12 6-12-6z" fill="#91CE9C"/>
   <path d="m449 69 8-4 8 4v20l-8 4-8-4z" fill="#438F83"/>
-  <path d="M477 68v16m-8-8h16M95 82v12m-6-6h12" stroke="#F6CF66" stroke-width="4"/>
+  <path class="pixel-sparkle" d="M477 68v16m-8-8h16M95 82v12m-6-6h12" stroke="#F6CF66" stroke-width="4"/>
 </svg>

@@ -9,4 +9,12 @@
   <img src="/pixel/base.svg" width="560" height="248" alt="">
 
 </figure>
+<section th:fragment="progress" th:if="${pixelTycoon}" class="tycoon-progress" id="tycoon-progress" th:attr="data-date=${date}" aria-labelledby="tycoon-progress-title">
+  <header><h2 id="tycoon-progress-title">Twój postęp</h2><button type="button" class="text-button" data-motion-toggle aria-pressed="false">Ogranicz animacje</button></header>
+  <div data-tycoon-summary role="status"><p>Postęp dokumentacji pojawi się po odczycie danych.</p></div>
+  <div data-tycoon-goal></div>
+  <details><summary>Odznaki i historia</summary><p class="field-help">Odznaki dokumentują osiągnięty etap. Bieżące liczniki zmieniają się po korektach. Daty historycznych odznak oznaczają rozpoznanie przy aktualizacji.</p><div class="tycoon-badges" data-tycoon-badges></div></details>
+  <p class="field-help" data-tycoon-error role="status"></p>
+</section>
+<div th:fragment="motion" th:if="${pixelTycoon}" class="tycoon-motion-settings"><button type="button" class="button secondary" data-motion-toggle aria-pressed="false">Ogranicz animacje</button><p class="field-help">Ustawienia systemowe ograniczające ruch zawsze mają pierwszeństwo.</p></div>
 </body></html>
