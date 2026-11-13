@@ -1,14 +1,8 @@
-# ncLEAN CRM — klikalny podgląd Lean
+# Podgląd ncLEAN · Cleaning Tycoon
 
-Pobierz **[nclean-pixel-tycoon-test.zip](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/ux/lean-workspace/preview/nclean-pixel-tycoon-test.zip)**. Jeżeli GitHub wymaga dostępu, zaloguj się na konto mające dostęp do repozytorium.
+Aktualna paczka: [nclean-tycoon-0.1-demo.zip](nclean-tycoon-0.1-demo.zip).
+Pobierz, wypakuj i otwórz `index.html`. Dane są syntetyczne; zapis działa tylko w pamięci karty. Nie ma połączenia z bazą CRM.
 
-1. Rozpakuj ZIP do zwykłego folderu.
-2. Otwórz `index.html` w Chrome, Edge lub Firefox.
-3. Zacznij od Kalendarza, następnie sprawdź Dzisiaj i Więcej. Podsumowanie pokazuje trzy kwoty i akcję; analizy oraz notatki rozwija się na żądanie.
-4. Klasyczny wygląd jest domyślny. Przycisk Pixel Tycoon pozwala porównać opcjonalny motyw i animacje.
+Tycoon działa od razu. Dostępne są kalendarz, klienci, cennik i obszary, wykonanie, podsumowanie, koszty, notatki oraz cele. To eksport 62 widoków istniejącej aplikacji ze wspólnymi stylami i skryptami oraz lokalnymi adapterami symulującymi zapis. Nie wszystkie operacje serwerowe da się symulować; trwałość sprawdzono osobno na prawdziwej aplikacji.
 
-To samodzielny HTML z lokalnymi zasobami. Dane są syntetyczne, zapis jest symulowany w pamięci karty, a odświeżenie resetuje zmiany. Nie jest to połączenie z bazą CRM. Prawdziwą aplikację i PostgreSQL sprawdzono oddzielnie.
-
-Instrukcja zmian i wyniki: [LEAN-WORKSPACE.md](../docs/LEAN-WORKSPACE.md). Tożsamość paczki: [build.json](build.json). Dołączono licencje fontów.
-
-Ta sesja Codexa nie deklaruje pulpitu/przekierowania portów (`capabilities: []`). Lokalny HTTP używany do testów nie jest publicznym adresem na komputerze użytkownika. Dlatego podgląd dostarczamy przez pobieralny ZIP, bez odnośnika do niedostępnej ścieżki `/workspace`.
+Sumy i commit: [build.json](build.json). Testy i ograniczenia: [raport wydania](../docs/TYCOON-0.1-VALIDATION.md). Starsza paczka z `test` w nazwie jest archiwalna.

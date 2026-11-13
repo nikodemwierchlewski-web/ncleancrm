@@ -1,0 +1,478 @@
+{
+  "session_and_lost_response": {
+    "relogin": "retry succeeds with fresh CSRF",
+    "commits": 1,
+    "clients": 1,
+    "items": 2,
+    "idempotency_token_preserved": true
+  },
+  "allocation_correction": {
+    "hidden_conflict_revealed": true,
+    "explicit_clear": true,
+    "final_total": "210.00",
+    "history_retained": 4
+  },
+  "explicit_missing_ids": true,
+  "native_form_session_recovery": true,
+  "views": [
+    {
+      "width": 360,
+      "route": "/calendar",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/today",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/dashboard",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/more",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/customers",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings/services",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings/areas",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/costs",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/fuel",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/notes",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/callbacks",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/search",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/work/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/day-closeout?date=2026-11-13",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/logout",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/offline.html",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/missing-release-route",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/calendar",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/today",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/dashboard",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/more",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/customers",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings/services",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings/areas",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/costs",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/fuel",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/notes",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/callbacks",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/search",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/work/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/day-closeout?date=2026-11-13",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/logout",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/offline.html",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/missing-release-route",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/calendar",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/today",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/dashboard",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/more",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/customers",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings/services",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings/areas",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/costs",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/fuel",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/notes",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/callbacks",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/search",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/work/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/day-closeout?date=2026-11-13",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/logout",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/offline.html",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/missing-release-route",
+      "status": 404,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/calendar",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/today",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/dashboard",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/more",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/customers",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings/services",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings/areas",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/costs",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/fuel",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/notes",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/callbacks",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/search",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/work/1",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/day-closeout?date=2026-11-13",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/logout",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/offline.html",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/missing-release-route",
+      "status": 404,
+      "overflow": false
+    }
+  ],
+  "javascript_errors": [],
+  "jar_sha256": "c5bf36c322fd878368c696a3cfedeea2bdde0687a38c8ee28a74929f469a6c58",
+  "code_commit": "d72314109003a5c991aab960859a2ae9417cb4a6"
+}

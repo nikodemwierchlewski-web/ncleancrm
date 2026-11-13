@@ -1,0 +1,134 @@
+{
+  "volume": {
+    "customers": 303,
+    "bookings": 503,
+    "measurements": [
+      {
+        "route": "/calendar",
+        "first_request": {
+          "ms": 421.0,
+          "bytes": 445549,
+          "jdbc_queries": 12
+        },
+        "warm_samples": [
+          {
+            "ms": 295.1,
+            "bytes": 445549,
+            "jdbc_queries": 12
+          },
+          {
+            "ms": 190.4,
+            "bytes": 445549,
+            "jdbc_queries": 12
+          },
+          {
+            "ms": 321.9,
+            "bytes": 445549,
+            "jdbc_queries": 12
+          }
+        ],
+        "warm_median_ms": 295.1,
+        "first_contentful_paint_ms": 364
+      },
+      {
+        "route": "/customers",
+        "first_request": {
+          "ms": 71.2,
+          "bytes": 39295,
+          "jdbc_queries": 1
+        },
+        "warm_samples": [
+          {
+            "ms": 31.9,
+            "bytes": 39295,
+            "jdbc_queries": 1
+          },
+          {
+            "ms": 20.1,
+            "bytes": 39295,
+            "jdbc_queries": 1
+          },
+          {
+            "ms": 16.1,
+            "bytes": 39295,
+            "jdbc_queries": 1
+          }
+        ],
+        "warm_median_ms": 20.1,
+        "first_contentful_paint_ms": 156
+      },
+      {
+        "route": "/dashboard?range=month",
+        "first_request": {
+          "ms": 321.9,
+          "bytes": 65893,
+          "jdbc_queries": 29
+        },
+        "warm_samples": [
+          {
+            "ms": 158.7,
+            "bytes": 65893,
+            "jdbc_queries": 29
+          },
+          {
+            "ms": 150.0,
+            "bytes": 65893,
+            "jdbc_queries": 29
+          },
+          {
+            "ms": 125.0,
+            "bytes": 65893,
+            "jdbc_queries": 29
+          }
+        ],
+        "warm_median_ms": 150.0,
+        "first_contentful_paint_ms": 284
+      },
+      {
+        "route": "/orders",
+        "first_request": {
+          "ms": 90.3,
+          "bytes": 55850,
+          "jdbc_queries": 14
+        },
+        "warm_samples": [
+          {
+            "ms": 154.4,
+            "bytes": 55850,
+            "jdbc_queries": 14
+          },
+          {
+            "ms": 88.4,
+            "bytes": 55850,
+            "jdbc_queries": 14
+          },
+          {
+            "ms": 44.8,
+            "bytes": 55850,
+            "jdbc_queries": 14
+          }
+        ],
+        "warm_median_ms": 88.4,
+        "first_contentful_paint_ms": 264
+      }
+    ],
+    "query_note": "JDBC DEBUG execution logs, no parameter logging; API requests with UI background stopped. /orders has 3 batch detail queries instead of 3 per booking."
+  },
+  "restore": {
+    "hashes_equal": true,
+    "tables": {
+      "booking": "503:747b0e4f5eefa580d29e635ac79575b8",
+      "crm_customer": "303:3c81a1a552a336dc7ddf0fd611e46c44",
+      "booking_item": "503:59ff2c8841b2a67214f7706a19b81c83",
+      "booking_payment": "1:37fb25fe838d8d4bb10f69d329b6bac5",
+      "booking_audit": "1:4794d4c38c19ee586bc9d6971f083687",
+      "memo_entry": "1:13d191e8859943c352cb38e8cf36dcd6",
+      "fuel_receipt": "1:23d3cbf8acc04765e7d90d5e1153f540",
+      "booking_photo": "1:a93c800c0188a736a983b7ed97c0f752"
+    },
+    "application_start_and_login": true,
+    "same_jar": true
+  },
+  "jar_sha256": "c5bf36c322fd878368c696a3cfedeea2bdde0687a38c8ee28a74929f469a6c58",
+  "code_commit": "d72314109003a5c991aab960859a2ae9417cb4a6"
+}

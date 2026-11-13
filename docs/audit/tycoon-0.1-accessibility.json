@@ -1,0 +1,386 @@
+[
+  {
+    "screen": "/calendar",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ],
+    "passes": 34
+  },
+  {
+    "screen": "/today",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ],
+    "passes": 31
+  },
+  {
+    "screen": "/dashboard",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ],
+    "passes": 41
+  },
+  {
+    "screen": "/more",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 12
+      }
+    ],
+    "passes": 30
+  },
+  {
+    "screen": "/settings",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ],
+    "passes": 31
+  },
+  {
+    "screen": "/customers",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ],
+    "passes": 34
+  },
+  {
+    "screen": "/settings/services",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 32
+  },
+  {
+    "screen": "/settings/areas",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ],
+    "passes": 36
+  },
+  {
+    "screen": "/costs",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 12
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ],
+    "passes": 38
+  },
+  {
+    "screen": "/fuel",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ],
+    "passes": 37
+  },
+  {
+    "screen": "/notes",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ],
+    "passes": 37
+  },
+  {
+    "screen": "/callbacks",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ],
+    "passes": 30
+  },
+  {
+    "screen": "/search",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 33
+  },
+  {
+    "screen": "booking dialog",
+    "width": 390,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 34
+  },
+  {
+    "screen": "/calendar",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ],
+    "passes": 37
+  },
+  {
+    "screen": "/today",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 5
+      }
+    ],
+    "passes": 31
+  },
+  {
+    "screen": "/dashboard",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      }
+    ],
+    "passes": 41
+  },
+  {
+    "screen": "/more",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 12
+      }
+    ],
+    "passes": 30
+  },
+  {
+    "screen": "/settings",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 13
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ],
+    "passes": 31
+  },
+  {
+    "screen": "/customers",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 4
+      }
+    ],
+    "passes": 34
+  },
+  {
+    "screen": "/settings/services",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 32
+  },
+  {
+    "screen": "/settings/areas",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ],
+    "passes": 36
+  },
+  {
+    "screen": "/costs",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 12
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ],
+    "passes": 38
+  },
+  {
+    "screen": "/fuel",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ],
+    "passes": 37
+  },
+  {
+    "screen": "/notes",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 6
+      }
+    ],
+    "passes": 37
+  },
+  {
+    "screen": "/callbacks",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 3
+      }
+    ],
+    "passes": 30
+  },
+  {
+    "screen": "/search",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 33
+  },
+  {
+    "screen": "booking dialog",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 33
+  },
+  {
+    "screen": "logout confirmation",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 2
+      }
+    ],
+    "passes": 20
+  },
+  {
+    "screen": "login",
+    "width": 1440,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 7
+      }
+    ],
+    "passes": 23
+  }
+]
