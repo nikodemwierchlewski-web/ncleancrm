@@ -1,9 +1,11 @@
 <!doctype html><html xmlns:th="http://www.thymeleaf.org"><head>
-<th:block th:fragment="assets" th:if="${pixelTycoon}">
+<th:block th:fragment="assets"><th:block th:if="${pixelTycoon}">
   <link rel="stylesheet" href="/css/tycoon.css">
   <meta name="crm-confirmed" th:if="${tycoonSignal != null}" th:attr="data-kind=${tycoonSignal.kind},data-order=${tycoonSignal.id}">
   <script src="/js/tycoon-motion.js" defer></script>
-  <script src="/js/tycoon.js" defer></script>
+  <script src="/js/tycoon.js" defer></script></th:block>
+  <link rel="stylesheet" href="/css/lean.css">
+  <script src="/js/lean.js" defer></script>
 </th:block>
 </head><body>
 <figure th:fragment="base" th:if="${pixelTycoon}" class="tycoon-base" aria-hidden="true">

@@ -1,15 +1,14 @@
-# Klikalny podgląd Pixel Tycoon — TEST
+# ncLEAN CRM — klikalny podgląd Lean
 
-Pobierz **[nclean-pixel-tycoon-test.zip](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/experiment/tycoon-interactions/preview/nclean-pixel-tycoon-test.zip)**. Jeżeli GitHub wymaga dostępu do repozytorium, zaloguj się na konto z dostępem. Możesz też otworzyć plik ZIP w tym katalogu i wybrać „Download raw file”.
+Pobierz **[nclean-pixel-tycoon-test.zip](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/ux/lean-workspace/preview/nclean-pixel-tycoon-test.zip)**. Jeżeli GitHub wymaga dostępu, zaloguj się na konto mające dostęp do repozytorium.
 
-1. Rozpakuj ZIP do zwykłego folderu na komputerze.
+1. Rozpakuj ZIP do zwykłego folderu.
 2. Otwórz `index.html` w Chrome, Edge lub Firefox.
-3. Użyj „Klasyczny”, żeby porównać wygląd; listą u góry zmienisz ekran.
+3. Zacznij od Kalendarza, następnie sprawdź Dzisiaj i Więcej. Podsumowanie pokazuje trzy kwoty i akcję; analizy oraz notatki rozwija się na żądanie.
+4. Klasyczny wygląd jest domyślny. Przycisk Pixel Tycoon pozwala porównać opcjonalny motyw i animacje.
 
-To samodzielny HTML z zasobami w środku, bez Javy i PostgreSQL. Dane są syntetyczne, zmiany pozostają w pamięci otwartej karty. Odświeżenie resetuje próbkę. Nie wpisuj prawdziwych danych klientów. Backend sprawdzono osobno.
+To samodzielny HTML z lokalnymi zasobami. Dane są syntetyczne, zapis jest symulowany w pamięci karty, a odświeżenie resetuje zmiany. Nie jest to połączenie z bazą CRM. Prawdziwą aplikację i PostgreSQL sprawdzono oddzielnie.
 
-Paczka zawiera animacje, odznaki i postęp z eksperymentu `experiment/tycoon-interactions`. Przyciski, formularze, wybór dnia i zapis reagują krótkimi animacjami. W podsumowaniu rozwiń „Odznaki i historia”; ruch ograniczysz w podsumowaniu lub ustawieniach. Domknięcie przykładowego dnia przyznaje odznakę w pamięci demonstracji. Dołączono licencje fontów. Normalny CRM zachowuje klasyczny wygląd jako domyślny.
+Instrukcja zmian i wyniki: [LEAN-WORKSPACE.md](../docs/LEAN-WORKSPACE.md). Tożsamość paczki: [build.json](build.json). Dołączono licencje fontów.
 
-## Dlaczego wcześniejszy link nie działał
-
-Odnośnik `/workspace/...` wskazywał plik środowiska chmurowego, którego panel tej sesji nie potrafił wczytać. Sam plik istnieje, a lokalny serwer zwraca HTTP200; to nie dowodzi dostępu użytkownika do serwera. Środowisko nie deklaruje pulpitu/przekierowania portów (`capabilities: []`); `open_in_codex` zwraca „This app tool is unavailable through dynamic tools”. Dlatego paczka jest dostarczona przez repozytorium, a nie ponownie przez nieskuteczną ścieżkę chmurową.
+Ta sesja Codexa nie deklaruje pulpitu/przekierowania portów (`capabilities: []`). Lokalny HTTP używany do testów nie jest publicznym adresem na komputerze użytkownika. Dlatego podgląd dostarczamy przez pobieralny ZIP, bez odnośnika do niedostępnej ścieżki `/workspace`.

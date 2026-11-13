@@ -80,8 +80,11 @@ public class DayReviewService {
             // Preserve existing allocation and duration; no guessed distribution across services.
             var prices=new LinkedHashMap<Integer,BigDecimal>();var times=new LinkedHashMap<Integer,Integer>();
             for(var item:records.items(id)){int pos=((Number)item.get("position")).intValue();if(item.get("final_amount")!=null)prices.put(pos,(BigDecimal)item.get("final_amount"));if(item.get("work_minutes")!=null)times.put(pos,((Number)item.get("work_minutes")).intValue());}
-            if(b.get("final_total")==null||WorkService.money(p.get("final_total")).compareTo((BigDecimal)b.get("final_total"))!=0)prices.clear();
-            work.complete(id,version,p.get("final_total"),b.get("timer_started")!=null?null:Objects.toString(b.get("work_minutes"),""),note,prices,times,measured,actor);
+            if(p.containsKey("allocations")){
+                prices.clear();times.clear();
+                for(var item:records.items(id)){int pos=((Number)item.get("position")).intValue();String amount=p.get("amount_"+pos),minutes=p.get("time_"+pos);if(amount!=null&&!amount.isBlank())prices.put(pos,WorkService.money(amount));if(minutes!=null&&!minutes.isBlank())times.put(pos,WorkService.minutes(minutes));}
+            }else if(b.get("final_total")==null||WorkService.money(p.get("final_total")).compareTo((BigDecimal)b.get("final_total"))!=0)prices.clear();
+            work.complete(id,version,p.get("final_total"),b.get("timer_started")!=null?null:p.getOrDefault("minutes",Objects.toString(b.get("work_minutes"),"")),note,prices,times,measured,actor);
             for(var z:zero)actual.zero(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])));
             db.update("UPDATE booking SET completion_no_notes=?,photo_before_exception=?,photo_after_exception=? WHERE id=?",noNotes,before,after,id);
         }else{

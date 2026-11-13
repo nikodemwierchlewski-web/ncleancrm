@@ -1098,6 +1098,26 @@ class CalendarPostgresIT {
         assertTrue(page.body().contains("/js/tycoon-motion.js"));
     }
 
+    @Test void leanNavigationSeparatesWorkFromSettingsAndUsesAuthoritativeDayReview() throws Exception {
+        long id=workBooking("Lean braki dokumentacji",DashboardService.today());var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);work.complete(id,0,"180","60","",Map.of(),Map.of(),List.of(),OWNER);
+        var browser=app.browser();browser.login();assertEquals(302,app.browser().get("/more").statusCode());
+        var more=browser.get("/more");assertEquals(200,more.statusCode());assertTrue(more.body().contains("href=\"/dashboard\""));assertTrue(more.body().contains("href=\"/costs\""));
+        var settings=browser.get("/settings");assertEquals(200,settings.statusCode());assertFalse(settings.body().contains("href=\"/dashboard\""));assertTrue(settings.body().contains("href=\"/settings/services\""));
+        var dashboard=browser.get("/dashboard");assertEquals(200,dashboard.statusCode());assertTrue(Pattern.compile("href=\"/more\"[^>]*aria-current=\"page\"").matcher(dashboard.body()).find());
+        var today=browser.get("/today");assertEquals(200,today.statusCode());assertTrue(today.body().contains("0 z 1 zleceń uzupełnionych"));assertTrue(today.body().contains("zdjęcie przed"));
+        var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);review.save(id,DashboardService.today(),reviewFields(id),OWNER);
+        assertTrue(browser.get("/today").body().contains("1 z 1 zleceń uzupełnionych"));
+        var order=browser.get("/work/"+id);assertEquals(200,order.statusCode());assertTrue(order.body().contains("id=\"complete-form\""));assertTrue(order.body().contains("action=\"/day-closeout/"+id+"\""));assertFalse(order.body().contains("action=\"/work/"+id+"/complete\""));
+    }
+
+    @Test void sharedCompletionRetainsOptionalAllocationsAndRejectsInvalidSumAtomically() {
+        var day=DashboardService.today();var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long first=estimateService("Lean pakiet A"),second=estimateService("Lean pakiet B");
+        long id=data.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"Pakiet testowy","500000093","Adres pakietu",Map.of(first,BigDecimal.ONE,second,BigDecimal.ONE));
+        var fields=reviewFields(id);fields.put("final_total","300");fields.put("minutes","90");fields.put("allocations","1");fields.put("amount_0","100");fields.put("amount_1","200");fields.put("time_0","30");fields.put("time_1","60");
+        var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);review.save(id,day,fields,OWNER);assertEquals(new BigDecimal("100.00"),data.items(id).get(0).get("final_amount"));assertEquals(90,app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("work_minutes"));
+        var before=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);fields.put("version","1");fields.put("amount_1","500");assertThrows(IllegalArgumentException.class,()->review.save(id,day,fields,OWNER));assertEquals(before,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id));
+    }
+
     private static final class Browser {
         private final URI base;
         private final HttpClient http;

@@ -25,6 +25,7 @@ public class RecordsController {
  @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customers(query).stream().filter(p->Boolean.TRUE.equals(p.get("active"))).limit(50).map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
  @org.springframework.transaction.annotation.Transactional
  @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){long saved=data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));contextSource(saved,p);return "redirect:/customers";}
+ @GetMapping("/more") String more(){return "settings/more";}
  @GetMapping("/settings") String settings(){return "settings/index";}
  @GetMapping("/settings/services") String services(Model m){common(m);return "records/services";}
  @PostMapping("/settings/services/chemicals") String chemical(@RequestParam Map<String,String> p){chemistry.saveMaterial(id(p,"id"),version(p),p.get("name"),p.get("packageUnit"),p.get("packageQuantity"),p.get("packagePrice"));return "redirect:/settings/services";}

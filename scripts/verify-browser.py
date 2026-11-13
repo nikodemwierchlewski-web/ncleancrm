@@ -97,12 +97,28 @@ def main():
             page.locator('[name=password]').fill(owner['password'])
             with page.expect_navigation():
                 page.locator('button[type=submit]').click()
+            page.goto(base + '/more')
+            page.get_by_role('link', name='Ustawienia', exact=False).click()
+            expect(page.locator('h1')).to_have_text('Ustawienia')
+            assert page.locator('main a[href="/dashboard"]').count() == 0
+            for width in (360, 390, 768, 1440):
+                page.set_viewport_size({'width': width, 'height': 844})
+                page.goto(base + '/dashboard')
+                expect(page.locator('.lean-kpis>a')).to_have_count(3)
+                assert not page.locator('#personal-panel').evaluate('e=>e.open')
+                action = page.locator('.lean-next-action').bounding_box()
+                assert action['y'] + action['height'] < 760
+                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+            page.set_viewport_size({'width': 390, 'height': 844})
+            print('PASS Lean IA: More/settings separation, three metrics and primary action above fold at four widths.', flush=True)
             if args.pixel_tycoon:
                 for width in (360, 390, 768, 1440):
                     page.set_viewport_size({'width': width, 'height': 844})
                     for route in ('/calendar', '/dashboard', '/settings'):
                         page.goto(base + route)
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width, route)
+                        if route == '/dashboard':page.locator('#personal-panel>summary').click()
+                        if route == '/settings':page.get_by_text('Wygląd i aplikacja',exact=True).click()
                         if route != '/settings':
                             world = page.locator('svg.tycoon-world')
                             expect(world).to_have_count(1)
@@ -115,6 +131,7 @@ def main():
                     expect(page.locator('svg.tycoon-world')).to_have_count(1)
                     assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
                     page.goto(base + '/settings')
+                    page.get_by_text('Wygląd i aplikacja',exact=True).click()
                     page.locator('[data-motion-toggle]').click()
                 page.set_viewport_size({'width': 390, 'height': 844})
                 page.goto(base + '/calendar')

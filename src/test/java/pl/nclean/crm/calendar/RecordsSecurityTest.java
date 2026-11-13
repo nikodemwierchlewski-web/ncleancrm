@@ -27,7 +27,7 @@ class RecordsSecurityTest {
     .andExpect(content().string(org.hamcrest.Matchers.containsString("Główna nawigacja")));
  }
  @Test void recordsRequireOwnerAndCsrf() throws Exception {
-  for(String path:new String[]{"/customers","/settings","/settings/services","/orders"}){
+  for(String path:new String[]{"/more","/customers","/settings","/settings/services","/orders"}){
    mvc.perform(get(path)).andExpect(status().is3xxRedirection());
    mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());
   }

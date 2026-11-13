@@ -34,6 +34,7 @@ public class CrmRecords {
  public List<Map<String,Object>> monthChemicals(YearMonth month){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position JOIN booking b ON b.id=c.booking_id WHERE b.day>=? AND b.day<? ORDER BY c.booking_id,c.item_position,c.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> actuals(long booking){return db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? ORDER BY item_position,chemical_id",booking);}
  public List<Map<String,Object>> monthActuals(YearMonth month){return db.queryForList("SELECT a.* FROM booking_actual_chemical a JOIN booking b ON b.id=a.booking_id WHERE b.day>=? AND b.day<? ORDER BY a.booking_id,a.item_position,a.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public Map<String,BigDecimal> forecastHints(long id){var hints=new HashMap<String,BigDecimal>();for(var row:chemicals(id))hints.put(row.get("item_position")+":"+row.get("chemical_id"),(BigDecimal)row.get("quantity"));return hints;}
  public Map<String,Map<Long,BigDecimal>> actualFields(Map<Long,List<Map<String,Object>>> lines,List<Map<String,Object>> forecasts,List<Map<String,Object>> actuals){
   var result=new HashMap<String,Map<Long,BigDecimal>>();var units=new HashMap<Long,String>();materials().forEach(m->units.put(m.id(),m.unit()));
   for(var entry:lines.entrySet())for(var item:entry.getValue()){

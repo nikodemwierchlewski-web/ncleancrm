@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-13",
+  "branch": "ux/lean-workspace",
+  "base": "experiment/tycoon-interactions@ecdeb57",
+  "tests": {
+    "unit_mvc": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgres_integration": {
+      "tests": 80,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "runtime_sha256": "b753f107cf973cbd323d04b377afe6d672626070f927b94968974c62228e272d",
+  "layout_measurements": [
+    {
+      "width": 360,
+      "dashboard_height": 1150,
+      "primary_action_bottom": 544
+    },
+    {
+      "width": 390,
+      "dashboard_height": 1150,
+      "primary_action_bottom": 544
+    },
+    {
+      "width": 768,
+      "dashboard_height": 1059,
+      "primary_action_bottom": 569
+    },
+    {
+      "width": 1440,
+      "dashboard_height": 1059,
+      "primary_action_bottom": 569
+    }
+  ],
+  "approximate_prior_sample_height_390": 3734,
+  "ui_scenarios": [
+    "eight bookings",
+    "new and returning customer",
+    "two categories with custom price",
+    "visit address does not overwrite customer default",
+    "shared completion from work and day queue",
+    "catalogue edit preserves historical price",
+    "cancellation and move",
+    "chemical zero/measurements/photo exceptions",
+    "photos and time",
+    "503 preserves draft and retry",
+    "two-tab conflict",
+    "goals/notes/achievements",
+    "day closure/reopen",
+    "restart persistence"
+  ],
+  "classic_browser": "PASS shared layout, customers, monthly costs50,503/retry",
+  "tycoon_browser": "PASS shared layout/four widths, motion preference/OS/background, mixed categories, saved:false, focus, customers/costs/503",
+  "migrations_unchanged": {
+    "V3__customers_catalog_bookings.sql": "39f6886fae3658801e3cf0b26be9b49dcee26096d70224f7b337a16f08c650ff",
+    "V5__service_prices_and_chemical_forecasts.sql": "4f03b9bcbefc6955bf885b48b40f4ab45daa933087301ed82c9737e32aa17e2d",
+    "V11__day_closeout.sql": "64dc14c9be34c1d96d20523576b16f47816888804252d0900a379693835f19e6",
+    "V6__actual_chemical_usage.sql": "ea3c52c41d7787abc62ec0eba599529e366a2ef1d117034f7b37f6cebddb9a8c",
+    "V1__calendar.sql": "0fe2c1b537568ad3536693e75034a8ae03e4ece372dcfe6225f5acdcc1f2beb9",
+    "V7__dashboard_costs.sql": "4d3b1c7b3dd1bd7224673cb9eb9745acf1555c42cfa33dcf856f8414dd9c5e82",
+    "V2__multiple_day_areas.sql": "6eb0012b7dc775ed7bd1031cc70c4a5b579156a6b1f3edaba90dc0cc60ea7d00",
+    "V9__workday_completion_and_payments.sql": "b5afb765872cb14fea7bc155e3cfe3af96132e13bcba6373adfa197521f91997",
+    "V4__weekly_area_plans.sql": "59de21c663fccb599320f1cbb6053ec64aa14e2b59bd4ef7be78823a78461fee",
+    "V8__fuel_journal_and_receipts.sql": "8a637c9cd1b0da0f350eed4ab6e21a5034a652e1ad9d2e224f202bb2b8cebced",
+    "V10__customer_context_and_service_photos.sql": "a0ccdd8bc7ca228a63bb95681dac06f9387263f2765630f293ba422e66fe174d",
+    "V14__tycoon_achievements.sql": "0df33f71bdf64d9df01d5d44483b13836a99f41824e2d2244ac137bc85b34cb6",
+    "V12__notes_and_goals.sql": "2c4bd0ad588e044b5eb2099646460492c99c59e95bffa1fd2c62a4ea89b06e19",
+    "V13__costs_equipment_and_vehicle_book.sql": "c581c183b5a37480c72d5f9ec883d1776080687bdc104a1e9ff453bf8b812df4"
+  },
+  "new_migrations": false,
+  "production_access": false,
+  "native_codex_preview": false,
+  "default_theme": "classic"
+}
