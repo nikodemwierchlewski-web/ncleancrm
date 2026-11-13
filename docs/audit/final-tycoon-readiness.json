@@ -1,0 +1,1374 @@
+{
+  "date_local": "2026-11-13",
+  "timezone": "Europe/Warsaw",
+  "source_commit": "900ea19",
+  "application_source_commit": "ffabed1",
+  "scope": "audit only; no application behavior changed",
+  "tests": {
+    "unit_mvc": {
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgres_integration": {
+      "tests": 80,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "route_handlers_declared": 73,
+  "java_files": 36,
+  "thymeleaf_files": 36,
+  "browser_routes_width_checks": 60,
+  "viewport_widths": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "probe_results": [
+    {
+      "id": "F01",
+      "case": "future DONE through edit endpoint",
+      "http": 200,
+      "stored_status": "DONE"
+    },
+    {
+      "id": "F02",
+      "case": "future completion through legacy endpoint",
+      "http": 302,
+      "stored_status": "DONE"
+    },
+    {
+      "id": "F04",
+      "case": "calendar skip target",
+      "href": "#main",
+      "target_count": 1,
+      "skip_links": 2
+    },
+    {
+      "id": "F05",
+      "case": "customers skip target",
+      "href": "#main-content",
+      "target_count": 1,
+      "skip_links": 1
+    },
+    {
+      "id": "F06",
+      "case": "missing resource /work/999999999",
+      "http": 400
+    },
+    {
+      "id": "F06",
+      "case": "missing resource /customers/999999999",
+      "http": 404
+    },
+    {
+      "id": "F06",
+      "case": "missing resource /day-closeout?date=2026-11-13&order=999999999",
+      "http": 200
+    },
+    {
+      "id": "F06",
+      "case": "missing resource /settings/areas?edit=999999999",
+      "http": 404
+    },
+    {
+      "id": "F07",
+      "case": "booking Escape/reopen retains in-memory draft",
+      "value": "Niezapisany klient"
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/calendar",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/today",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/dashboard",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/more",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/settings",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/customers",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/settings/services",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/settings/areas",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/costs",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/fuel",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/notes",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/callbacks",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/search",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/work/3",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 360,
+      "route": "/day-closeout?date=2026-11-13",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/calendar",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/today",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/dashboard",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/more",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/settings",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/customers",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/settings/services",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/settings/areas",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/costs",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/fuel",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/notes",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/callbacks",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/search",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/work/3",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 390,
+      "route": "/day-closeout?date=2026-11-13",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/calendar",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/today",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/dashboard",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/more",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/settings",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/customers",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/settings/services",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/settings/areas",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/costs",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/fuel",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/notes",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/callbacks",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/search",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/work/3",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 768,
+      "route": "/day-closeout?date=2026-11-13",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/calendar",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/today",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/dashboard",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/more",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/settings",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/customers",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/settings/services",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/settings/areas",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/costs",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/fuel",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/notes",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/callbacks",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/search",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/work/3",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VIEW",
+      "width": 1440,
+      "route": "/day-closeout?date=2026-11-13",
+      "http": 200,
+      "overflow": false
+    },
+    {
+      "id": "VOLUME",
+      "route": "/calendar",
+      "http": 200,
+      "bytes": 450881,
+      "milliseconds": 1752
+    },
+    {
+      "id": "VOLUME",
+      "route": "/customers",
+      "http": 200,
+      "bytes": 433984,
+      "milliseconds": 1364
+    },
+    {
+      "id": "VOLUME",
+      "route": "/dashboard?range=month",
+      "http": 200,
+      "bytes": 66492,
+      "milliseconds": 106
+    },
+    {
+      "id": "VOLUME",
+      "route": "/orders",
+      "http": 200,
+      "bytes": 859637,
+      "milliseconds": 769
+    },
+    {
+      "id": "BACKUP",
+      "case": "pg_dump/pg_restore to a new isolated DB",
+      "match": true,
+      "counts_and_blob_md5": "503:303:7cfdd07889b3295d6a550914ab35e068"
+    },
+    {
+      "id": "JS",
+      "errors": []
+    },
+    {
+      "id": "F03",
+      "case": "price correction with hidden existing allocations",
+      "message": "Podaj kwoty wszystkich pozycji sumujące się do ceny końcowej albo pozostaw cały podział pusty.",
+      "allocation_collapsed": true,
+      "price_preserved": "200.00"
+    },
+    {
+      "id": "F06b",
+      "case": "invalid explicit order silently selects another booking",
+      "requested_id": 999999999,
+      "form_action": "/day-closeout/1"
+    }
+  ],
+  "session_recovery_probe": {
+    "retry_after_relogin_http": 403,
+    "draft_preserved": true,
+    "saved_orders_before_refresh": "0",
+    "retry_with_fresh_csrf_http": 200,
+    "saved_orders_after_refresh": "1"
+  },
+  "axe": {
+    "version": "4.10.3",
+    "npm_integrity": "sha512-Xm7bpRXnDSX2YE2YFfBk2FnF0ep6tmG7xPh8iHee8MIcrgq762Nkce856dYtJYLkuIoYZvGfTs/PbZhideTcEg==",
+    "screen_width_cases": 30,
+    "cases_with_violations": 10,
+    "method": "Official script served through browser request interception on same origin; server CSP was not disabled. Contrast findings rechecked with reduced motion to remove transient animation effects.",
+    "results": [
+      {
+        "screen": "/calendar",
+        "width": 390,
+        "violations": [
+          {
+            "id": "page-has-heading-one",
+            "impact": "moderate",
+            "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+            "help": "Page should contain a level-one heading",
+            "nodes": [
+              {
+                "target": [
+                  "html"
+                ],
+                "summary": "Fix all of the following:\n  Page must have a level-one heading"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 4
+          }
+        ]
+      },
+      {
+        "screen": "/today",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      {
+        "screen": "/dashboard",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 13
+          }
+        ]
+      },
+      {
+        "screen": "/more",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 12
+          }
+        ]
+      },
+      {
+        "screen": "/settings",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 13
+          },
+          {
+            "id": "link-in-text-block",
+            "nodes": 1
+          }
+        ]
+      },
+      {
+        "screen": "/customers",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/settings/services",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "/settings/areas",
+        "width": 390,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "nodes": [
+              {
+                "target": [
+                  "#area-form > .eyebrow"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.7 (foreground color: #6f8799, background color: #fffef6, font size: 6.0pt (8px), font weight: bold). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".card-description"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.86 (foreground color: #6b8497, background color: #fffef6, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".form-field:nth-child(2) > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.5 (foreground color: #748b9e, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#color-hint"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.5 (foreground color: #748b9e, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".area-preview > span:nth-child(1)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.17 (foreground color: #7890a3, background color: #f7fafc, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".card-heading > div > .eyebrow"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.7 (foreground color: #6f8799, background color: #fffef6, font size: 6.0pt (8px), font weight: bold). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".count-badge"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.77 (foreground color: #628097, background color: #eef5fb, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(1) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(1) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(2) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(2) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(3) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(3) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(4) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(4) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "totalNodes": 18
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/costs",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 12
+          },
+          {
+            "id": "link-in-text-block",
+            "nodes": 1
+          }
+        ]
+      },
+      {
+        "screen": "/fuel",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 7
+          }
+        ]
+      },
+      {
+        "screen": "/notes",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 6
+          }
+        ]
+      },
+      {
+        "screen": "/callbacks",
+        "width": 390,
+        "violations": [
+          {
+            "id": "skip-link",
+            "impact": "moderate",
+            "description": "Ensure all skip links have a focusable target",
+            "help": "The skip-link target should exist and be focusable",
+            "nodes": [
+              {
+                "target": [
+                  ".skip-link"
+                ],
+                "summary": "Fix any of the following:\n  No skip link target"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/search",
+        "width": 390,
+        "violations": [
+          {
+            "id": "skip-link",
+            "impact": "moderate",
+            "description": "Ensure all skip links have a focusable target",
+            "help": "The skip-link target should exist and be focusable",
+            "nodes": [
+              {
+                "target": [
+                  ".skip-link"
+                ],
+                "summary": "Fix any of the following:\n  No skip link target"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "booking dialog",
+        "width": 390,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "/calendar",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "nodes": [
+              {
+                "target": [
+                  ".calendar-weekdays > span:nth-child(1)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #6e8394, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".calendar-weekdays > span:nth-child(2)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #6e8394, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".calendar-weekdays > span:nth-child(3)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #6e8394, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "span:nth-child(4)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #6e8394, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "span:nth-child(5)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.93 (foreground color: #6e8394, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "span:nth-child(6)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.13 (foreground color: #8194a3, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "span:nth-child(7)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.13 (foreground color: #8194a3, background color: #ffffff, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "totalNodes": 7
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      {
+        "screen": "/today",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      {
+        "screen": "/dashboard",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "aria-prohibited-attr",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 13
+          }
+        ]
+      },
+      {
+        "screen": "/more",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 12
+          }
+        ]
+      },
+      {
+        "screen": "/settings",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 13
+          },
+          {
+            "id": "link-in-text-block",
+            "nodes": 1
+          }
+        ]
+      },
+      {
+        "screen": "/customers",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/settings/services",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "/settings/areas",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "nodes": [
+              {
+                "target": [
+                  "#area-form > .eyebrow"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.7 (foreground color: #6f8799, background color: #fffef6, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".card-description"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.86 (foreground color: #6b8497, background color: #fffef6, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".form-field:nth-child(2) > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.5 (foreground color: #748b9e, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#color-hint"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.5 (foreground color: #748b9e, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".area-preview > span:nth-child(1)"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.17 (foreground color: #7890a3, background color: #f7fafc, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".card-heading > div > .eyebrow"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.7 (foreground color: #6f8799, background color: #fffef6, font size: 6.8pt (9px), font weight: bold). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  ".count-badge"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.77 (foreground color: #628097, background color: #eef5fb, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(1) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(1) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(2) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(2) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(3) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(3) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(4) > .work-area-details > p > .state-label.active"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #3d7d55, background color: #eaf6ee, font size: 6.0pt (8px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "article:nth-child(4) > .work-area-details > p > code"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.95 (foreground color: #6a8296, background color: #fffef6, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ],
+            "totalNodes": 18
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/costs",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 12
+          },
+          {
+            "id": "link-in-text-block",
+            "nodes": 1
+          }
+        ]
+      },
+      {
+        "screen": "/fuel",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 7
+          }
+        ]
+      },
+      {
+        "screen": "/notes",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 6
+          }
+        ]
+      },
+      {
+        "screen": "/callbacks",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "skip-link",
+            "impact": "moderate",
+            "description": "Ensure all skip links have a focusable target",
+            "help": "The skip-link target should exist and be focusable",
+            "nodes": [
+              {
+                "target": [
+                  ".skip-link"
+                ],
+                "summary": "Fix any of the following:\n  No skip link target"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 3
+          }
+        ]
+      },
+      {
+        "screen": "/search",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "skip-link",
+            "impact": "moderate",
+            "description": "Ensure all skip links have a focusable target",
+            "help": "The skip-link target should exist and be focusable",
+            "nodes": [
+              {
+                "target": [
+                  ".skip-link"
+                ],
+                "summary": "Fix any of the following:\n  No skip link target"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "booking dialog",
+        "width": 1440,
+        "violations": [],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "nodes": 2
+          }
+        ]
+      },
+      {
+        "screen": "logout confirmation",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "landmark-one-main",
+            "impact": "moderate",
+            "description": "Ensure the document has a main landmark",
+            "help": "Document should have one main landmark",
+            "nodes": [
+              {
+                "target": [
+                  "html"
+                ],
+                "summary": "Fix all of the following:\n  Document does not have a main landmark"
+              }
+            ],
+            "totalNodes": 1
+          },
+          {
+            "id": "page-has-heading-one",
+            "impact": "moderate",
+            "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+            "help": "Page should contain a level-one heading",
+            "nodes": [
+              {
+                "target": [
+                  "html"
+                ],
+                "summary": "Fix all of the following:\n  Page must have a level-one heading"
+              }
+            ],
+            "totalNodes": 1
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "description": "Ensure all page content is contained by landmarks",
+            "help": "All page content should be contained by landmarks",
+            "nodes": [
+              {
+                "target": [
+                  "h2"
+                ],
+                "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              }
+            ],
+            "totalNodes": 1
+          }
+        ],
+        "incomplete": []
+      },
+      {
+        "screen": "login",
+        "width": 1440,
+        "violations": [
+          {
+            "id": "landmark-one-main",
+            "impact": "moderate",
+            "description": "Ensure the document has a main landmark",
+            "help": "Document should have one main landmark",
+            "nodes": [
+              {
+                "target": [
+                  "html"
+                ],
+                "summary": "Fix all of the following:\n  Document does not have a main landmark"
+              }
+            ],
+            "totalNodes": 1
+          },
+          {
+            "id": "page-has-heading-one",
+            "impact": "moderate",
+            "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+            "help": "Page should contain a level-one heading",
+            "nodes": [
+              {
+                "target": [
+                  "html"
+                ],
+                "summary": "Fix all of the following:\n  Page must have a level-one heading"
+              }
+            ],
+            "totalNodes": 1
+          },
+          {
+            "id": "region",
+            "impact": "moderate",
+            "description": "Ensure all page content is contained by landmarks",
+            "help": "All page content should be contained by landmarks",
+            "nodes": [
+              {
+                "target": [
+                  "h2"
+                ],
+                "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "target": [
+                  "p:nth-child(2)"
+                ],
+                "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "target": [
+                  "p:nth-child(3)"
+                ],
+                "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              }
+            ],
+            "totalNodes": 3
+          }
+        ],
+        "incomplete": []
+      }
+    ]
+  },
+  "migrations_sha256": {
+    "V3__customers_catalog_bookings.sql": "39f6886fae3658801e3cf0b26be9b49dcee26096d70224f7b337a16f08c650ff",
+    "V5__service_prices_and_chemical_forecasts.sql": "4f03b9bcbefc6955bf885b48b40f4ab45daa933087301ed82c9737e32aa17e2d",
+    "V11__day_closeout.sql": "64dc14c9be34c1d96d20523576b16f47816888804252d0900a379693835f19e6",
+    "V6__actual_chemical_usage.sql": "ea3c52c41d7787abc62ec0eba599529e366a2ef1d117034f7b37f6cebddb9a8c",
+    "V1__calendar.sql": "0fe2c1b537568ad3536693e75034a8ae03e4ece372dcfe6225f5acdcc1f2beb9",
+    "V7__dashboard_costs.sql": "4d3b1c7b3dd1bd7224673cb9eb9745acf1555c42cfa33dcf856f8414dd9c5e82",
+    "V2__multiple_day_areas.sql": "6eb0012b7dc775ed7bd1031cc70c4a5b579156a6b1f3edaba90dc0cc60ea7d00",
+    "V9__workday_completion_and_payments.sql": "b5afb765872cb14fea7bc155e3cfe3af96132e13bcba6373adfa197521f91997",
+    "V4__weekly_area_plans.sql": "59de21c663fccb599320f1cbb6053ec64aa14e2b59bd4ef7be78823a78461fee",
+    "V8__fuel_journal_and_receipts.sql": "8a637c9cd1b0da0f350eed4ab6e21a5034a652e1ad9d2e224f202bb2b8cebced",
+    "V10__customer_context_and_service_photos.sql": "a0ccdd8bc7ca228a63bb95681dac06f9387263f2765630f293ba422e66fe174d",
+    "V14__tycoon_achievements.sql": "0df33f71bdf64d9df01d5d44483b13836a99f41824e2d2244ac137bc85b34cb6",
+    "V12__notes_and_goals.sql": "2c4bd0ad588e044b5eb2099646460492c99c59e95bffa1fd2c62a4ea89b06e19",
+    "V13__costs_equipment_and_vehicle_book.sql": "c581c183b5a37480c72d5f9ec883d1776080687bdc104a1e9ff453bf8b812df4"
+  },
+  "production_access": false,
+  "windows_powershell_executed": false,
+  "physical_mobile_devices_tested": false,
+  "vps_deployment_tested": false,
+  "native_codex_preview": false,
+  "full_business_capture": "PASS real PostgreSQL: eight jobs, booking/prices/address, photos/time/chemistry, callbacks routes, costs/equipment/fuel models, goals/notes, closeout/reopen and restart",
+  "restore_limit": "pg_dump/pg_restore, row counts and BLOB digest verified in a separate database; application startup against restored database not repeated in this audit"
+}

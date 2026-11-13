@@ -1,0 +1,440 @@
+[
+  {
+    "method": "GET",
+    "route": "/customers",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 23
+  },
+  {
+    "method": "POST",
+    "route": "/customers/search",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 24
+  },
+  {
+    "method": "POST",
+    "route": "/customers/lookup",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 25
+  },
+  {
+    "method": "POST",
+    "route": "/customers",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 27
+  },
+  {
+    "method": "GET",
+    "route": "/more",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 28
+  },
+  {
+    "method": "GET",
+    "route": "/settings",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 29
+  },
+  {
+    "method": "GET",
+    "route": "/settings/services",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 30
+  },
+  {
+    "method": "POST",
+    "route": "/settings/services/chemicals",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 31
+  },
+  {
+    "method": "POST",
+    "route": "/settings/services/{id}/chemistry",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 32
+  },
+  {
+    "method": "POST",
+    "route": "/settings/services/{id}/suggestion",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 36
+  },
+  {
+    "method": "POST",
+    "route": "/orders/{id}/items/{position}/actual",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 37
+  },
+  {
+    "method": "POST",
+    "route": "/settings/services/category",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 42
+  },
+  {
+    "method": "POST",
+    "route": "/settings/services",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 43
+  },
+  {
+    "method": "GET",
+    "route": "/orders",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 44
+  },
+  {
+    "method": "POST",
+    "route": "/orders",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 53
+  },
+  {
+    "method": "POST",
+    "route": "/orders",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 69
+  },
+  {
+    "method": "POST",
+    "route": "/orders/{id}",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 71
+  },
+  {
+    "method": "POST",
+    "route": "/orders/{id}",
+    "file": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+    "line": 73
+  },
+  {
+    "method": "GET",
+    "route": "/search",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 15
+  },
+  {
+    "method": "GET",
+    "route": "/callbacks",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 16
+  },
+  {
+    "method": "POST",
+    "route": "/callbacks/{id}",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 17
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/photos",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 18
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/photos/{photo}/delete",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 19
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/photo-time",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 20
+  },
+  {
+    "method": "GET",
+    "route": "/photos/{id}",
+    "file": "src/main/java/pl/nclean/crm/context/ContextController.java",
+    "line": 22
+  },
+  {
+    "method": "GET",
+    "route": "/costs",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 20
+  },
+  {
+    "method": "GET",
+    "route": "/costs/editor",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 25
+  },
+  {
+    "method": "POST",
+    "route": "/costs",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 26
+  },
+  {
+    "method": "POST",
+    "route": "/costs/{id}/cancel",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 27
+  },
+  {
+    "method": "POST",
+    "route": "/costs/fuel/{id}/cancel",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 28
+  },
+  {
+    "method": "GET",
+    "route": "/costs/equipment/{id}",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 29
+  },
+  {
+    "method": "POST",
+    "route": "/costs/equipment/{id}",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 30
+  },
+  {
+    "method": "POST",
+    "route": "/costs/receipts",
+    "file": "src/main/java/pl/nclean/crm/costs/CostController.java",
+    "line": 31
+  },
+  {
+    "method": "GET",
+    "route": "/notes",
+    "file": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+    "line": 14
+  },
+  {
+    "method": "GET",
+    "route": "/notes/editor",
+    "file": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+    "line": 15
+  },
+  {
+    "method": "POST",
+    "route": "/notes",
+    "file": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+    "line": 16
+  },
+  {
+    "method": "POST",
+    "route": "/notes/{id}/action",
+    "file": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+    "line": 21
+  },
+  {
+    "method": "GET",
+    "route": "/tycoon/progress",
+    "file": "src/main/java/pl/nclean/crm/tycoon/TycoonController.java",
+    "line": 15
+  },
+  {
+    "method": "POST",
+    "route": "/tycoon/achievements/{code}/ack",
+    "file": "src/main/java/pl/nclean/crm/tycoon/TycoonController.java",
+    "line": 20
+  },
+  {
+    "method": "GET",
+    "route": "/day-closeout",
+    "file": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+    "line": 18
+  },
+  {
+    "method": "POST",
+    "route": "/day-closeout/{id}",
+    "file": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+    "line": 24
+  },
+  {
+    "method": "POST",
+    "route": "/day-closeout/close",
+    "file": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+    "line": 25
+  },
+  {
+    "method": "GET",
+    "route": "/today",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 20
+  },
+  {
+    "method": "GET",
+    "route": "/work/{id}",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 22
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/timer",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 23
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/complete",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 24
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/payments",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 29
+  },
+  {
+    "method": "POST",
+    "route": "/work/{id}/payments/{payment}/reverse",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 30
+  },
+  {
+    "method": "GET",
+    "route": "/customers/{id}",
+    "file": "src/main/java/pl/nclean/crm/work/WorkController.java",
+    "line": 31
+  },
+  {
+    "method": "GET",
+    "route": "/export/customers.csv",
+    "file": "src/main/java/pl/nclean/crm/work/ExportController.java",
+    "line": 14
+  },
+  {
+    "method": "GET",
+    "route": "/export/orders.csv",
+    "file": "src/main/java/pl/nclean/crm/work/ExportController.java",
+    "line": 15
+  },
+  {
+    "method": "GET",
+    "route": "/fuel",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 28
+  },
+  {
+    "method": "POST",
+    "route": "/fuel/day",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 29
+  },
+  {
+    "method": "POST",
+    "route": "/fuel/parameters",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 33
+  },
+  {
+    "method": "POST",
+    "route": "/fuel/purchases",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 37
+  },
+  {
+    "method": "POST",
+    "route": "/fuel/receipts",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 43
+  },
+  {
+    "method": "GET",
+    "route": "/fuel/receipts/{id}",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 44
+  },
+  {
+    "method": "POST",
+    "route": "/fuel/receipts/{id}/discard",
+    "file": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+    "line": 45
+  },
+  {
+    "method": "GET",
+    "route": "/settings/areas",
+    "file": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+    "line": 26
+  },
+  {
+    "method": "POST",
+    "route": "/settings/areas/weekly",
+    "file": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+    "line": 39
+  },
+  {
+    "method": "POST",
+    "route": "/settings/areas",
+    "file": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+    "line": 59
+  },
+  {
+    "method": "POST",
+    "route": "/settings/areas/{id}",
+    "file": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+    "line": 65
+  },
+  {
+    "method": "POST",
+    "route": "/settings/areas/{id}/active",
+    "file": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+    "line": 71
+  },
+  {
+    "method": "GET",
+    "route": "/",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 34
+  },
+  {
+    "method": "GET",
+    "route": "/calendar",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 37
+  },
+  {
+    "method": "POST",
+    "route": "/calendar/areas",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 50
+  },
+  {
+    "method": "POST",
+    "route": "/calendar/areas",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 72
+  },
+  {
+    "method": "POST",
+    "route": "/calendar/areas/restore",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 79
+  },
+  {
+    "method": "POST",
+    "route": "/calendar/district",
+    "file": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+    "line": 88
+  },
+  {
+    "method": "GET",
+    "route": "/dashboard",
+    "file": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+    "line": 20
+  },
+  {
+    "method": "GET",
+    "route": "/settings/costs",
+    "file": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+    "line": 34
+  },
+  {
+    "method": "POST",
+    "route": "/settings/costs/month",
+    "file": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+    "line": 35
+  },
+  {
+    "method": "POST",
+    "route": "/settings/costs/fuel",
+    "file": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+    "line": 44
+  }
+]
