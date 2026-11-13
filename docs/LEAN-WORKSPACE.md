@@ -48,3 +48,9 @@ Chromium na prawdziwej aplikacji, osobne schematy lokalnego PostgreSQL: osiem wi
 Szerokości 360/390/768/1440 px: brak poziomego przewijania; trzy kwoty i akcja podsumowania oraz akcja Dzisiaj powyżej 760 px. Domyślna wysokość Podsumowania: 1150 px na telefonie, 1059 px na komputerze; dół głównej akcji 544/569 px. Sprawdzono oba motywy, klawiaturę/fokus, ograniczony ruch i mały viewport. Powtarzalny scripts/verify-browser.py sprawdza oba motywy i nową organizację; plik właściciela pozostaje prywatny.
 
 Nie użyto bazy produkcyjnej. Nie dodano modułów biznesowych ani migracji. Klasyczny wygląd pozostaje domyślny w aplikacji i nowej paczce HTML; Pixel Tycoon można włączyć w podglądzie przełącznikiem.
+
+Podgląd HTML: 62 rzeczywiście wyrenderowane widoki i te same moduły UI, z jawnymi adapterami symulacji. Sprawdzono tryb klasyczny jako domyślny, przełączanie Tycoon, nowe menu, wspólny formularz wykonania i utrzymanie wartości po demonstracyjnym zapisie, nawigację/formularze/cele/odznaki, cztery szerokości i zagnieżdżoną ramkę z nieprzezroczystym originem. Poprawiono serializację aktualnych wartości kontrolek podczas przejść w demonstracji. Dane i zapis HTML są syntetyczne, w pamięci karty. Pobrano ZIP z GitHuba: HTTP 200, zgodność SHA-256 z testowanym plikiem i metadanymi.
+
+[Wyniki i sumy migracji](audit/lean-workspace-evidence.json), [paczka i instrukcja](../preview/README.md). Brak natywnego pulpitu/przekierowania portów w tej sesji; lokalny HTTP nie jest adresem publicznym dla użytkownika.
+
+Próba `gh pr create --draft` zakończyła się `POST https://api.github.com/graphql: Forbidden` (403). Gałąź jest wysłana; [opis PR](LEAN-WORKSPACE-PR.md) i [porównanie zmian](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/experiment/tycoon-interactions...ux/lean-workspace?expand=1) są gotowe do przeglądu.
