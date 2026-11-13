@@ -47,3 +47,7 @@ Pierwsze nowe scenariusze przeglądarkowe wymagały otwarcia mobilnego przegląd
 [Instrukcja i ZIP](../preview/README.md). Paczka zawiera 60 widoków wyrenderowanych przez prawdziwą aplikację i te same moduły UI, z adapterami symulującymi zapis. Dane są syntetyczne; zmiany w pliku HTML pozostają w pamięci karty. Pamięć krótkich efektów przejścia jest również symulowana wewnątrz podglądu. PostgreSQL i transakcje sprawdzono osobno.
 
 Ta sesja nie deklaruje natywnego pulpitu ani przekierowania portów Codexa. Lokalny serwer służy testom i nie jest publicznym adresem użytkownika. Dostęp dostarczamy przez pobieralny ZIP, nie ścieżkę `/workspace`.
+
+Wyniki i sumy: [tycoon-interactions-evidence.json](audit/tycoon-interactions-evidence.json). Paczkę pobrano z GitHuba: HTTP200, application/zip, zgodność SHA-256 z przetestowanym HTML i metadanymi.
+
+Gałąź została wysłana. Próba utworzenia draft PR przez `gh pr create` zakończyła się `POST https://api.github.com/graphql: Forbidden` (403). [Gotowy opis PR](TYCOON-INTERACTIONS-PR.md) i [porównanie do poprzedniego eksperymentu](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/experiment/cleaning-tycoon-progress...experiment/tycoon-interactions?expand=1).
