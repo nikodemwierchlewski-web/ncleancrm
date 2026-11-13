@@ -49,3 +49,5 @@ Pobieralny ZIP i instrukcja: [preview/README.md](../preview/README.md). Podgląd
 Podgląd HTML sprawdzono w Chromium również w zagnieżdżonej ramce z nieprzezroczystym originem: nawigacja i zapis wydatku, pięć obrazków odznak, kroki celu, postęp dnia, jednorazowa odznaka za przykładowe zamknięcie, preferencja ruchu między ekranami, przełączanie wyglądu oraz cztery szerokości. Brak błędów JavaScript. [Zestawienie wyników i sum migracji](audit/cleaning-tycoon-evidence.json).
 
 Bieżące środowisko Codexa nie udostępnia obsługi pulpitu ani przekierowania portów. Lokalny HTTP jest narzędziem testów przeglądarkowych, nie publicznym linkiem dla użytkownika. Nie deklarujemy dostępności interaktywnego hostingu w czacie.
+
+Próba utworzenia draft PR przez `gh pr create` zakończyła się `POST https://api.github.com/graphql: Forbidden` (403). Gałąź została wysłana. Gotowy opis: [CLEANING-TYCOON-PR.md](CLEANING-TYCOON-PR.md). [Otwórz porównanie do bazowego eksperymentu](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/experiment/pixel-tycoon...experiment/cleaning-tycoon-progress?expand=1).
