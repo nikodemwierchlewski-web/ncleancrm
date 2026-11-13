@@ -1,13 +1,14 @@
 {
-  "code_commit": "d72314109003a5c991aab960859a2ae9417cb4a6",
   "repository": "nikodemwierchlewski-web/ncleancrm",
-  "mode": "DEMO - synthetic data, memory only, no PostgreSQL writes",
+  "branch": "feature/ncleanek-guide",
+  "code_commit": "6b9285e05007f23c776b24072668d890f0cd7b3c",
+  "generated_utc": "2026-11-13T11:14:53.159341+00:00",
   "views": 62,
-  "generated_utc": "2026-11-13T10:27:43.727649+00:00",
-  "html_sha256": "85e36b7eff55e284d44da3af278b5021a8fc9d55a3b7b1754b191664644a28a8",
-  "jar_sha256": "c5bf36c322fd878368c696a3cfedeea2bdde0687a38c8ee28a74929f469a6c58",
-  "appearance": "Permanent Cleaning Tycoon",
-  "zip_sha256": "363a4e8a8d5ff2ce58c79c56a73e821da80ce0e5229eb0366441782858cf6bf9",
-  "zip_bytes": 657264,
-  "artifact": "nclean-tycoon-0.1-demo.zip"
+  "helper": "ncLEANEK",
+  "mode": "DEMO: synthetic data, simulated saves in memory, no PostgreSQL connection",
+  "html_sha256": "a8a23c0c2b970272780fb1a8ae66e026c4bf4185d2876b338fcf62466d986433",
+  "jar_sha256": "0dc6ce074df8d7c091a999fd6972f5013aec7cee874abf74eafe68bcb54f365f",
+  "artifact": "ncleanek-demo.zip",
+  "zip_bytes": 674409,
+  "zip_sha256": "032dd1888ec50ec451f009c9bafb12e60a6a665befd1b1cf4bac5df64bcfc89f"
 }

@@ -43,3 +43,7 @@ Nie badano fizycznego telefonu, klawiatury Android/iOS, pełnego czytnika ekranu
 Aktualna paczka: `preview/ncleanek-demo.zip`. Wypakuj ZIP i otwórz index.html w aktualnym Chrome lub Edge. To syntetyczna demonstracja 62 widoków istniejącej aplikacji, z symulowanym zapisem w pamięci. Preferencje pomocnika zachowują się między ekranami tej demonstracji; odświeżenie resetuje sesję. Nie wpisuj prawdziwych danych klientów.
 
 Wbudowany panel Codexa w tej sesji nie udostępnia przeglądarki użytkownikowi. HTML sprawdzamy oddzielnie w Chromium, również w ramce sandbox. Nie wdrażamy produkcji ani nie łączymy bazy nclean.pl.
+
+Wynik przeglądarki: 11 scenariuszy pomocnika i 60 kombinacji tras/szerokości, bez błędów JS. Zmierzono zmianę transformacji chodzącej postaci, pauzę poza ekranem i powrót ruchu; ograniczenie systemowe i symulowane ukrycie karty zatrzymują ruch. Dodatkowo samouczek notatki zachował tytuł i pozwolił zapisać dokładnie jeden wpis. Krótki viewport 390×430 mieści panel pomocy.
+
+axe-core 4.10.3: 16 kombinacji przy 360/390/768/1440 px, zero zgłoszonych naruszeń. We wszystkich 16 są pozycje incomplete wymagające ręcznej oceny; nie uznano ich za zaliczone. [Raport dostępności](audit/ncleanek-accessibility.json) i [próby interfejsu](audit/ncleanek-browser.json).

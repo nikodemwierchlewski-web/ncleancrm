@@ -1,8 +1,9 @@
-# Podgląd ncLEAN · Cleaning Tycoon
+# Podgląd ncLEAN CRM z pomocnikiem ncLEANEK
 
-Aktualna paczka: [nclean-tycoon-0.1-demo.zip](nclean-tycoon-0.1-demo.zip).
-Pobierz, wypakuj i otwórz `index.html`. Dane są syntetyczne; zapis działa tylko w pamięci karty. Nie ma połączenia z bazą CRM.
+Aktualna paczka: [ncleanek-demo.zip](ncleanek-demo.zip). Pobierz, wypakuj i otwórz index.html w aktualnym Chrome lub Edge.
 
-Tycoon działa od razu. Dostępne są kalendarz, klienci, cennik i obszary, wykonanie, podsumowanie, koszty, notatki oraz cele. To eksport 62 widoków istniejącej aplikacji ze wspólnymi stylami i skryptami oraz lokalnymi adapterami symulującymi zapis. Nie wszystkie operacje serwerowe da się symulować; trwałość sprawdzono osobno na prawdziwej aplikacji.
+Przycisk z postacią w nagłówku otwiera ncLEANKA. Uruchom samouczek albo znaki ? przy opcjach. Ustawienia → Wygląd i aplikacja zawierają ukrycie/przywrócenie pomocnika i ograniczenie animacji. Zachowano klikalny kalendarz, rezerwacje, klientów, ustawienia, wykonanie, podsumowanie, koszty i notatki.
 
-Sumy i commit: [build.json](build.json). Testy i ograniczenia: [raport wydania](../docs/TYCOON-0.1-VALIDATION.md). Starsza paczka z `test` w nazwie jest archiwalna.
+To eksport 62 widoków prawdziwej aplikacji ze wspólnymi stylami i skryptami. Dane są syntetyczne, zapis jest symulowany w pamięci. Przypomnienia DEMO dotyczą przykładowego dnia. Odświeżenie resetuje sesję; ta paczka nie łączy się z PostgreSQL. Nie wpisuj prawdziwych danych klientów.
+
+[Instrukcja i weryfikacja](../docs/NCLEANEK.md). [Commit i sumy](build.json). Starsze paczki pozostają archiwalne.

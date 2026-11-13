@@ -1,0 +1,318 @@
+{
+  "checks": [
+    "calendar tour read-only, 8 visits, date and focus preserved",
+    "modal hint/Escape keeps fields and restores focus",
+    "real booking still saves once after help tour",
+    "mouse hover and keyboard preserve draft",
+    "preferences hide/reload/restore/reset",
+    "mute today survives reload without hiding regular help",
+    "60 real responsive views with helper open/close and no old visible theme names",
+    "short 390x430 viewport help fits screen",
+    "walking transform changes, pauses offscreen and resumes",
+    "helper preferences contain no entered draft text",
+    "OS reduced motion and simulated hidden-tab suspension"
+  ],
+  "views": [
+    {
+      "width": 360,
+      "route": "/calendar",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/today",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/customers",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings/services",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/settings/areas",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/dashboard",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/fuel",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/costs",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/notes",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/more",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/callbacks",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/search",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/work/1",
+      "overflow": false
+    },
+    {
+      "width": 360,
+      "route": "/day-closeout?date=2026-11-13",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/calendar",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/today",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/customers",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings/services",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/settings/areas",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/dashboard",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/fuel",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/costs",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/notes",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/more",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/callbacks",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/search",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/work/1",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "route": "/day-closeout?date=2026-11-13",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/calendar",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/today",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/customers",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings/services",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/settings/areas",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/dashboard",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/fuel",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/costs",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/notes",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/more",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/callbacks",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/search",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/work/1",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "route": "/day-closeout?date=2026-11-13",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/calendar",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/today",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/customers",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings/services",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/settings/areas",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/dashboard",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/fuel",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/costs",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/notes",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/more",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/callbacks",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/search",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/work/1",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "route": "/day-closeout?date=2026-11-13",
+      "overflow": false
+    }
+  ],
+  "javascript_errors": []
+}

@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-13",
+  "unit_mvc": 36,
+  "postgres_testcontainers": 85,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "migrations": "V1-V14 unchanged",
+  "real_application_capture": "62 views and existing business flows/restart passed",
+  "demo": "helper, modal help/tour, booking, preferences across routes, clients/settings and nested sandbox passed",
+  "limitations": [
+    "Physical phone and actual software keyboard not tested",
+    "No full screen-reader assessment",
+    "Older browsers without Popover API not tested",
+    "axe incomplete is not a pass"
+  ],
+  "real_note_modal_tour": "passed, preserved draft and one saved note"
+}
