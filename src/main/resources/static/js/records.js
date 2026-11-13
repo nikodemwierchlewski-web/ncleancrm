@@ -20,6 +20,7 @@
         const result = json ? await response.json() : {};
         if (!response.ok || !json || result.saved !== true) throw Error(result.message || 'Nie udało się zapisać. Sprawdź połączenie i zalogowanie, a potem spróbuj ponownie.');
         window.NcleanMotion?.confirmed({kind:result.motion||'updated',id:result.id},true);
+        window.NcleanDrafts?.saved(form);
         onSaved();
       } catch (exception) {
         error.textContent = exception.message;

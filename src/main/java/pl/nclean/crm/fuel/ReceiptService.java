@@ -23,12 +23,13 @@ public class ReceiptService {
     }
     public byte[] normalize(MultipartFile file){
         if(file==null||file.isEmpty()||file.getSize()>MAX_BYTES)throw new IllegalArgumentException("Wybierz zdjęcie JPEG lub PNG do 8 MB.");
-        try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(file.getBytes()))){
-            var readers=ImageIO.getImageReaders(input);if(!readers.hasNext())throw new IllegalArgumentException("Plik nie jest poprawnym zdjęciem JPEG lub PNG.");
+        byte[] original;try{original=file.getBytes();}catch(IOException ex){throw new IllegalArgumentException("Nie udało się odczytać zdjęcia.");}
+        try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(original))){
+            var readers=ImageIO.getImageReaders(input);if(!readers.hasNext())throw new IllegalArgumentException("Obsługiwane są poprawne zdjęcia JPEG i PNG. Zapisz HEIC jako JPEG.");
             var reader=readers.next();try{
                 String format=reader.getFormatName().toLowerCase(Locale.ROOT);if(!Set.of("jpeg","jpg","png").contains(format))throw new IllegalArgumentException("Obsługiwane są zdjęcia JPEG i PNG. Zapisz HEIC jako JPEG.");
                 reader.setInput(input,true,true);int width=reader.getWidth(0),height=reader.getHeight(0);if(width<=0||height<=0||(long)width*height>20_000_000)throw new IllegalArgumentException("Zdjęcie może mieć maksymalnie 20 megapikseli.");
-                var image=reader.read(0);var normalized=new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);var graphics=normalized.createGraphics();try{graphics.setColor(Color.WHITE);graphics.fillRect(0,0,width,height);graphics.drawImage(image,0,0,null);}finally{graphics.dispose();}
+                var image=reader.read(0);int orientation=ImageOrientation.read(original);int outputWidth=orientation>=5?height:width,outputHeight=orientation>=5?width:height;var normalized=new BufferedImage(outputWidth,outputHeight,BufferedImage.TYPE_INT_RGB);var graphics=normalized.createGraphics();try{graphics.setColor(Color.WHITE);graphics.fillRect(0,0,outputWidth,outputHeight);graphics.drawImage(image,ImageOrientation.transform(orientation,width,height),null);}finally{graphics.dispose();}
                 var bytes=new ByteArrayOutputStream();if(!ImageIO.write(normalized,"jpeg",bytes)||bytes.size()>MAX_BYTES)throw new IllegalArgumentException("Zdjęcie po przetworzeniu przekracza limit. Wybierz mniejszy obraz.");
                 return bytes.toByteArray();
             }finally{reader.dispose();}

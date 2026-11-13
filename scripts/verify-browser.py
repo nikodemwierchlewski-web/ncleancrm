@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--owner-file', type=Path, required=True)
     parser.add_argument('--port', type=int, default=18096)
     parser.add_argument('--chromium', default=shutil.which('chromium'))
-    parser.add_argument('--pixel-tycoon', action='store_true', help='Also verify experimental artwork, progress and motion settings.')
+    parser.add_argument('--pixel-tycoon', action='store_true', help='Also verify Tycoon artwork, progress and motion settings.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     jar = root / 'target/nclean-crm-0.0.1-SNAPSHOT.jar'

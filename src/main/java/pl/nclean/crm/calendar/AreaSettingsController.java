@@ -105,7 +105,6 @@ public class AreaSettingsController {
     ResponseEntity<String> invalidPlan(IllegalArgumentException ex) { return ResponseEntity.badRequest().body(ex.getMessage()); }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    ResponseEntity<String> notFound() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nie znaleziono obszaru pracy.");
-    }
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    String notFound() { return "error/4xx"; }
 }

@@ -1,4 +1,4 @@
-param([switch]$PixelTycoon)
+param([switch]$PixelTycoon) # Legacy alias; Tycoon is always the application appearance.
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
@@ -21,7 +21,7 @@ try {
         throw 'The local PostgreSQL database did not start. Check Docker Desktop and port 55433.'
     }
     Write-Host 'Open http://127.0.0.1:8081 after the application starts. Login: local-owner.'
-    $crmProfiles = if ($PixelTycoon) { 'local,tycoon' } else { 'local' }
+    $crmProfiles = 'local'
     & '.\mvnw.cmd' 'spring-boot:run' "-Dspring-boot.run.profiles=$crmProfiles" '-Dspring-boot.run.arguments=--spring.datasource.url=jdbc:postgresql://127.0.0.1:55433/nclean_crm --spring.flyway.url=jdbc:postgresql://127.0.0.1:55433/nclean_crm'
     if ($LASTEXITCODE -ne 0) {
         throw 'The CRM application exited with an error.'

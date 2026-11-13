@@ -585,10 +585,10 @@ class CalendarPostgresIT {
         jdbc.update("INSERT INTO dashboard_month(month,configured) VALUES ('2026-12-01',TRUE),('2027-01-01',TRUE)");
         jdbc.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES ('2026-12-01','Grudzień','MARKETING',310),('2027-01-01','Styczeń','OTHER',620)");
         var week=dashboard.summary(LocalDate.of(2026,12,31),"week","plan");assertEquals(new BigDecimal("40.00"),week.marketing());assertEquals(new BigDecimal("60.00"),week.fixed());assertEquals(0,week.missingMonths());
-        var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Bez historycznej wyceny");var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);long chemical=chemistry.saveMaterial(null,0,"Stary pomiar","ml","1000","50");
-        long id=data.book(UUID.randomUUID(),LocalDate.of(2028,2,10),java.time.LocalTime.NOON,null,"Klient próbny","500000095","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(id,0,LocalDate.of(2028,2,10),java.time.LocalTime.NOON,"DONE");
+        var historyDay=DashboardService.today().minusDays(1);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Bez historycznej wyceny");var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);long chemical=chemistry.saveMaterial(null,0,"Stary pomiar","ml","1000","50");
+        long id=data.book(UUID.randomUUID(),historyDay,java.time.LocalTime.NOON,null,"Klient próbny","500000095","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(id,0,historyDay,java.time.LocalTime.NOON,"DONE");
         jdbc.update("UPDATE booking_item SET actual_defined=TRUE WHERE booking_id=?",id);jdbc.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity) VALUES (?,0,?,'Stary pomiar','ml',100)",id,chemical);
-        assertEquals(1,dashboard.summary(LocalDate.of(2028,2,10),"day","actual").missingChemistry());
+        assertEquals(1,dashboard.summary(historyDay,"day","actual").missingChemistry());
     }
 
     @Test
@@ -969,26 +969,26 @@ class CalendarPostgresIT {
     }
 
     @Test
-    void tycoonExperimentIsOptInAndSwitchingBackPreservesDataAndSecurity() throws Exception {
+    void tycoonIsDefaultAcrossRoutesAndRestartPreservesDataAndSecurity() throws Exception {
         long booking=workBooking("Motyw nie zmienia danych",DashboardService.today());
         var original=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking);
         var classic=app.browser();classic.login();
-        assertFalse(classic.get("/calendar").body().contains("/css/tycoon.css"));
-        assertFalse(classic.get("/dashboard").body().contains("/pixel/base.svg"));
+        assertTrue(classic.get("/calendar").body().contains("/css/tycoon.css"));
+        assertTrue(classic.get("/dashboard").body().contains("/pixel/base.svg"));
         app.close();app=RunningApp.start(true);jdbc=app.context().getBean(JdbcTemplate.class);
         assertEquals(302,app.browser().get("/calendar").statusCode());
         var experiment=app.browser();experiment.login();
         for(String path:List.of("/calendar","/today","/customers","/settings","/settings/areas","/settings/services","/settings/costs","/dashboard","/fuel","/costs","/notes","/day-closeout","/work/"+booking)){
             var page=experiment.get(path);assertEquals(200,page.statusCode(),path);
             assertTrue(page.body().contains("/css/tycoon.css"),path);assertTrue(page.body().contains("/js/tycoon.js"),path);
-            assertTrue(page.body().contains("TYCOON · TEST"),path);
+            assertTrue(page.body().contains("TYCOON"),path);
         }
         assertTrue(experiment.get("/dashboard").body().contains("/pixel/base.svg"));
         assertEquals(200,experiment.get("/pixel/base.svg").statusCode());
         assertEquals(403,experiment.settings("/customers",Map.of("name","Bez CSRF","phone","500000099"),false).statusCode());
         assertEquals(original,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking));
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
-        var restored=app.browser();restored.login();assertFalse(restored.get("/calendar").body().contains("/css/tycoon.css"));
+        var restored=app.browser();restored.login();assertTrue(restored.get("/calendar").body().contains("/css/tycoon.css"));
         assertEquals(original,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",booking));
     }
 
@@ -1116,6 +1116,52 @@ class CalendarPostgresIT {
         var fields=reviewFields(id);fields.put("final_total","300");fields.put("minutes","90");fields.put("allocations","1");fields.put("amount_0","100");fields.put("amount_1","200");fields.put("time_0","30");fields.put("time_1","60");
         var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);review.save(id,day,fields,OWNER);assertEquals(new BigDecimal("100.00"),data.items(id).get(0).get("final_amount"));assertEquals(90,app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("work_minutes"));
         var before=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);fields.put("version","1");fields.put("amount_1","500");assertThrows(IllegalArgumentException.class,()->review.save(id,day,fields,OWNER));assertEquals(before,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id));
+    }
+
+    @Test void futureDoneRejectedAtomicallyThroughEveryWriteEntry() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Przyszła wizyta",day.plusDays(1));
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);
+        var before=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);var items=records.items(id);
+        var browser=app.browser();browser.login();
+        assertEquals(400,browser.settings("/orders/"+id,Map.of("calendar","1","version","0","day",day.plusDays(1),"starts","12:00","status","DONE"),true).statusCode());
+        assertEquals(400,browser.settings("/work/"+id+"/complete",Map.of("version","0","final_total","100","minutes","45","note","Pomiar"),true).statusCode());
+        var futureFields=reviewFields(id);futureFields.put("date",day.plusDays(1).toString());assertEquals(400,browser.settings("/day-closeout/"+id,futureFields,true).statusCode());
+        assertEquals(before,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id));assertEquals(items,records.items(id));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking_audit WHERE booking_id=?",Integer.class,id));assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
+        for(var valid:List.of(day.minusDays(1),day)){
+            long past=workBooking("Dozwolone wykonanie "+valid,valid);work.complete(past,0,"100","45","",Map.of(),Map.of(),List.of(),OWNER);
+            var completed=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",past);
+            assertThrows(IllegalArgumentException.class,()->records.reschedule(past,1,day.plusDays(1),java.time.LocalTime.NOON,"DONE"));
+            assertEquals(completed,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",past));
+        }
+    }
+
+    @Test void explicitCloseoutIdNeverFallsBackToAnotherCustomer() throws Exception {
+        var day=DashboardService.today();long today=workBooking("Właściwy klient",day),other=workBooking("Inny dzień",day.minusDays(1));var browser=app.browser();browser.login();
+        assertEquals(404,browser.get("/day-closeout?date="+day+"&order=999999999").statusCode());
+        assertEquals(404,browser.get("/day-closeout?date="+day+"&order="+other).statusCode());
+        assertEquals(200,browser.get("/day-closeout?date="+day+"&order="+today).statusCode());
+        var wrong=reviewFields(other);wrong.put("date",day.toString());assertEquals(400,browser.settings("/day-closeout/"+other,wrong,true).statusCode());
+        app.context().getBean(pl.nclean.crm.records.CrmRecords.class).reschedule(today,0,day.plusDays(1),java.time.LocalTime.NOON,"PLANNED");
+        assertEquals(404,browser.get("/day-closeout?date="+day+"&order="+today).statusCode());assertEquals(404,browser.get("/work/999999999").statusCode());assertEquals(404,browser.get("/customers/999999999").statusCode());
+    }
+
+    @Test void sessionEndpointAndPublicThemeNeverExposePrivateData() throws Exception {
+        var anonymous=app.browser();assertEquals(302,anonymous.get("/session").statusCode());
+        assertEquals(200,anonymous.get("/login").statusCode());assertTrue(anonymous.get("/login").body().contains("/css/tycoon.css"));
+        assertEquals(200,anonymous.get("/font/PixelifySans.ttf").statusCode());
+        assertEquals(302,anonymous.get("/photos/00000000-0000-0000-0000-000000000001").statusCode());
+        var owner=app.browser();owner.login();var session=owner.get("/session");assertEquals(200,session.statusCode());assertTrue(session.headers().firstValue("Cache-Control").orElse("").contains("no-store"));assertTrue(session.body().contains("token"));assertFalse(session.body().contains(PASSWORD));
+        assertEquals(403,owner.settings("/customers",Map.of("name","Bez CSRF","phone","500000099"),false).statusCode());
+    }
+
+    @Test void pagesAndLookupAreBoundedWithoutLosingSingleRecordHistory() throws Exception {
+        for(int n=0;n<62;n++)jdbc.update("INSERT INTO crm_customer(name,phone,address,active) VALUES (?,?,?,?)",String.format("Klient %03d",n),"+48500000099","Adres",n!=61);
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        assertEquals(26,records.customerPage("Klient",0,false).size());assertEquals(26,records.customerPage("Klient",1,false).size());assertEquals(12,records.customerPage("Klient",2,false).size());
+        assertEquals(50,records.customerPage("Klient",0,true).size());assertThrows(IllegalArgumentException.class,()->records.customerPage("x",-1,false));
+        var browser=app.browser();browser.login();assertEquals(200,browser.get("/customers?page=2").statusCode());assertTrue(browser.get("/customers").body().contains("Następne"));
+        long id=workBooking("Stronicowanie nie gubi historii",DashboardService.today());assertEquals(200,browser.get("/orders").statusCode());assertEquals(200,browser.get("/orders?repeat="+id).statusCode());
     }
 
     private static final class Browser {

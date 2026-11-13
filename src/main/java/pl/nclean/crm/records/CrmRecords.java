@@ -17,9 +17,24 @@ public class CrmRecords {
  public List<ChemistryService.Material> materials(){return chemistry.materials();}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
  public Map<Long,BigDecimal> standardCosts(){return chemistry.standardCosts();}
+ public static void validateCompletionDay(LocalDate day){if(day==null||day.isAfter(pl.nclean.crm.dashboard.DashboardService.today()))throw new IllegalArgumentException("Przyszła wizyta pozostaje zaplanowana. Najpierw popraw termin.");}
  public List<Map<String,Object>> customers(String query){
   String q=query==null?"":query.strip();
   return db.queryForList("SELECT * FROM crm_customer WHERE position(lower(?) in lower(name))>0 OR position(? in phone)>0 ORDER BY active DESC,name,id",q,q.replaceAll("[\\s()-]",""));
+ }
+ public Map<String,Object> customer(long id){return db.queryForList("SELECT * FROM crm_customer WHERE id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
+ public Map<String,Object> booking(long id){return db.queryForList("SELECT * FROM booking WHERE id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
+ public List<Map<String,Object>> customerPage(String query,int page,boolean activeOnly){
+  if(query==null||query.length()>120||page<0||page>100000)throw new IllegalArgumentException("Sprawdź wyszukiwanie i numer strony.");String q=query.strip();
+  return db.queryForList("SELECT * FROM crm_customer WHERE (NOT ? OR active) AND (position(lower(?) in lower(name))>0 OR position(? in phone)>0) ORDER BY active DESC,name,id LIMIT ? OFFSET ?",activeOnly,q,q.replaceAll("[\\s()-]",""),activeOnly?50:26,activeOnly?0:page*25);
+ }
+ public List<Map<String,Object>> bookingPage(LocalDate day,Long customer,int page){
+  if(page<0||page>100000)throw new IllegalArgumentException("Sprawdź numer strony.");
+  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid FROM booking b WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC LIMIT 26 OFFSET ?",day,day,customer,customer,page*25);
+ }
+ public List<Map<String,Object>> bookingRows(String kind,List<Long> ids){
+  if(ids.isEmpty())return List.of();String table=switch(kind){case "items"->"booking_item";case "chemicals"->"booking_chemical";case "actuals"->"booking_actual_chemical";default->throw new IllegalArgumentException();};
+  return db.queryForList("SELECT "+(kind.equals("chemicals")?"t.*,i.name service_name":"t.*")+" FROM "+table+" t "+(kind.equals("chemicals")?"JOIN booking_item i ON i.booking_id=t.booking_id AND i.position=t.item_position ":"")+" WHERE t.booking_id IN ("+String.join(",",Collections.nCopies(ids.size(),"?"))+") ORDER BY t.booking_id,"+(kind.equals("items")?"t.position":"t.item_position,t.chemical_id"),ids.toArray());
  }
  public List<Map<String,Object>> categories(){return db.queryForList("SELECT * FROM service_category ORDER BY name,id");}
  public List<Map<String,Object>> services(){return db.queryForList("SELECT s.*,c.name category FROM service_definition s JOIN service_category c ON c.id=s.category_id ORDER BY c.name,s.name,s.id");}
@@ -104,6 +119,7 @@ public class CrmRecords {
  }
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
+  if("DONE".equals(status))validateCompletionDay(day);
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new IllegalArgumentException("Nieznane zlecenie.");
   if(status.equals("CANCELLED")&&db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia. Anulowanie nie usuwa należności ani historii wpłat.");

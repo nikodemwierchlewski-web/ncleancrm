@@ -17,13 +17,13 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error","/manifest.webmanifest","/sw.js","/offline.html","/pwa/icon-192.png","/pwa/icon-512.png").permitAll()
+                .requestMatchers("/login","/css/**","/js/**","/font/**","/pixel/**","/icons.svg","/error","/manifest.webmanifest","/sw.js","/offline.html","/pwa/icon-192.png","/pwa/icon-512.png").permitAll()
                 .anyRequest().hasRole("OWNER"))
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"))
                 .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN)))
-            .formLogin(Customizer.withDefaults())
-            .logout(logout -> logout.invalidateHttpSession(true).deleteCookies("NCLEAN_CRM_SESSION"))
+            .formLogin(login -> login.loginPage("/login").permitAll())
+            .logout(logout -> logout.logoutSuccessUrl("/login?logout").invalidateHttpSession(true).deleteCookies("NCLEAN_CRM_SESSION"))
             .csrf(Customizer.withDefaults())
             .build();
     }

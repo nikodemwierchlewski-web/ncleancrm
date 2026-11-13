@@ -63,7 +63,7 @@ public class DayReviewService {
         boolean noNotes=p.containsKey("no_notes");if(noNotes&&!note.isBlank())throw new IllegalArgumentException("Wpisz notatkę albo wybierz Bez uwag.");
         String original=db.queryForObject("SELECT to_jsonb(b)::text FROM booking b WHERE id=?",String.class,id);
         if(outcome.equals("DONE")){
-            if(day.isAfter(DashboardService.today()))throw new IllegalArgumentException("Nie potwierdzaj wykonania przyszłej wizyty.");
+            CrmRecords.validateCompletionDay(day);
             var measured=new ArrayList<WorkService.Measurement>();var zero=new ArrayList<int[]>();
             for(var item:records.items(id)){
                 int pos=((Number)item.get("position")).intValue();String mode=p.getOrDefault("chem_"+pos,"KEEP");
