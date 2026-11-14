@@ -1,14 +1,14 @@
 {
-  "code_commit": "c79775d52f683226c5ee49c2c7d4d28170bb45c3",
+  "code_commit": "a9d78370984282242d8b09775b4a1914a5d64bb1",
   "branch": "feature/ncleanek-floating",
-  "generated_utc": "2026-11-14T10:29:36.645644+00:00",
-  "helper": "ncLEANEK — fixed-size bottom rail, horizontal drag and day closeout reminder",
-  "mode": "synthetic DEMO, simulated saves in memory, no database connection",
-  "views": 62,
-  "html_sha256": "03dc809b3b01ed308e8f8df14917736b52a4ce4b4dc4fb03c5e2a79751a522eb",
-  "jar_sha256": "e64bdadbbfc7beb05d417fd4dab959a8d0d242718e67032452d6fcaaddf7fc9c",
-  "artifact": "ncleanek-floating-demo.zip",
-  "zip_sha256": "1bd7a8c978d7700b2a4e8245e7f861898caacadc4952658c664bc37e018c5dcb",
-  "zip_bytes": 683412,
-  "html_bytes": 2779335
+  "generated_utc": "2026-11-14T11:30:52.131901+00:00",
+  "mode": "synthetic DEMO; memory-only saves; no database connection",
+  "views": 63,
+  "feature": "reversible removal, collision-safe companion and clean blue completion stars",
+  "html_sha256": "be8ff53b946d1942e0ba298024d86fd6b60178d66a26404622f3223bda06b2b4",
+  "jar_sha256": "1ec7777e661a250bc944544875a85a779fe83617017807e47b0eb9b76fe96bc8",
+  "html_bytes": 2875808,
+  "artifact": "nclean-removal-stars-demo.zip",
+  "zip_sha256": "7ff529fdeef6aa4696d598aa3395d84ba40fb90db4a2179c1df424fefc21e086",
+  "zip_bytes": 694946
 }
