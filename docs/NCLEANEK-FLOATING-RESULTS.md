@@ -39,3 +39,9 @@ python scripts/verify-floating-preview.py \
 ```
 
 Gałąź: `feature/ncleanek-floating`, baza: `feature/ncleanek-guide@d99ea42`. Na prośbę właściciela nie tworzono Pull Requesta. Nie scalano do main i nie wdrażano aplikacji.
+
+## Potwierdzenie dostarczenia
+
+Gałąź i kod wysłano do GitHuba. Pobrano ponownie ZIP i pojedynczy HTML; ich SHA-256 są zgodne z `preview/build.json`, a index.html w ZIP jest identyczny z pojedynczym plikiem. Pobrany HTML przeszedł ponowne testy przeglądarkowe: przeciąganie, samouczek, pamięć/reset położenia, formularz i próbny zapis oraz zagnieżdżony sandbox, bez błędów JS. [Dowód](audit/ncleanek-floating-delivery.json).
+
+[ZIP z GitHuba](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/feature/ncleanek-floating/preview/ncleanek-floating-demo.zip). [Pojedynczy HTML](../preview/ncleanek-floating.html). Pull Request nie był tworzony.

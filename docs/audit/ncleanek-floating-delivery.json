@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-14",
+  "branch": "feature/ncleanek-floating",
+  "code_commit": "2eee5abaf4a6d8a5af9679cab90c3b27f2631614",
+  "zip_sha256": "6cb78a2f93a2d9ea8f60bd16a22429c96fe4e23c093829ab71a8949ba048c94d",
+  "html_sha256": "cd4e1495d8837ba1270b1d35a3e31ce1c8fd4247345f2ad55c853f1e0994e155",
+  "zip_bytes": 682930,
+  "html_bytes": 2775674,
+  "download_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/feature/ncleanek-floating/preview/ncleanek-floating-demo.zip",
+  "download_hashes_match": true,
+  "zip_contains_identical_single_html": true,
+  "downloaded_browser_replay": "passed: drag, tours, position/reset, booking, nested sandbox, no JS errors",
+  "no_pull_request_created": true
+}
