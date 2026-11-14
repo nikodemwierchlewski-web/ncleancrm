@@ -1,0 +1,17 @@
+{
+  "artifact_commit": "d9997a4cf501d1cd3a1f961ababc0619b4f86e05",
+  "code_commit": "a9d78370984282242d8b09775b4a1914a5d64bb1",
+  "html_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/d9997a4/preview/nclean-removal-stars.html",
+  "zip_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/d9997a4/preview/nclean-removal-stars-demo.zip",
+  "html_sha256": "be8ff53b946d1942e0ba298024d86fd6b60178d66a26404622f3223bda06b2b4",
+  "zip_sha256": "7ff529fdeef6aa4696d598aa3395d84ba40fb90db4a2179c1df424fefc21e086",
+  "download_sha256_and_zip_content": "PASS",
+  "downloaded_browser_test": "PASS: four widths, cancel/remove/undo, catalogue/costs/new booking, stars/reduced motion, nested opaque sandbox; no JS errors",
+  "browser_modes": [
+    "HTTP serving of downloaded HTML",
+    "nested sandbox"
+  ],
+  "physical_phone_tested": false,
+  "codex_live_panel_verified": false,
+  "pull_request_created": false
+}

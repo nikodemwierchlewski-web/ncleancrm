@@ -99,3 +99,12 @@ resetuje sesję. Nie łączy się z bazą. Prawdziwe operacje zweryfikowano oddz
 na PostgreSQL. Panel Codexa nie jest potwierdzonym hostingiem aplikacji.
 
 Zmiany na `feature/ncleanek-floating`, bez Pull Requesta, scalenia i produkcji.
+
+## Dostarczenie
+
+Pobrano HTML i ZIP z GitHuba (`d9997a4`), potwierdzono SHA-256 i identyczny
+index.html wewnątrz ZIP. Pobrany HTML przeszedł ponownie test czterech szerokości,
+usuwania/cofania, cennika, kosztów, nowego zlecenia, gwiazdek i zagnieżdżonego
+sandboxu bez błędów JS. [Dowód pobrania](audit/removal-clean-stars-delivery.json).
+To weryfikacja pliku demonstracji, bez deklarowania działającego hostingu
+lub panelu przeglądarki Codexa.
