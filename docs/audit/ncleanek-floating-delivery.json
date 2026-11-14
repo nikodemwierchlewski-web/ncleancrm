@@ -10,5 +10,10 @@
   "download_hashes_match": true,
   "zip_contains_identical_single_html": true,
   "downloaded_browser_replay": "passed: drag, tours, position/reset, booking, nested sandbox, no JS errors",
-  "no_pull_request_created": true
+  "no_pull_request_created": true,
+  "direct_file_url_in_cloud_browser": "blocked by cloud browser policy: ERR_BLOCKED_BY_ADMINISTRATOR",
+  "verified_browser_modes": [
+    "HTTP serving of downloaded file",
+    "nested opaque sandbox"
+  ]
 }
