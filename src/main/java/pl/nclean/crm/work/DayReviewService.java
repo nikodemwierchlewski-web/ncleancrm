@@ -30,16 +30,16 @@ public class DayReviewService {
             }
             order.put("missing",missing);order.put("complete",missing.isEmpty());if(missing.isEmpty())complete++;
         }
-        var moves=db.queryForList("SELECT m.*,b.customer_name,b.starts FROM booking_move m JOIN booking b ON b.id=m.booking_id WHERE from_day=? ORDER BY m.id",day);
+        var moves=db.queryForList("SELECT m.*,b.customer_name,b.starts FROM booking_move m JOIN booking b ON b.id=m.booking_id WHERE b.removed_at IS NULL AND from_day=? ORDER BY m.id",day);
         var fingerprint=fingerprint(day);var saved=db.queryForList("SELECT * FROM day_review WHERE day=?",day);boolean closed=!saved.isEmpty()&&fingerprint.equals(saved.get(0).get("fingerprint"))&&complete==orders.size();
         return new Review(day,orders,moves,complete,fingerprint,closed,!saved.isEmpty()&&!closed);
     }
     private static final String FINGERPRINT_SQL="""
         SELECT md5(jsonb_build_array(
-          (SELECT COALESCE(jsonb_agg(to_jsonb(b) ORDER BY id),'[]') FROM booking b WHERE day=?),
-          (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE day=?)),
-          (SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE day=?)),
-          (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE day=?)),
+          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
+          (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
+          (SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
+          (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(to_jsonb(m) ORDER BY id),'[]') FROM booking_move m WHERE from_day=?)
         )::text)
         """;
@@ -47,7 +47,7 @@ public class DayReviewService {
     /** Uses the same canonical fingerprint as closing a day; payments deliberately do not affect it. */
     public Optional<Review> latestOpenBefore(LocalDate day){
         DashboardService.period(day,"day");
-        var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
+        var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE removed_at IS NULL AND day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
         return dates.isEmpty()?Optional.empty():Optional.of(review(dates.get(0).toLocalDate()));
     }
     @Transactional public void close(LocalDate day,String expected,String actor){
@@ -62,13 +62,13 @@ public class DayReviewService {
     }
     @Transactional public void save(long id,LocalDate day,Map<String,String> p,String actor){
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-        var b=db.queryForList("SELECT * FROM booking WHERE id=? FOR UPDATE",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznane zlecenie."));
+        var b=db.queryForList("SELECT * FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznane zlecenie."));
         long version=Long.parseLong(p.get("version"));
         if(((Number)b.get("version")).longValue()!=version||!((java.sql.Date)b.get("day")).toLocalDate().equals(day))throw new IllegalArgumentException("Zlecenie zmieniło się w innym oknie. Zachowaj dane i odśwież widok przed korektą.");
         var outcome=p.getOrDefault("outcome","");if(!Set.of("DONE","CANCELLED","MOVED","UNKNOWN").contains(outcome))throw new IllegalArgumentException("Wybierz, czy zlecenie się odbyło.");
         String note=limited(p.get("note"),2000),before=limited(p.get("before_exception"),300),after=limited(p.get("after_exception"),300);
         boolean noNotes=p.containsKey("no_notes");if(noNotes&&!note.isBlank())throw new IllegalArgumentException("Wpisz notatkę albo wybierz Bez uwag.");
-        String original=db.queryForObject("SELECT to_jsonb(b)::text FROM booking b WHERE id=?",String.class,id);
+        String original=db.queryForObject("SELECT to_jsonb(b)::text FROM booking b WHERE b.removed_at IS NULL AND id=?",String.class,id);
         if(outcome.equals("DONE")){
             CrmRecords.validateCompletionDay(day);
             var measured=new ArrayList<WorkService.Measurement>();var zero=new ArrayList<int[]>();
@@ -106,7 +106,7 @@ public class DayReviewService {
             db.update("UPDATE booking SET review_reason=? WHERE id=?",limited(p.get("reason"),300),id);
             if(!note.isBlank()||noNotes)db.update("UPDATE booking SET completion_note=?,completion_no_notes=? WHERE id=?",note,noNotes,id);
         }
-        db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),? FROM booking b WHERE id=?",id,original,actor,id);
+        db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),? FROM booking b WHERE b.removed_at IS NULL AND id=?",id,original,actor,id);
     }
     private static String limited(String value,int max){String v=value==null?"":value.strip();if(v.length()>max)throw new IllegalArgumentException("Tekst przekracza limit "+max+" znaków.");return v;}
 }

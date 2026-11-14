@@ -1,0 +1,40 @@
+{
+  "scope": "Settled removal confirmation dialog only, not whole-app WCAG; incomplete retained",
+  "views": [
+    {
+      "width": 360,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "violations": [],
+      "incomplete": []
+    }
+  ]
+}

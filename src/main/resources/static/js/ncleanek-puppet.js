@@ -33,6 +33,12 @@
   const focused=document.activeElement;
   const editing=focused?.matches('input:not([type=hidden]),textarea,select,[contenteditable=true]');
   dock.classList.toggle('is-busy',Boolean(editing||document.querySelector('dialog[open],.ncleanek-panel:not([hidden])')));
+  const b=bounds(),chipWidth=Math.min(230,b.right-b.left),chip=dock.querySelector('.ncleanek-reminder-chip');
+  const chipLeft=clamp(position.x+44-chipWidth,b.left,b.right-chipWidth),chipBottom=position.y-8;
+  const chipRect={left:chipLeft,right:chipLeft+chipWidth,top:chipBottom-(chip?.offsetHeight||54),bottom:chipBottom};
+  const controls=[...document.querySelectorAll('button,a[href],input:not([type=hidden]),select,textarea')].filter(n=>!n.closest('.ncleanek-dock,.ncleanek-panel'));
+  // Compute the parked rectangle even while hidden: no hide/show oscillation.
+  dock.classList.toggle('is-reminder-blocked',controls.some(n=>n.getClientRects().length&&overlaps(chipRect,n.getBoundingClientRect())));
   const r=dock.getBoundingClientRect();
   const protectedNodes=[...document.querySelectorAll('.booking-submit button,.review-save button,.completion-submit button,.dialog-footer button,.ncleanek-panel:not([hidden])')];
   if(editing)protectedNodes.push(focused,focused.closest('label')||focused);

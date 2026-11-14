@@ -4,7 +4,7 @@
   addEventListener('online',connection);addEventListener('offline',connection);connection();
   // Keep private forms in memory on failed network requests; no localStorage or offline queue.
   document.querySelectorAll('.work-panel form, .records form[method=post]:not(#booking-form):not(.actual-usage-form):not(#service-photo-form)').forEach(form=>form.addEventListener('submit',async event=>{
-    if(form.matches('.day-review-form,.note-form,.note-action,.cost-form,.cost-action,.asset-form')||event.defaultPrevented||(/\/photos\/.*\/delete$/.test(form.getAttribute('action')||''))||form.getAttribute('id')==='service-photo-form'||form.getAttribute('id')==='photo-time-form')return;
+    if(form.matches('.day-review-form,.note-form,.note-action,.cost-form,.cost-action,.asset-form,.removal-form')||event.defaultPrevented||(/\/photos\/.*\/delete$/.test(form.getAttribute('action')||''))||form.getAttribute('id')==='service-photo-form'||form.getAttribute('id')==='photo-time-form')return;
     event.preventDefault();
     if(form.dataset.saving)return;
     const body=new URLSearchParams(new FormData(form));

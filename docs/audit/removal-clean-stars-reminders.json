@@ -1,0 +1,10 @@
+{
+  "pending_day_link": "/day-closeout?date=2026-11-14&order=4",
+  "passive_no_focus_or_modal": true,
+  "snooze_20_minutes_across_routes_and_expiry": true,
+  "mute_today_across_routes": true,
+  "hidden_during_editing_and_help": true,
+  "draft_preserved": true,
+  "opens_authoritative_closeout": true,
+  "javascript_errors": []
+}

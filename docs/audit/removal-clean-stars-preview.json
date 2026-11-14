@@ -1,0 +1,30 @@
+{
+  "viewports": [
+    {
+      "width": 360,
+      "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+      "category_hidden_from_booking": true,
+      "stars_bounded_and_reduced_motion": true
+    },
+    {
+      "width": 390,
+      "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+      "category_hidden_from_booking": true,
+      "stars_bounded_and_reduced_motion": true
+    },
+    {
+      "width": 768,
+      "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+      "category_hidden_from_booking": true,
+      "stars_bounded_and_reduced_motion": true
+    },
+    {
+      "width": 1440,
+      "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+      "category_hidden_from_booking": true,
+      "stars_bounded_and_reduced_motion": true
+    }
+  ],
+  "nested_opaque_sandbox": true,
+  "javascript_errors": []
+}

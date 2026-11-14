@@ -1,0 +1,6 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
+<form th:fragment="action(kind,id,version,label,restore)" class="removal-form" th:action="@{/manage/remove}" method="post" th:attr="data-removal-label=${label}">
+ <input name="kind" type="hidden" th:value="${kind}"><input name="id" type="hidden" th:value="${id}"><input name="version" type="hidden" th:value="${version}"><input name="restore" type="hidden" th:value="${restore}">
+ <button type="submit" class="button" th:classappend="${restore ? 'secondary' : 'removal-button'}" th:text="${restore ? 'Przywróć' : (kind == 'equipment' ? 'Archiwizuj sprzęt' : 'Usuń')}" th:attr="aria-label=${(restore ? 'Przywróć: ' : 'Usuń: ')+label}"></button>
+ <p class="removal-error" role="alert"></p>
+</form></body></html>

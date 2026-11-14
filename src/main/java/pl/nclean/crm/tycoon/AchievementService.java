@@ -21,10 +21,10 @@ public class AchievementService {
     private final JdbcTemplate db;
     public AchievementService(JdbcTemplate db){this.db=db;}
     private void lock(){db.queryForObject("SELECT id FROM tycoon_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
-    public long performedCount(){return db.queryForObject("SELECT count(*) FROM booking WHERE status='DONE' AND day<=?",Long.class,DashboardService.today());}
+    public long performedCount(){return db.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NULL AND status='DONE' AND day<=?",Long.class,DashboardService.today());}
     private void award(String code,String source,long value){db.update("INSERT INTO tycoon_award(code,source_key,source_value) VALUES (?,?,?) ON CONFLICT(code) DO NOTHING",code,source,value);}
     @Transactional public void performed(long id){
-        lock();if(db.queryForObject("SELECT count(*) FROM booking WHERE id=? AND status='DONE' AND day<=?",Integer.class,id,DashboardService.today())==0)return;
+        lock();if(db.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NULL AND id=? AND status='DONE' AND day<=?",Integer.class,id,DashboardService.today())==0)return;
         long count=performedCount();for(var badge:BADGES)if(badge.code.endsWith("_CLEAN")&&count>=badge.target)award(badge.code,Long.toString(id),count);
     }
     @Transactional public void goalCompleted(long id){lock();if(db.queryForObject("SELECT count(*) FROM memo_entry WHERE id=? AND kind='GOAL' AND completed",Integer.class,id)==1)award("FIRST_GOAL",Long.toString(id),1);}

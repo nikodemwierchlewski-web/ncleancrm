@@ -29,11 +29,11 @@ public class ActualUsageService {
     @Transactional
     public void record(long booking,int position,long version,Map<Long,BigDecimal> quantities){
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-        var items=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE i.booking_id=? AND i.position=? FOR UPDATE OF b,i",booking,position);
+        var items=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND i.booking_id=? AND i.position=? FOR UPDATE OF b,i",booking,position);
         if(items.isEmpty())throw new IllegalArgumentException("Nieznana pozycja zlecenia.");
         if(!"DONE".equals(items.get(0).get("status")))throw new IllegalArgumentException("Rzeczywiste zużycie zapisz po oznaczeniu zlecenia jako wykonane.");
         if(quantities==null||quantities.size()>100)throw new IllegalArgumentException("Podaj do 100 pozycji rzeczywistego zużycia.");
-        var materials=new HashMap<Long,ChemistryService.Material>();chemistry.materials().forEach(m->materials.put(m.id(),m));
+        var materials=new HashMap<Long,ChemistryService.Material>();chemistry.materialsForBooking(booking).forEach(m->materials.put(m.id(),m));
         var normalized=new LinkedHashMap<Long,BigDecimal>();
         for(var entry:quantities.entrySet()){
             if(!materials.containsKey(entry.getKey())||entry.getValue()==null)throw new IllegalArgumentException("Wybierz istniejący środek.");
@@ -56,7 +56,7 @@ public class ActualUsageService {
     public Map<Long,List<Suggestion>> suggestions(){
         var materials=new HashMap<Long,ChemistryService.Material>();chemistry.materials().forEach(m->materials.put(m.id(),m));
         // One observation per booking/service/chemical, including explicit zeros.
-        var rows=db.queryForList("SELECT b.id booking_id,i.service_id,a.chemical_id,a.unit,SUM(a.quantity) amount,SUM(i.quantity) service_quantity,b.day FROM booking_actual_chemical a JOIN booking_item i ON i.booking_id=a.booking_id AND i.position=a.item_position JOIN booking b ON b.id=i.booking_id JOIN service_definition s ON s.id=i.service_id WHERE b.status='DONE' AND i.actual_defined=TRUE AND i.unit=s.unit GROUP BY b.id,i.service_id,a.chemical_id,a.unit,b.day");
+        var rows=db.queryForList("SELECT b.id booking_id,i.service_id,a.chemical_id,a.unit,SUM(a.quantity) amount,SUM(i.quantity) service_quantity,b.day FROM booking_actual_chemical a JOIN booking_item i ON i.booking_id=a.booking_id AND i.position=a.item_position JOIN booking b ON b.id=i.booking_id JOIN service_definition s ON s.id=i.service_id WHERE b.removed_at IS NULL AND b.status='DONE' AND i.actual_defined=TRUE AND i.unit=s.unit GROUP BY b.id,i.service_id,a.chemical_id,a.unit,b.day");
         record Key(long service,long chemical){}
         record Sample(BigDecimal quantity,LocalDate day){}
         var groups=new LinkedHashMap<Key,List<Sample>>();

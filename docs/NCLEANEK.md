@@ -66,3 +66,7 @@ Strzałki lewo/prawo przesuwają postać, Home przywraca prawy dolny róg, Enter
 Aktualne zachowanie i testy: [NCLEANEK-BOTTOM-RAIL-RESULTS.md](NCLEANEK-BOTTOM-RAIL-RESULTS.md). Starsze raporty opisują poprzedni wariant pomocnika.
 
 Przypomnienie „Dokończ dzień” pojawia się bez otwierania okna, gdy istniejący endpoint `/help/context` zgłasza zaległość. Prowadzi do pierwszej wizyty z brakami lub do zamknięcia uzupełnionego dnia. × odkłada je na 20 minut; Opcje pozwalają wyciszyć je na dziś. Nie pokazujemy chmurki w otwartym formularzu ani podczas pomocy lub przeciągania. Przypomnienia działają tylko w otwartej aplikacji.
+
+Aktualizacja usuwania i animacji: chmurka ustępuje również przyciskom/linkom/polom
+przy zachowaniu miejsca ludzika. Przypomnienie jest wtedy dostępne w panelu.
+[Wyniki i bieżący podgląd](REMOVE-AND-CLEAN-STARS-RESULTS.md).

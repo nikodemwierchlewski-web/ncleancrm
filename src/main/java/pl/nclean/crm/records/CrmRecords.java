@@ -15,6 +15,7 @@ public class CrmRecords {
  private final pl.nclean.crm.tycoon.AchievementService achievements;
  public CrmRecords(JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
  public List<ChemistryService.Material> materials(){return chemistry.materials();}
+ public List<ChemistryService.Material> materialsForBooking(long id){return chemistry.materialsForBooking(id);}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
  public Map<Long,BigDecimal> standardCosts(){return chemistry.standardCosts();}
  public static void validateCompletionDay(LocalDate day){if(day==null||day.isAfter(pl.nclean.crm.dashboard.DashboardService.today()))throw new IllegalArgumentException("Przyszła wizyta pozostaje zaplanowana. Najpierw popraw termin.");}
@@ -23,35 +24,37 @@ public class CrmRecords {
   return db.queryForList("SELECT * FROM crm_customer WHERE position(lower(?) in lower(name))>0 OR position(? in phone)>0 ORDER BY active DESC,name,id",q,q.replaceAll("[\\s()-]",""));
  }
  public Map<String,Object> customer(long id){return db.queryForList("SELECT * FROM crm_customer WHERE id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
- public Map<String,Object> booking(long id){return db.queryForList("SELECT * FROM booking WHERE id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
+ public Map<String,Object> booking(long id){return db.queryForList("SELECT * FROM booking WHERE removed_at IS NULL AND id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
  public List<Map<String,Object>> customerPage(String query,int page,boolean activeOnly){
   if(query==null||query.length()>120||page<0||page>100000)throw new IllegalArgumentException("Sprawdź wyszukiwanie i numer strony.");String q=query.strip();
   return db.queryForList("SELECT * FROM crm_customer WHERE (NOT ? OR active) AND (position(lower(?) in lower(name))>0 OR position(? in phone)>0) ORDER BY active DESC,name,id LIMIT ? OFFSET ?",activeOnly,q,q.replaceAll("[\\s()-]",""),activeOnly?50:26,activeOnly?0:page*25);
  }
  public List<Map<String,Object>> bookingPage(LocalDate day,Long customer,int page){
   if(page<0||page>100000)throw new IllegalArgumentException("Sprawdź numer strony.");
-  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid FROM booking b WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC LIMIT 26 OFFSET ?",day,day,customer,customer,page*25);
+  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC LIMIT 26 OFFSET ?",day,day,customer,customer,page*25);
  }
  public List<Map<String,Object>> bookingRows(String kind,List<Long> ids){
   if(ids.isEmpty())return List.of();String table=switch(kind){case "items"->"booking_item";case "chemicals"->"booking_chemical";case "actuals"->"booking_actual_chemical";default->throw new IllegalArgumentException();};
   return db.queryForList("SELECT "+(kind.equals("chemicals")?"t.*,i.name service_name":"t.*")+" FROM "+table+" t "+(kind.equals("chemicals")?"JOIN booking_item i ON i.booking_id=t.booking_id AND i.position=t.item_position ":"")+" WHERE t.booking_id IN ("+String.join(",",Collections.nCopies(ids.size(),"?"))+") ORDER BY t.booking_id,"+(kind.equals("items")?"t.position":"t.item_position,t.chemical_id"),ids.toArray());
  }
- public List<Map<String,Object>> categories(){return db.queryForList("SELECT * FROM service_category ORDER BY name,id");}
- public List<Map<String,Object>> services(){return db.queryForList("SELECT s.*,c.name category FROM service_definition s JOIN service_category c ON c.id=s.category_id ORDER BY c.name,s.name,s.id");}
+ public List<Map<String,Object>> categories(){return db.queryForList("SELECT * FROM service_category WHERE removed_at IS NULL ORDER BY name,id");}
+ public List<Map<String,Object>> removedCatalogue(){return db.queryForList("SELECT 'category' kind,id,version,name FROM service_category WHERE removed_at IS NOT NULL UNION ALL SELECT 'service',id,version,name FROM service_definition WHERE removed_at IS NOT NULL UNION ALL SELECT 'chemical',id,version,name FROM chemical WHERE removed_at IS NOT NULL ORDER BY kind,name,id");}
+ public List<Map<String,Object>> removedBookings(){return db.queryForList("SELECT * FROM booking WHERE removed_at IS NOT NULL ORDER BY removed_at DESC,id DESC LIMIT 200");}
+ public List<Map<String,Object>> services(){return db.queryForList("SELECT s.*,c.name category FROM service_definition s JOIN service_category c ON c.id=s.category_id WHERE s.removed_at IS NULL AND c.removed_at IS NULL ORDER BY c.name,s.name,s.id");}
  public List<Map<String,Object>> bookings(LocalDate day,Long customer){
-  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label FROM booking b WHERE (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
+  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
  }
  public List<Map<String,Object>> monthBookings(YearMonth month){
-  return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
+  return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
  }
- public List<Map<String,Object>> monthItems(YearMonth month){return db.queryForList("SELECT i.* FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.day>=? AND b.day<? ORDER BY i.booking_id,i.position",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public List<Map<String,Object>> monthItems(YearMonth month){return db.queryForList("SELECT i.* FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND b.day>=? AND b.day<? ORDER BY i.booking_id,i.position",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> chemicals(long booking){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position WHERE c.booking_id=? ORDER BY c.item_position,c.chemical_id",booking);}
- public List<Map<String,Object>> monthChemicals(YearMonth month){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position JOIN booking b ON b.id=c.booking_id WHERE b.day>=? AND b.day<? ORDER BY c.booking_id,c.item_position,c.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public List<Map<String,Object>> monthChemicals(YearMonth month){return db.queryForList("SELECT c.*,i.name service_name FROM booking_chemical c JOIN booking_item i ON i.booking_id=c.booking_id AND i.position=c.item_position JOIN booking b ON b.id=c.booking_id WHERE b.removed_at IS NULL AND b.day>=? AND b.day<? ORDER BY c.booking_id,c.item_position,c.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
  public List<Map<String,Object>> actuals(long booking){return db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? ORDER BY item_position,chemical_id",booking);}
- public List<Map<String,Object>> monthActuals(YearMonth month){return db.queryForList("SELECT a.* FROM booking_actual_chemical a JOIN booking b ON b.id=a.booking_id WHERE b.day>=? AND b.day<? ORDER BY a.booking_id,a.item_position,a.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
+ public List<Map<String,Object>> monthActuals(YearMonth month){return db.queryForList("SELECT a.* FROM booking_actual_chemical a JOIN booking b ON b.id=a.booking_id WHERE b.removed_at IS NULL AND b.day>=? AND b.day<? ORDER BY a.booking_id,a.item_position,a.chemical_id",month.atDay(1),month.plusMonths(1).atDay(1));}
  public Map<String,BigDecimal> forecastHints(long id){var hints=new HashMap<String,BigDecimal>();for(var row:chemicals(id))hints.put(row.get("item_position")+":"+row.get("chemical_id"),(BigDecimal)row.get("quantity"));return hints;}
  public Map<String,Map<Long,BigDecimal>> actualFields(Map<Long,List<Map<String,Object>>> lines,List<Map<String,Object>> forecasts,List<Map<String,Object>> actuals){
-  var result=new HashMap<String,Map<Long,BigDecimal>>();var units=new HashMap<Long,String>();materials().forEach(m->units.put(m.id(),m.unit()));
+  var result=new HashMap<String,Map<Long,BigDecimal>>();var units=new HashMap<Long,String>();chemistry.allMaterials().forEach(m->units.put(m.id(),m.unit()));
   for(var entry:lines.entrySet())for(var item:entry.getValue()){
    String key=entry.getKey()+":"+item.get("position");var values=new LinkedHashMap<Long,BigDecimal>();
    var source=((Number)item.get("actual_version")).longValue()==0?forecasts:actuals;
@@ -74,12 +77,12 @@ public class CrmRecords {
   if(id==null)return db.queryForObject("INSERT INTO crm_customer(name,phone,address,notes) VALUES (?,?,?,?) RETURNING id",Long.class,name,number,address,notes);
   changed(db.update("UPDATE crm_customer SET name=?,phone=?,address=?,notes=?,active=?,version=version+1 WHERE id=? AND version=?",name,number,address,notes,active,id,version));return id;
  }
- @Transactional public void category(Long id,String name){name=text(name,100,true);if(id==null)db.update("INSERT INTO service_category(name) VALUES (?)",name);else changed(db.update("UPDATE service_category SET name=? WHERE id=?",name,id));}
+ @Transactional public void category(Long id,String name){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=text(name,100,true);if(id==null)db.update("INSERT INTO service_category(name) VALUES (?)",name);else changed(db.update("UPDATE service_category SET name=?,version=version+1 WHERE removed_at IS NULL AND id=?",name,id));}
  @Transactional public void service(Long id,long version,long category,String name,String unit,String price,int minutes,boolean active){
-  name=text(name,120,true);unit=text(unit,20,true);BigDecimal amount=money(price);
-  if(minutes<1||minutes>1440||db.queryForObject("SELECT count(*) FROM service_category WHERE id=?",Integer.class,category)!=1)throw new IllegalArgumentException("Wybierz kategorię i czas od 1 do 1440 minut.");
+  db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=text(name,120,true);unit=text(unit,20,true);BigDecimal amount=money(price);
+  if(minutes<1||minutes>1440||db.queryForObject("SELECT count(*) FROM service_category WHERE removed_at IS NULL AND id=?",Integer.class,category)!=1)throw new IllegalArgumentException("Wybierz kategorię i czas od 1 do 1440 minut.");
   if(id==null)db.update("INSERT INTO service_definition(category_id,name,unit,price,minutes) VALUES (?,?,?,?,?)",category,name,unit,amount,minutes);
-  else changed(db.update("UPDATE service_definition SET category_id=?,name=?,unit=?,price=?,minutes=?,active=?,version=version+1 WHERE id=? AND version=?",category,name,unit,amount,minutes,active,id,version));
+  else changed(db.update("UPDATE service_definition SET category_id=?,name=?,unit=?,price=?,minutes=?,active=?,version=version+1 WHERE removed_at IS NULL AND id=? AND version=?",category,name,unit,amount,minutes,active,id,version));
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities){
   return book(token,day,starts,customer,name,number,address,quantities,Map.of(),Map.of());
@@ -90,7 +93,7 @@ public class CrmRecords {
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var existing=db.queryForList("SELECT id FROM booking WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return existing.get(0);
+  var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
   address=text(address,240,true);source=pl.nclean.crm.context.ContextService.source(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
   if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
@@ -98,7 +101,7 @@ public class CrmRecords {
   var lines=new ArrayList<Map<String,Object>>();BigDecimal total=BigDecimal.ZERO;
   for(var entry:quantities.entrySet()){
    BigDecimal qty=entry.getValue();if(qty==null||qty.signum()<=0||qty.scale()>2||qty.compareTo(new BigDecimal("10000"))>0)throw new IllegalArgumentException("Ilość musi być dodatnia, maksymalnie 10000 i dwa miejsca po przecinku.");
-   var found=db.queryForList("SELECT * FROM service_definition WHERE id=? AND active=TRUE",entry.getKey());if(found.isEmpty())throw new IllegalArgumentException("Usługa została wyłączona lub nie istnieje. Odśwież cennik.");
+   var found=db.queryForList("SELECT s.* FROM service_definition s JOIN service_category c ON c.id=s.category_id WHERE s.id=? AND s.active=TRUE AND s.removed_at IS NULL AND c.removed_at IS NULL",entry.getKey());if(found.isEmpty())throw new IllegalArgumentException("Usługa została wyłączona lub nie istnieje. Odśwież cennik.");
    var line=new LinkedHashMap<>(found.get(0));line.put("suggested_price",line.get("price"));
    if(prices.containsKey(entry.getKey())){if(prices.get(entry.getKey())==null)throw new IllegalArgumentException("Podaj cenę uzgodnioną.");line.put("price",money(prices.get(entry.getKey()).toPlainString()));}
    var quote=chemistry.quote(entry.getKey(),qty,forecasts.get(entry.getKey()));quotes.add(quote);allDefined&=quote.defined();if(quote.cost()!=null)chemistryTotal=chemistryTotal.add(quote.cost());
@@ -121,14 +124,14 @@ public class CrmRecords {
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
   if("DONE".equals(status))validateCompletionDay(day);
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
+  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
   if(status.equals("CANCELLED")&&db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia. Anulowanie nie usuwa należności ani historii wpłat.");
   changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
   boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
   boolean stopped=before.get(0).get("timer_started")!=null&&!status.equals("PLANNED");
   if(photoMoved)db.update("UPDATE booking SET work_minutes=NULL,work_started_at=NULL,work_finished_at=NULL,work_time_source='UNKNOWN' WHERE id=?",id);
-  if(photoMoved||stopped){db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);if(stopped&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE id=?) WHERE booking_id=?",id,id);}
-  db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE id=?",id,before.get(0).get("snapshot"),id);
+  if(photoMoved||stopped){db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);if(stopped&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE removed_at IS NULL AND id=?) WHERE booking_id=?",id,id);}
+  db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE b.removed_at IS NULL AND id=?",id,before.get(0).get("snapshot"),id);
   if(status.equals("DONE"))achievements.performed(id);
  }
 }

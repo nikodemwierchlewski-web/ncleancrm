@@ -1,0 +1,25 @@
+{
+  "unit_mvc": {
+    "tests": 38,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "postgresql_testcontainers": {
+    "tests": 93,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frozen_runtime_sha256": "1ec7777e661a250bc944544875a85a779fe83617017807e47b0eb9b76fe96bc8",
+  "physical_phone_tested": false,
+  "production_connection": false,
+  "pull_request_created": false,
+  "capture_real_business_flows": [
+    "PASS interactions: saved-id highlight and booked scene only after server success,503 preserves fields, rapid day selection settles, mixed-category count, dialog focus and month transition.",
+    "PASS notes real UI: memo/task/goals, steps and explicit completion, pin5/max3, archive/restore, search,503 retry, two-tab conflict, four widths and compact viewport.",
+    "PASS Tycoon: SVG animation, 4 widths, motion preference/reload/OS, goal steps, dates, modal deferral, notification acknowledgement.",
+    "PASS lean: navigation/config separation, authoritative missing data, shared completion from visit, returning client, two categories/custom price/address, catalogue change keeps history, default dashboard/Today actions above fold, four widths.",
+    "PASS closeout: real chemistry, photos/time, separate notes,503 retry, cancel/move, explicit exceptions, partial day, two tabs, four widths, closure persistence and reopening."
+  ]
+}

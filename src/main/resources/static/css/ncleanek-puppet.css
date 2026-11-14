@@ -11,6 +11,6 @@
 
 /* Reminder stays small, follows the horizontal rail, and never opens a modal. */
 .ncleanek-reminder-chip{position:absolute;bottom:68px;left:var(--ncleanek-chip-left,0px);width:min(230px,calc(100vw - 20px));display:flex;align-items:center;background:#fffef8;color:#183b4b;border:1px solid #95b5b5;border-radius:10px;box-shadow:0 2px 8px #183b4b15;pointer-events:auto;font:12px/1.4 Montserrat,system-ui}
-.ncleanek-reminder-chip[hidden],.ncleanek-dock.is-busy .ncleanek-reminder-chip,.ncleanek-dock.is-dragging .ncleanek-reminder-chip,.ncleanek-dock.is-yielding .ncleanek-reminder-chip{display:none!important}
+.ncleanek-dock.is-reminder-blocked .ncleanek-reminder-chip,.ncleanek-reminder-chip[hidden],.ncleanek-dock.is-busy .ncleanek-reminder-chip,.ncleanek-dock.is-dragging .ncleanek-reminder-chip,.ncleanek-dock.is-yielding .ncleanek-reminder-chip{display:none!important}
 .ncleanek-reminder-chip a{display:flex;flex-direction:column;justify-content:center;flex:1;min-width:0;min-height:52px;padding:6px 9px;color:inherit;text-decoration:none}.ncleanek-reminder-chip strong{font-size:12px}.ncleanek-reminder-chip span{font-size:10px;overflow-wrap:anywhere}
 .ncleanek-reminder-chip button{width:44px;min-width:44px;min-height:44px;margin:0 3px 0 0;padding:0;border:0;background:transparent;color:#355966;box-shadow:none;font-size:22px;cursor:pointer}.ncleanek-reminder-chip a:focus-visible,.ncleanek-reminder-chip button:focus-visible{outline:3px solid #1682a8;outline-offset:-3px;border-radius:8px}

@@ -27,7 +27,7 @@ public class RecordsController {
  @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){long saved=data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));contextSource(saved,p);return "redirect:/customers";}
  @GetMapping("/more") String more(){return "settings/more";}
  @GetMapping("/settings") String settings(){return "settings/index";}
- @GetMapping("/settings/services") String services(Model m){common(m);return "records/services";}
+ @GetMapping("/settings/services") String services(Model m){common(m);m.addAttribute("removedCatalogue",data.removedCatalogue());return "records/services";}
  @PostMapping("/settings/services/chemicals") String chemical(@RequestParam Map<String,String> p){chemistry.saveMaterial(id(p,"id"),version(p),p.get("name"),p.get("packageUnit"),p.get("packageQuantity"),p.get("packagePrice"));return "redirect:/settings/services";}
  @PostMapping("/settings/services/{id}/chemistry") String recipe(@PathVariable long id,@RequestParam Map<String,String> p){
   var quantities=new LinkedHashMap<Long,BigDecimal>();p.forEach((key,value)->{if(key.startsWith("standard_")&&!value.isBlank()){var q=ChemistryService.quantity(value,false);if(q.signum()>0)quantities.put(Long.valueOf(key.substring(9)),q);}});
@@ -42,7 +42,7 @@ public class RecordsController {
  @PostMapping("/settings/services/category") String category(@RequestParam Map<String,String> p){data.category(id(p,"id"),p.get("name"));return "redirect:/settings/services";}
  @PostMapping("/settings/services") String service(@RequestParam Map<String,String> p){data.service(id(p,"id"),version(p),Long.parseLong(p.get("category")),p.get("name"),p.get("unit"),p.get("price"),Integer.parseInt(p.get("minutes")),p.containsKey("active"));return "redirect:/settings/services";}
  @GetMapping("/orders") String orders(@RequestParam Map<String,String> p,Model m){
-  common(m);LocalDate day=p.containsKey("day")?LocalDate.parse(p.get("day")):null;
+  common(m);m.addAttribute("removedOrders",data.removedBookings());LocalDate day=p.containsKey("day")?LocalDate.parse(p.get("day")):null;
   int page=Integer.parseInt(p.getOrDefault("page","0"));var found=data.bookingPage(day,id(p,"customer"),page);var orders=found.stream().limit(25).toList();m.addAttribute("orders",orders);m.addAttribute("page",page);m.addAttribute("hasNext",found.size()>25);m.addAttribute("filterDay",day);m.addAttribute("filterCustomer",id(p,"customer"));
   var ids=orders.stream().map(o->((Number)o.get("id")).longValue()).toList();
   var lines=data.bookingRows("items",ids).stream().collect(java.util.stream.Collectors.groupingBy(o->((Number)o.get("booking_id")).longValue()));m.addAttribute("lines",lines);

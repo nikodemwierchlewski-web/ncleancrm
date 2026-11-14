@@ -1,0 +1,26 @@
+{
+  "viewports": [
+    {
+      "width": 360,
+      "cancel_delete_undo_booking_catalogue_cost_chemical": true
+    },
+    {
+      "width": 390,
+      "cancel_delete_undo_booking_catalogue_cost_chemical": true
+    },
+    {
+      "width": 768,
+      "cancel_delete_undo_booking_catalogue_cost_chemical": true
+    },
+    {
+      "width": 1440,
+      "cancel_delete_undo_booking_catalogue_cost_chemical": true
+    }
+  ],
+  "stale_version_dialog": true,
+  "controlled_503_preserves_state_and_retry": true,
+  "stars_maximum_8_and_single_layer": true,
+  "reduced_motion_and_modal_suppress": true,
+  "booking_snapshots_preserved": true,
+  "javascript_errors": []
+}

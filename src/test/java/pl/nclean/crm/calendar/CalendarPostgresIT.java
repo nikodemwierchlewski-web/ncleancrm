@@ -65,6 +65,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM removal_audit");jdbc.update("UPDATE service_category SET removed_at=NULL");jdbc.update("UPDATE service_definition SET removed_at=NULL");
         jdbc.update("DELETE FROM tycoon_award");jdbc.update("DELETE FROM cost_audit");jdbc.update("DELETE FROM cost_entry");jdbc.update("DELETE FROM equipment_item");jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
         jdbc.update("DELETE FROM fuel_audit");jdbc.update("DELETE FROM fuel_purchase");jdbc.update("DELETE FROM fuel_receipt");jdbc.update("DELETE FROM fuel_day");jdbc.update("DELETE FROM fuel_parameters");
@@ -86,7 +87,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -111,7 +112,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -231,7 +232,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(14, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(15, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -963,9 +964,9 @@ class CalendarPostgresIT {
         old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
         var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        assertEquals(beforeBooking,old.queryForMap("SELECT * FROM booking WHERE id=?",booking));assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
+        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(14,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(15,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -1068,7 +1069,7 @@ class CalendarPostgresIT {
         old.update("INSERT INTO memo_entry(request_token,kind,title,completed) VALUES (?,'GOAL','Historyczny cel',true)",UUID.randomUUID());
         var before=old.queryForList("SELECT * FROM booking ORDER BY id");var goal=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        assertEquals(before,old.queryForList("SELECT * FROM booking ORDER BY id"));assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
+        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->assertNull(row.remove("removed_at")));assertEquals(before,after);assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
         assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE origin='HISTORY' AND notified_at IS NOT NULL",Integer.class));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
@@ -1173,6 +1174,86 @@ class CalendarPostgresIT {
         var form=reviewFields(id);days.save(id,yesterday,form,OWNER);days.close(yesterday,days.review(yesterday).fingerprint(),OWNER);assertTrue(days.latestOpenBefore(today).isEmpty());assertFalse(guide.context(yesterday,id).containsKey("reminder"));
         jdbc.update("UPDATE booking SET version=version+1 WHERE id=?",id);assertEquals(yesterday,days.latestOpenBefore(today).orElseThrow().day());assertTrue(guide.context(yesterday,id).containsKey("reminder"));assertEquals(404,browser.get("/help/context?date="+today+"&order="+id).statusCode());
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(yesterday,app.context().getBean(pl.nclean.crm.work.DayReviewService.class).latestOpenBefore(today).orElseThrow().day());
+    }
+
+    @Test void removedBookingIsExcludedEverywhereAndRestoresSnapshotsAfterRestart() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Usunięcie pomyłki",day);
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
+        work.complete(id,0,"180","45","Notatka historyczna",Map.of(),Map.of(),List.of(),OWNER);
+        var items=jdbc.queryForList("SELECT * FROM booking_item WHERE booking_id=?",id);var snapshot=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);
+        assertEquals(new BigDecimal("180.00"),work.revenue(day,day,"actual"));
+        assertEquals(2L,remove.change("booking",id,1,false,OWNER).get("version"));
+        remove.change("booking",id,1,false,OWNER);assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM removal_audit WHERE kind='booking' AND entity_id=?",Integer.class,id));
+        assertTrue(records.monthBookings(YearMonth.from(day)).isEmpty());assertTrue(records.bookings(day,null).isEmpty());assertTrue(work.orders(day).isEmpty());assertTrue(work.analytics(day,day).isEmpty());assertTrue(review.review(day).orders().isEmpty());
+        assertEquals(0,work.revenue(day,day,"actual").signum());assertTrue(app.context().getBean(pl.nclean.crm.dashboard.DashboardService.class).summary(day,"day","actual").orders().isEmpty());
+        assertTrue(app.context().getBean(pl.nclean.crm.context.ContextService.class).search("500000098").stream().noneMatch(r->r.type().equals("order")));
+        assertFalse(app.context().getBean(pl.nclean.crm.help.GuideService.class).context(day,null).containsKey("reminder"));
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,()->work.complete(id,2,"180","45","",Map.of(),Map.of(),List.of(),OWNER));
+        assertThrows(IllegalStateException.class,()->remove.change("booking",id,0,true,OWNER));
+        assertEquals(items,jdbc.queryForList("SELECT * FROM booking_item WHERE booking_id=?",id));
+        assertThrows(IllegalArgumentException.class,()->records.book((UUID)snapshot.get("request_token"),day,java.time.LocalTime.NOON,null,"Ponowienie","500000098","Adres",Map.of(((Number)items.get(0).get("service_id")).longValue(),BigDecimal.ONE)));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertTrue(app.context().getBean(pl.nclean.crm.records.CrmRecords.class).monthBookings(YearMonth.from(day)).isEmpty());
+        app.context().getBean(pl.nclean.crm.removal.RemovalService.class).change("booking",id,2,true,OWNER);
+        var restored=app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id);assertEquals(snapshot.get("final_total"),restored.get("final_total"));assertEquals(snapshot.get("completion_note"),restored.get("completion_note"));assertEquals(items,jdbc.queryForList("SELECT * FROM booking_item WHERE booking_id=?",id));assertEquals(1,app.context().getBean(pl.nclean.crm.work.WorkService.class).orders(day).size());
+    }
+
+    @Test void removalRequiresConfirmationOwnerCsrfCurrentVersionAndCorrectedPayments() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Ochrona usuwania",day);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
+        var browser=app.browser();browser.login();var form=new LinkedHashMap<String,Object>(Map.of("kind","booking","id",id,"version",0,"confirmed",true));
+        assertEquals(403,browser.settings("/manage/remove",form,false).statusCode());form.put("confirmed",false);assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());form.put("confirmed",true);
+        long paid=work.pay(id,UUID.randomUUID(),day,"50","CASH","");assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());
+        work.reverse(id,paid,UUID.randomUUID(),day,"Błędny wpis");work.timer(id,0,true,OWNER);form.put("version",1);assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());work.timer(id,1,false,OWNER);
+        form.put("version",0);assertEquals(409,browser.settings("/manage/remove",form,true).statusCode());form.put("version",2);assertEquals(200,browser.settings("/manage/remove",form,true).statusCode());assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM booking_payment WHERE booking_id=?",Integer.class,id));assertEquals(404,browser.get("/work/"+id).statusCode());
+        assertThrows(IllegalArgumentException.class,()->remove.change("not_a_table",id,3,false,OWNER));
+    }
+
+    @Test void removedCataloguePreservesBookedPricesAndCategoryServiceActivity() {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
+        records.category(null,"ZZZ Kategoria usuwania");long category=jdbc.queryForObject("SELECT max(id) FROM service_category",Long.class);
+        records.service(null,0,category,"ZZZ Usługa próbna","szt.","123",45,true);long service=jdbc.queryForObject("SELECT max(id) FROM service_definition",Long.class);
+        long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres testowy",Map.of(service,BigDecimal.ONE));var snapshot=records.items(id);
+        remove.change("service",service,0,false,OWNER);assertTrue(records.services().stream().noneMatch(s->s.get("id").equals(service)));assertEquals(snapshot,records.items(id));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Nowy","500000099","Adres",Map.of(service,BigDecimal.ONE)));
+        remove.change("category",category,0,false,OWNER);assertTrue(records.categories().stream().noneMatch(c->c.get("id").equals(category)));assertThrows(IllegalArgumentException.class,()->remove.change("service",service,1,true,OWNER));
+        remove.change("category",category,1,true,OWNER);remove.change("service",service,1,true,OWNER);assertEquals(Boolean.TRUE,jdbc.queryForObject("SELECT active FROM service_definition WHERE id=?",Boolean.class,service));assertEquals(snapshot,records.items(id));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=? AND price<>123",Integer.class,id));
+    }
+
+    @Test void chemicalRemovalBlocksActiveReferencesAndRestoresUnusedMaterial() {
+        var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
+        long material=chemistry.saveMaterial(null,0,"Środek testowy","ml","1000","50");long service=estimateService("Powiązanie środka");chemistry.saveRecipe(service,0,true,Map.of(material,new BigDecimal("10")));
+        assertThrows(IllegalArgumentException.class,()->remove.change("chemical",material,0,false,OWNER));
+        chemistry.saveRecipe(service,1,true,Map.of());remove.change("chemical",material,0,false,OWNER);assertTrue(chemistry.materials().isEmpty());remove.change("chemical",material,1,true,OWNER);assertEquals("Środek testowy",chemistry.materials().get(0).name());
+    }
+
+    @Test void archivedChemicalRemainsEditableInItsHistoricalVisitWithSnapshotPrice() throws Exception {
+        var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
+        long material=chemistry.saveMaterial(null,0,"Historyczny środek","ml","1000","50");long service=estimateService("Historia usuniętej chemii");long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(material,new BigDecimal("10")))));
+        work.complete(id,0,"100","30","",Map.of(),Map.of(),List.of(),OWNER);actual.record(id,0,0,Map.of(material,new BigDecimal("8")));var before=records.actuals(id);remove.change("chemical",material,0,false,OWNER);assertTrue(chemistry.materials().isEmpty());assertEquals(material,chemistry.materialsForBooking(id).get(0).id());actual.record(id,0,1,Map.of(material,new BigDecimal("8")));var after=records.actuals(id);before.forEach(row->row.remove("recorded_at"));after.forEach(row->row.remove("recorded_at"));assertEquals(before,after);var browser=app.browser();browser.login();assertTrue(browser.get("/work/"+id).body().contains("Historyczny środek"));
+    }
+
+    @Test void expensesAndFuelRemoveAndRestoreOnceWithoutLosingHistory() {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);var today=DashboardService.today();
+        long expense=costs.save(expense("CAR_REPAIR","Błędny rachunek","120"),OWNER);
+        long purchase=fuel.savePurchase(new pl.nclean.crm.fuel.FuelJournalService.Purchase(null,0,UUID.randomUUID(),java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Warsaw")).minusMinutes(1),"SHARED","DIESEL","50","10","5",false,null,false,"",null),OWNER);
+        var before=costs.totals(today,today);assertEquals(new BigDecimal("170.00"),before.get("all"));
+        remove.change("expense",expense,0,false,OWNER);remove.change("fuel",purchase,0,false,OWNER);assertEquals(0,costs.totals(today,today).get("all").signum());assertEquals(2,costs.entries(today,today,"all","",true,0).size());
+        remove.change("expense",expense,1,true,OWNER);remove.change("fuel",purchase,1,true,OWNER);remove.change("fuel",purchase,1,true,OWNER);assertEquals(before,costs.totals(today,today));assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM removal_audit WHERE kind='fuel' AND entity_id=?",Integer.class,purchase));
+    }
+
+    @Test void equipmentArchiveKeepsItsPurchaseAndInvestmentTotals() {
+        var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);var p=expense("EQUIPMENT_PURCHASE","Sprzęt próbny","1500");long expense=costs.save(p,OWNER);long asset=((Number)costs.entry(expense).get("asset_id")).longValue();var before=costs.entry(expense);var totals=costs.totals(DashboardService.today(),DashboardService.today());remove.change("equipment",asset,0,false,OWNER);assertEquals(Boolean.FALSE,costs.asset(asset).get("active"));assertEquals(before,costs.entry(expense));assertEquals(totals,costs.totals(DashboardService.today(),DashboardService.today()));remove.change("equipment",asset,1,true,OWNER);assertEquals(Boolean.TRUE,costs.asset(asset).get("active"));
+    }
+
+    @Test void v15KeepsV14ClosedDayFingerprintAndAllSnapshots() throws Exception {
+        String schema="legacy_v14_closed_day";var source=new DriverManagerDataSource(POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema,POSTGRES.getUsername(),POSTGRES.getPassword());var old=new JdbcTemplate(source);
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("14").load().migrate();long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Klient testowy','500000099') RETURNING id",Long.class);var day=DashboardService.today().minusDays(1);
+        old.update("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,status,total) VALUES (?,?,?,TIME '10:00','Klient testowy','500000099','Adres testowy','CANCELLED',100)",UUID.randomUUID(),person,day);
+        var field=pl.nclean.crm.work.DayReviewService.class.getDeclaredField("FINGERPRINT_SQL");field.setAccessible(true);String current=(String)field.get(null),legacy=current.replace("b.removed_at IS NULL AND ","").replace("removed_at IS NULL AND ","").replace("to_jsonb(b)-'removed_at'","to_jsonb(b)");String fingerprint=old.queryForObject(legacy,String.class,day,day,day,day,day);
+        old.update("INSERT INTO day_review(day,fingerprint,closed_by) VALUES (?,?,?)",day,fingerprint,OWNER);Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(fingerprint,old.queryForObject(current,String.class,day,day,day,day,day));assertEquals(fingerprint,old.queryForObject("SELECT fingerprint FROM day_review",String.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NOT NULL",Integer.class));
     }
 
     private static final class Browser {

@@ -36,7 +36,9 @@ public class ChemistryService {
         var unit=(String)row.get("package_unit");var quantity=(BigDecimal)row.get("package_quantity");var price=(BigDecimal)row.get("package_price");
         return new Material(((Number)row.get("id")).longValue(),((Number)row.get("version")).longValue(),(String)row.get("name"),unit,quantity,price,baseUnit(unit),price.divide(quantity.multiply(factor(unit)),16,RoundingMode.HALF_UP));
     }
-    public List<Material> materials() { return db.queryForList("SELECT * FROM chemical ORDER BY name,id").stream().map(this::view).toList(); }
+    public List<Material> materials() { return db.queryForList("SELECT * FROM chemical WHERE removed_at IS NULL ORDER BY name,id").stream().map(this::view).toList(); }
+    public List<Material> allMaterials(){return db.queryForList("SELECT * FROM chemical ORDER BY name,id").stream().map(this::view).toList();}
+    public List<Material> materialsForBooking(long booking){return db.queryForList("SELECT * FROM chemical c WHERE removed_at IS NULL OR c.id IN (SELECT chemical_id FROM booking_chemical WHERE booking_id=? UNION SELECT chemical_id FROM booking_actual_chemical WHERE booking_id=?) ORDER BY name,id",booking,booking).stream().map(this::view).toList();}
     public Map<Long,Recipe> recipes() {
         var result=new LinkedHashMap<Long,Recipe>();
         for(var row:db.queryForList("SELECT id,chemistry_defined FROM service_definition"))result.put(((Number)row.get("id")).longValue(),new Recipe((Boolean)row.get("chemistry_defined"),new LinkedHashMap<>()));
@@ -45,22 +47,22 @@ public class ChemistryService {
     }
     @Transactional
     public long saveMaterial(Long id,long version,String name,String packageUnit,String quantity,String price) {
-        name=CrmRecords.text(name,120,true);baseUnit(packageUnit);var amount=quantity(quantity,true);var money=CrmRecords.money(price);
+        db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=CrmRecords.text(name,120,true);baseUnit(packageUnit);var amount=quantity(quantity,true);var money=CrmRecords.money(price);
         if(id==null)return db.queryForObject("INSERT INTO chemical(name,package_unit,package_quantity,package_price) VALUES (?,?,?,?) RETURNING id",Long.class,name,packageUnit,amount,money);
-        var rows=db.queryForList("SELECT * FROM chemical WHERE id=? FOR UPDATE",id);
+        var rows=db.queryForList("SELECT * FROM chemical WHERE removed_at IS NULL AND id=? FOR UPDATE",id);
         if(rows.isEmpty())throw new IllegalArgumentException("Nieznany środek chemiczny.");
         if(!baseUnit((String)rows.get(0).get("package_unit")).equals(baseUnit(packageUnit)) && db.queryForObject("SELECT (SELECT count(*) FROM service_chemical WHERE chemical_id=?)+(SELECT count(*) FROM booking_actual_chemical WHERE chemical_id=?)",Integer.class,id,id)>0)
             throw new IllegalArgumentException("Ten środek ma przypisany standard lub zapisane rzeczywiste zużycie. Dla innego rodzaju jednostki dodaj osobny środek.");
-        CrmRecords.changed(db.update("UPDATE chemical SET name=?,package_unit=?,package_quantity=?,package_price=?,version=version+1 WHERE id=? AND version=?",name,packageUnit,amount,money,id,version));return id;
+        CrmRecords.changed(db.update("UPDATE chemical SET name=?,package_unit=?,package_quantity=?,package_price=?,version=version+1 WHERE removed_at IS NULL AND id=? AND version=?",name,packageUnit,amount,money,id,version));return id;
     }
     @Transactional
     public void saveRecipe(long service,long version,boolean defined,Map<Long,BigDecimal> quantities) {
-        if(quantities.size()>100)throw new IllegalArgumentException("Standard może zawierać do 100 środków.");
+        db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);if(quantities.size()>100)throw new IllegalArgumentException("Standard może zawierać do 100 środków.");
         var known=new HashSet<>(materials().stream().map(Material::id).toList());
         for(var entry:quantities.entrySet())if(!known.contains(entry.getKey())||entry.getValue()==null)throw new IllegalArgumentException("Wybierz istniejący środek.");
         var normalized=new LinkedHashMap<Long,BigDecimal>();
         quantities.forEach((id,q)->normalized.put(id,quantity(q.toPlainString(),false)));
-        CrmRecords.changed(db.update("UPDATE service_definition SET chemistry_defined=?,version=version+1 WHERE id=? AND version=?",defined||!normalized.isEmpty(),service,version));
+        CrmRecords.changed(db.update("UPDATE service_definition SET chemistry_defined=?,version=version+1 WHERE removed_at IS NULL AND id=? AND version=?",defined||!normalized.isEmpty(),service,version));
         db.update("DELETE FROM service_chemical WHERE service_id=?",service);
         for(var entry:normalized.entrySet())db.update("INSERT INTO service_chemical(service_id,chemical_id,quantity) VALUES (?,?,?)",service,entry.getKey(),entry.getValue());
     }
