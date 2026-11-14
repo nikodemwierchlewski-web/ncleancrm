@@ -1,3 +1,4 @@
+# LEGACY SUBDOMAIN EXAMPLE. Current target is nclean.pl/crm/; see SAME-DOMAIN-AUDIT.md.
 # Include in nginx's http context. Initial bind is loopback only.
 # After VPN/firewall review, replace it with the server's actual VPN IP:443.
 # Use a separate vhost; do not replace the nclean.pl CMS configuration.

@@ -1,46 +1,80 @@
-# CRM na własnym serwerze z VPN — przygotowanie wdrożenia
+# Docelowe wdrożenie: https://nclean.pl/crm/
 
-To konfiguracja do przeglądu, nie wykonane wdrożenie. System operacyjny, adres VPN, usługi PostgreSQL/nginx, DNS i połączenie do serwera użytkownika nie są dostępne w tej sesji. Przykład zakłada Linux z systemd i nginx na tym samym hoście co CRM. Dla innego układu trzeba jawnie zmienić reguły zaufania proxy; nie rozszerzać ich na dowolne adresy.
+**Bez subdomeny. Obecny kod nie jest jeszcze gotowy pod `/crm/`.**
+[Audyt zgodności i wynik prawdziwej próby HTTPS](SAME-DOMAIN-AUDIT.md).
+Samo dodanie `context-path` lub reguły nginx nie wystarcza: część zasobów,
+linków, żądań JavaScript i PWA nadal korzysta z głównego `/`.
 
-## Rozdzielenie od strony
+## Układ docelowy
 
-- `nclean.pl`: dotychczasowy CMS, bez zmian w tej pracy.
-- `crm.nclean.pl`: osobny vhost, proces i konto systemowe `nclean-crm`.
-- CRM nasłuchuje wyłącznie na `127.0.0.1:8081`; PostgreSQL nie ma publicznego portu.
-- Dostęp do vhosta CRM początkowo wyłącznie przez VPN. Przykład nginx wiąże się z loopbackiem `127.0.0.1:8443`, aby skopiowanie go nie wystawiło aplikacji. Po sprawdzeniu firewalla operator zastępuje bind faktycznym adresem interfejsu VPN i portem443.
-- Osobna baza, role, sekrety, kopie i sesja CRM. Nie współdzielić tabel, kont administratora, kluczy ani cookies domenowych z CMS. Samo użycie Java 17/PostgreSQL po obu stronach nie oznacza wspólnej bazy.
-- Pierwsze połączenie strony z CRM może być zwykłym odnośnikiem do logowania. Przekazywanie zgłoszeń przez API jest następnym, oddzielnie projektowanym etapem; tutaj nie dodano API publicznego, CORS ani obejścia logowania.
+- `https://nclean.pl/` i dotychczasowe adresy publiczne: istniejący CMS.
+- `https://nclean.pl/crm/`: osobny proces CRM, dostępny przez ten sam serwer WWW.
+- Java 17/CRM nasłuchuje na loopbacku `127.0.0.1:8081`.
+- Oddzielna baza PostgreSQL, role, sekrety, kopie i konto systemowe `nclean-crm`.
+- Własna sesja `NCLEAN_CRM_SESSION`, Secure/HttpOnly/SameSite=Strict,
+  ze ścieżką `/crm`; logowanie OWNER i CSRF pozostają włączone.
+- Przed przełączeniem zachować istniejącą konfigurację CMS, certyfikat i routing.
+  Nie zastępować `location /`, nie współdzielić bazy ani kont właściciela.
 
-## Przed uruchomieniem
+Aktualnego systemu/proxy/portów ani konfiguracji produkcyjnego nclean.pl nie
+potwierdzono. Przykłady dotyczą nginx na tym samym Linuxie co CRM. Dla Apache
+operator musi przygotować i przetestować równoważną konfigurację.
 
-1. Potwierdzić aktualny kod CMS i jego mapowanie portów, użytkownika systemowego, konfigurację proxy i bazy. Raport `AUDYT-NcleanCMS.md` dotyczy archiwum z 28.10.2026, nie bieżącej produkcji.
-2. Podłączyć serwer przez VPN, potwierdzić Linux/Java 17, zasoby, wolne porty i odizolowaną testową bazę. Nie używać adresów ani poświadczeń bazy CMS.
-3. W czystym checkoutcie kandydata uruchomić `./mvnw -B -ntp clean verify`. Testcontainers wymaga Dockera; testy nie korzystają z produkcji.
-4. Przygotować bazę CRM i role. Rola aplikacji powinna mieć prawa odczytu/zapisu tabel i sekwencji, rola migracji DDL; schemat i domyślne granty muszą zapewnić aplikacji prawa do tabel tworzonych przez migratora. Nie uruchamiać aplikacji jako superużytkownik PostgreSQL. Rozdzielenie ról na docelowym serwerze wymaga sprawdzenia; w lokalnym Compose `crm_dev` jest właścicielem wyłącznie swojej bazy.
-5. Utworzyć osobny użytkownik systemowy. JAR kopiować jako niezmienny artefakt wydania do `/opt/nclean-crm/releases/<SHA>/nclean-crm.jar`; `/opt/nclean-crm/current` wskazuje zatwierdzone wydanie. Sprawdzić sumę SHA256 po przesłaniu.
-6. Na serwerze, poza checkoutem, utworzyć `/etc/nclean-crm/secrets.properties` według szablonu: właściciel `root:nclean-crm`, tryb0640. Własny login i hash BCrypt wygenerować lokalnie; nie przesyłać haseł przez czat i nie umieszczać ich w argumentach procesu. Wypełnione pliki nie trafiają do Git.
-7. Zapewnić poprawny certyfikat dla subdomeny. Certyfikat z próby audytowej jest jednodniowy i lokalny — nie stanowi certyfikatu wdrożeniowego.
-8. Przejrzeć jednostkę systemd i pliki nginx, dopasować ścieżki. `nginx-crm.conf.example` wchodzi do kontekstu `http`, a fragment proxy do `/etc/nginx/snippets/nclean-crm-proxy.conf`. Sprawdzić `nginx -t` i `systemd-analyze verify`; dopiero potem operator instaluje/uruchamia usługę.
+## Pliki do przeglądu
 
-Profil `prod` wymaga Secure cookie, przyjmuje nagłówki proxy jedynie od loopbacka i działa za HTTPS. nginx zastępuje nagłówki przekazane przez klienta, ogranicza logowanie do 5 żądań/min/IP z krótkim burst, ogranicza rozmiar żądania do 9 MiB i pomija query string w access logu. Limit obejmuje GET i POST `/login`; przy wspólnym wyjściowym IP VPN trzeba ocenić wygodę tego ustawienia.
+- `nginx-crm-path.http.conf.example`: format logów bez query string i limit
+  logowania; kontekst `http`.
+- `nginx-crm-path.locations.conf.example`: trzy lokalizacje do istniejącego
+  vhosta HTTPS `nclean.pl`. `^~ /crm/` chroni routing zasobów przed regułami CMS.
+- `nginx-crm-path-proxy.conf.example`: fragment proxy, docelowo
+  `/etc/nginx/snippets/nclean-crm-path-proxy.conf`. Zachowuje prefix w URI.
+- `nclean-crm.service.example`: konto systemowe, restart i ograniczenia procesu.
+  Po naprawie ścieżek wymaga dopisania do ExecStart
+  `--server.servlet.context-path=/crm` oraz
+  `--server.tomcat.remoteip.port-header=X-Forwarded-Port`.
+- `secrets.properties.example`: szablon, nigdy wypełniony plik w Git.
 
-## Próba odbiorcza na stagingu
+Starsze `nginx-crm.conf.example` i `nginx-crm-proxy.conf.example` dokumentują
+archiwalny wariant subdomenowy. **Nie używać ich jako docelowego wdrożenia.**
+Nowych przykładów również nie należy instalować przed zaliczeniem bramki poniżej.
 
-- Poprawny HTTPS/certyfikat, przekierowanie logowania, sesja Secure/HttpOnly/SameSite=Strict, brak Domain cookies współdzielonego z CMS.
-- Anonimowy użytkownik nie odczytuje CRM ani zdjęć; brak tokenu CSRF blokuje zapis; wielokrotne próby logowania otrzymują429.
-- Nowy i powracający klient, zachowanie ręcznego adresu, dwie kategorie usług, zmiana ceny, zapis i edycja.
-- Osiem zleceń, kilka obszarów, kolory i historia dezaktywacji przy 360/390/768/1440px.
-- Wykonanie, rzeczywista chemia, zdjęcia, dwie notatki, wpłata częściowa, zamknięcie dnia i korekta po zamknięciu.
-- Rzeczywisty telefon i jego klawiatura/aparat. Obsługa HEIC nie jest zaimplementowana; JPEG/PNG mają limit8 MiB i20 MP.
-- Licznik/agregat i tankowanie nie dublują kosztu zużycia paliwa. Pusty odczyt i niepotwierdzona cena nie stają się zerem.
-- Restart i pełna próba kopii/odtworzenia na osobnej bazie, wraz ze zdjęciami, wpłatami i zamknięciem dnia.
+## Bramka wdrożeniowa
 
-## Kopie, obserwacja i wycofanie
+1. Dostosować wszystkie adresy serwera, Thymeleaf, JS, CSS i PWA do prefixu;
+   zachować również lokalne uruchomienie w `/`. Nie obchodzić tego masowym
+   przekazywaniem głównych `/login`, `/css`, `/js`, `/sw.js` do CRM.
+2. Przetestować pod jednym HTTPS: publiczne `/` i oferta, `/crm/`, logowanie,
+   OWNER/CSRF, wszystkie moduły, obrazy, rachunki, pliki, usuwanie/przywracanie,
+   wylogowanie, sesję i restart. Brak żądań CRM poza `/crm/`.
+3. Zawęzić manifest i service worker do `/crm/`; sprzątanie Cache Storage może
+   usuwać tylko cache CRM. Cache publicznej strony musi przeżyć aktualizację CRM.
+4. Potwierdzić rzeczywisty serwer WWW, certyfikat, firewall/VPN i wolne porty.
+   Port Java i PostgreSQL mają pozostać prywatne. Operator ustala, czy `/crm/`
+   będzie dostępny tylko przez VPN, czy przez Internet z normalnym logowaniem.
+5. Wybrać sprawdzony commit pełnej implementacji. `main` był starszy o 51 commitów
+   od badanego `e9fab47`; samo wdrożenie main nie zawiera obecnego CRM.
+   Przygotowanie wydania/scalenie wymaga oddzielnego przeglądu, bez automatycznego
+   zastępowania produkcji w tym audycie.
+6. Na izolowanym stagingu wykonać `./mvnw -B -ntp verify` (Windows: `mvnw.cmd`),
+   próbę na fizycznym telefonie i kopię/odtworzenie aktualnego schematu V15 wraz
+   ze zdjęciami, wpłatami i usuniętymi wpisami. Uruchomić aktualny skan zależności.
+7. Ustalić kopie poza serwerem, retencję, miejsce na zdjęcia i logi, monitoring
+   dostępności/dysku/certyfikatu oraz operatora odpowiedzialnego za odtworzenie.
 
-- Przed pierwszym użyciem ustalić harmonogram, retencję, zaszyfrowane miejsce kopii poza serwerem i osobę sprawdzającą ich wykonanie. Kopia zawiera dane klientów i prywatne zdjęcia. Lokalny dump i pomyślne odtworzenie nie zastępują kopii poza serwerem.
-- Monitorować dostępność logowania, błędy5xx, miejsce PostgreSQL/backupu, ważność certyfikatu i stan procesu. Nie wysyłać danych klientów do zewnętrznego monitoringu bez osobnej decyzji.
-- Zdjęcia są BLOB-ami w PostgreSQL: limit 40 zdjęć/zlecenie i8 MiB/plik oznacza do 320MiB na zlecenie. Zaplanować miejsce i czas wykonywania kopii według rzeczywistego wykorzystania.
-- Przed zmianą wydania wykonać kopię i potwierdzić jej odtworzenie. Nie wykonywać Flyway clean, nie edytować wykonanych migracji i nie usuwać wolumenu.
-- Przy wycofaniu nie zakładać, że stary JAR obsłuży nowy schemat. Sprawdzić zgodność albo odtworzyć kopię do osobnej bazy i uruchomić zgodne wydanie na jej adresie. Nie nadpisywać jedynej aktualnej bazy; uwzględnić zapisy wykonane po kopii.
+## Proces, baza i wycofanie
 
-Konfiguracja CI została dodana, ale wymaga opublikowania gałęzi i wykonania przez GitHub Actions. Ustawić wymagany wynik `verify` przed scalaniem. W tej sesji przeszły lokalne testy; nie deklarujemy wykonania workflow na GitHubie ani wdrożenia na serwerze użytkownika.
+Wydanie przechowywać niezmiennie w `/opt/nclean-crm/releases/<SHA>/nclean-crm.jar`;
+`current` wskazuje wybraną wersję. Sprawdzić SHA-256 po przesłaniu.
+Sekrety dostarczyć poza checkoutem w `/etc/nclean-crm/secrets.properties`,
+`root:nclean-crm`, tryb0640. Login i BCrypt wygenerować lokalnie. Nie podawać haseł
+w argumentach procesu i nie uruchamiać aplikacji jako superużytkownika PostgreSQL.
+Rola migracji i rola aplikacji muszą mieć uzgodnione, sprawdzone granty tabel
+oraz sekwencji. Lokalny Compose jest środowiskiem developmentu.
+
+Przed zmianą wykonać kopię i sprawdzić jej odtworzenie do osobnej bazy. Zachować
+wcześniejszy JAR i konfigurację proxy. Nie zakładać zgodności starego JAR-a z nowym
+schematem; uwzględnić zapisy po kopii. Nie używać Flyway clean ani usuwać wolumenu.
+Zdjęcia są w PostgreSQL; limity 40×8 MiB/zlecenie wymagają planu pojemności.
+
+To dokumentacja i lokalny audyt. Nie zmieniono serwera, CMS, DNS, certyfikatów
+ani bazy produkcyjnej. Nie utworzono Pull Requesta i nie scalono gałęzi.

@@ -1,0 +1,208 @@
+{
+  "tested_code_commit": "e9fab47",
+  "architecture": "Same local HTTPS origin: public root fixture and real Spring Boot /crm; separate disposable PostgreSQL schema",
+  "production_contact": false,
+  "tls_test_certificate": "self-signed local fixture; browser trusts fixture only in this test",
+  "nginx_syntax": "PASS",
+  "public_root_preserved": true,
+  "public_offer_preserved": true,
+  "crm_canonical_redirect": {
+    "status": 308,
+    "location": "https://127.0.0.1:18443/crm/"
+  },
+  "anonymous_calendar_redirect": {
+    "status": 302,
+    "location": "https://127.0.0.1:18443/crm/login"
+  },
+  "owner_login_and_ssr_calendar": "PASS",
+  "owner_help_api_status": 200,
+  "write_without_csrf_status": 403,
+  "session_cookie": [
+    {
+      "name": "NCLEAN_CRM_SESSION",
+      "path": "/crm",
+      "secure": true,
+      "httpOnly": true,
+      "sameSite": "Strict"
+    }
+  ],
+  "escaped_links_and_assets": [
+    {
+      "tag": "LINK",
+      "url": "/css/crm.css"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/records.css"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/daily.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/records.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/actual-usage.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/forecast.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/daily.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/app.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/interface.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/interface.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/session.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/tycoon.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/tycoon-motion.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/tycoon.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/lean.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/lean.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/removal.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/removal.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/ncleanek.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/ncleanek-content.js"
+    },
+    {
+      "tag": "LINK",
+      "url": "/css/ncleanek-puppet.css"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/ncleanek-puppet.js"
+    },
+    {
+      "tag": "SCRIPT",
+      "url": "/js/ncleanek.js"
+    },
+    {
+      "tag": "A",
+      "url": "/calendar"
+    },
+    {
+      "tag": "A",
+      "url": "/today"
+    },
+    {
+      "tag": "A",
+      "url": "/calendar"
+    },
+    {
+      "tag": "A",
+      "url": "/customers"
+    },
+    {
+      "tag": "A",
+      "url": "/more"
+    },
+    {
+      "tag": "A",
+      "url": "/search"
+    },
+    {
+      "tag": "A",
+      "url": "/orders#removed-orders"
+    }
+  ],
+  "root_asset_returns_public_fixture": true,
+  "prefixed_asset_status": 200,
+  "manifest": {
+    "id": "/",
+    "name": "ncLEAN CRM",
+    "short_name": "ncLEAN",
+    "lang": "pl",
+    "start_url": "/calendar",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#f5f7fa",
+    "theme_color": "#208be3",
+    "icons": [
+      {
+        "src": "/pwa/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/pwa/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  },
+  "worker_registers_root_path": true,
+  "worker_references_root_offline": true,
+  "worker_deletes_foreign_origin_caches": true,
+  "frontend_javascript_errors": [
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined",
+    "PUBLIC_SITE_FIXTURE is not defined"
+  ],
+  "ready_for_crm_path": false,
+  "worker_foreign_cache_probe": {
+    "foreign_cache_before": true,
+    "foreign_cache_after": false
+  }
+}

@@ -1,0 +1,16 @@
+# No trailing slash: preserve /crm/... for Spring's real servlet context.
+proxy_pass http://127.0.0.1:8081;
+proxy_http_version 1.1;
+proxy_set_header Host $host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-Port $server_port;
+proxy_set_header X-Forwarded-For $remote_addr;
+# Do not accept client-provided forwarding/prefix headers.
+proxy_set_header X-Forwarded-Host "";
+proxy_set_header X-Forwarded-Prefix "";
+proxy_set_header Forwarded "";
+proxy_hide_header Strict-Transport-Security;
+client_max_body_size 9m;
+proxy_connect_timeout 5s;
+proxy_read_timeout 60s;
+proxy_send_timeout 60s;

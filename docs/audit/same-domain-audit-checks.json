@@ -1,0 +1,28 @@
+{
+  "code_commit": "e9fab47",
+  "context_path_ready": false,
+  "production_contact": false,
+  "production_head_request": "blocked by environment CONNECT proxy, HTTP 403",
+  "nginx_path_snippets_syntax": "PASS",
+  "public_main": {
+    "commit": "7d26eb039bbf04e2481b8574040d214f377aefba",
+    "candidate_commits_ahead_at_e9fab47": 51,
+    "candidate_commits_behind": 0
+  },
+  "verification": {
+    "unit_mvc": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgresql_testcontainers": {
+      "tests": 93,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "verify_log_sha256": "391ba8ce0b00b1a444060572230a1c1a57b17e6dc635e5f2aff1a4432c68781f",
+  "notes": "No application or migration changes in this audit; documentation and illustrative nginx configuration only. No PR, merge, production changes or database connection."
+}

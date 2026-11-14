@@ -1,0 +1,5 @@
+# Target: https://nclean.pl/crm/ (NOT a subdomain).
+# Include once in nginx's http context, after reviewing the deployment audit.
+# Application URL-prefix fixes are still required; this is not a deployment approval.
+log_format nclean_crm_path '$remote_addr $request_method $uri $status $request_time';
+limit_req_zone $binary_remote_addr zone=nclean_crm_path_login:10m rate=5r/m;
