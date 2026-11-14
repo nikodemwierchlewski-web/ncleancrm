@@ -1,5 +1,7 @@
 package pl.nclean.crm.context;
 
+import pl.nclean.crm.records.CustomerAcquisitionSource;
+import pl.nclean.crm.shared.BusinessDates;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
@@ -8,7 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import pl.nclean.crm.dashboard.DashboardService;
 import pl.nclean.crm.fuel.ReceiptService;
 
 @Service
@@ -16,9 +17,8 @@ import pl.nclean.crm.fuel.ReceiptService;
 public class ContextService {
     private final JdbcTemplate db;private final ReceiptService images;
     public ContextService(JdbcTemplate db,ReceiptService images){this.db=db;this.images=images;}
-    public static final Map<String,String> SOURCES=labels();
-    private static Map<String,String> labels(){var labels=new LinkedHashMap<String,String>();labels.put("UNKNOWN","Nieustalone");labels.put("GOOGLE","Google / Mapy");labels.put("FACEBOOK","Facebook");labels.put("REFERRAL","Polecenie");labels.put("OLX","OLX");labels.put("OTHER","Inne");return Collections.unmodifiableMap(labels);}
-    public static String source(String value){var s=value==null||value.isBlank()?"UNKNOWN":value;if(!SOURCES.containsKey(s))throw new IllegalArgumentException("Wybierz źródło klienta.");return s;}
+    public static final Map<String,String> SOURCES=CustomerAcquisitionSource.LABELS;
+    public static String source(String value){return CustomerAcquisitionSource.normalize(value);}
     public static Optional<LocalDateTime> filenameTime(String filename){
         if(filename==null)return Optional.empty();
         var m=Pattern.compile("^(?:IMG_|PXL_)?(\\d{8})[_-](\\d{6})(?:[._-].*)?\\.[A-Za-z0-9]+$",Pattern.CASE_INSENSITIVE).matcher(filename);
@@ -65,9 +65,9 @@ public class ContextService {
         db.query("SELECT id,day,customer_name,address FROM booking WHERE removed_at IS NULL AND (position(lower(?) in lower(customer_name||' '||address))>0 OR (?<>'' AND position(? in regexp_replace(phone,'[^0-9]','','g'))>0)) ORDER BY day DESC,starts LIMIT 20",r->{result.add(new Result("order",r.getLong("id"),r.getString("customer_name"),r.getDate("day")+" · "+r.getString("address")));},q,phone,phone);return result;
     }
     public List<Map<String,Object>> contacts(long customer){return db.queryForList("SELECT * FROM customer_contact WHERE customer_id=? ORDER BY id DESC LIMIT 30",customer);}
-    public List<Map<String,Object>> callbacks(){return db.queryForList("SELECT c.*,v.last_day FROM crm_customer c JOIN (SELECT customer_id,max(day) last_day FROM booking WHERE removed_at IS NULL AND status='DONE' GROUP BY customer_id) v ON v.customer_id=c.id WHERE c.active=TRUE AND v.last_day<=? AND (c.contact_due IS NULL OR c.contact_due<=?) AND NOT EXISTS(SELECT 1 FROM booking b WHERE b.removed_at IS NULL AND b.customer_id=c.id AND b.status='PLANNED' AND b.day>=?) ORDER BY COALESCE(c.contact_due,v.last_day),c.name",DashboardService.today().minusMonths(6),DashboardService.today(),DashboardService.today());}
-    @Transactional public void contact(long customer,long version,UUID token,LocalDate next,String note){if(next==null||!next.isAfter(DashboardService.today())||next.getYear()>2100||note==null||note.length()>1000)throw new IllegalArgumentException("Podaj przyszłą datę ponownego kontaktu i notatkę do 1000 znaków.");
+    public List<Map<String,Object>> callbacks(){return db.queryForList("SELECT c.*,v.last_day FROM crm_customer c JOIN (SELECT customer_id,max(day) last_day FROM booking WHERE removed_at IS NULL AND status='DONE' GROUP BY customer_id) v ON v.customer_id=c.id WHERE c.active=TRUE AND v.last_day<=? AND (c.contact_due IS NULL OR c.contact_due<=?) AND NOT EXISTS(SELECT 1 FROM booking b WHERE b.removed_at IS NULL AND b.customer_id=c.id AND b.status='PLANNED' AND b.day>=?) ORDER BY COALESCE(c.contact_due,v.last_day),c.name",BusinessDates.today().minusMonths(6),BusinessDates.today(),BusinessDates.today());}
+    @Transactional public void contact(long customer,long version,UUID token,LocalDate next,String note){if(next==null||!next.isAfter(BusinessDates.today())||next.getYear()>2100||note==null||note.length()>1000)throw new IllegalArgumentException("Podaj przyszłą datę ponownego kontaktu i notatkę do 1000 znaków.");
         db.queryForList("SELECT id FROM crm_customer WHERE id=? FOR UPDATE",customer);var replay=db.queryForList("SELECT customer_id FROM customer_contact WHERE request_token=?",token);if(!replay.isEmpty()){if(((Number)replay.get(0).get("customer_id")).longValue()!=customer)throw new IllegalArgumentException("Token należy do innego klienta.");return;}
-        if(db.update("UPDATE crm_customer SET last_contact=?,contact_due=?,version=version+1 WHERE id=? AND version=?",DashboardService.today(),next,customer,version)!=1)throw new IllegalArgumentException("Klient zmienił się w innym oknie. Odśwież przed zapisem.");db.update("INSERT INTO customer_contact(request_token,customer_id,contacted_on,next_on,note) VALUES (?,?,?,?,?)",token,customer,DashboardService.today(),next,note.strip());
+        if(db.update("UPDATE crm_customer SET last_contact=?,contact_due=?,version=version+1 WHERE id=? AND version=?",BusinessDates.today(),next,customer,version)!=1)throw new IllegalArgumentException("Klient zmienił się w innym oknie. Odśwież przed zapisem.");db.update("INSERT INTO customer_contact(request_token,customer_id,contacted_on,next_on,note) VALUES (?,?,?,?,?)",token,customer,BusinessDates.today(),next,note.strip());
     }
 }

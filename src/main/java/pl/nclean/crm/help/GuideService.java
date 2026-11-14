@@ -1,11 +1,11 @@
 package pl.nclean.crm.help;
 
+import pl.nclean.crm.shared.BusinessDates;
 import java.time.*;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import pl.nclean.crm.dashboard.DashboardService;
 import pl.nclean.crm.work.DayReviewService;
 import pl.nclean.crm.work.WorkService;
 
@@ -21,7 +21,7 @@ public class GuideService {
     public Map<String,Object> context(LocalDate requested,Long order){
         var now=LocalDateTime.now(clock);var today=now.toLocalDate();var day=requested==null?today:requested;
         if(order!=null){var actual=((java.sql.Date)work.order(order).get("day")).toLocalDate();if(requested!=null&&!actual.equals(requested))throw new ResponseStatusException(HttpStatus.NOT_FOUND);day=actual;}
-        DashboardService.period(day,"day");var review=days.review(day);var result=new LinkedHashMap<String,Object>();
+        BusinessDates.period(day,"day");var review=days.review(day);var result=new LinkedHashMap<String,Object>();
         result.put("date",day.toString());result.put("today",today.toString());result.put("total",review.orders().size());result.put("complete",review.complete());result.put("closed",review.closed());
         if(day.isAfter(today))return result;
         if(order!=null){final long id=order;var row=review.orders().stream().filter(o->((Number)o.get("id")).longValue()==id).findFirst().orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));

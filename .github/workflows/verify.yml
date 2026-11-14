@@ -1,8 +1,9 @@
 name: Verify CRM
 on:
   pull_request:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'refactor/**']
 permissions:
   contents: read
 jobs:

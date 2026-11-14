@@ -1,0 +1,243 @@
+{
+  "date": "2026-11-14",
+  "branch": "refactor/modular-crm-foundation",
+  "baseline": "b5b646b",
+  "command": "./mvnw -B -ntp verify",
+  "environment": {
+    "java": "17",
+    "database": "Isolated PostgreSQL via Testcontainers; browser tests use separate temporary local schemas",
+    "production_connection": false
+  },
+  "result": "BUILD SUCCESS",
+  "unit_mvc_architecture": {
+    "totals": {
+      "tests": 50,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "suite": "pl.nclean.crm.architecture.ArchitectureTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.calendar.CalendarSecurityTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.calendar.RecordsSecurityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.ContextSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.CostSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.DashboardSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.DashboardTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.DayReviewSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.FuelSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.NoteSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.PhotoNameTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.RemovalSecurityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.TycoonSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.dashboard.WorkSecurityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.fuel.ImageOrientationTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.help.GuideSecurityTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.help.GuideServiceTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.removal.RemovalServiceTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "pl.nclean.crm.shared.SharedConventionsTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "postgres_integration": {
+    "totals": {
+      "tests": 97,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "suite": "pl.nclean.crm.calendar.CalendarPostgresIT",
+        "tests": 97,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "total_tests": 147,
+  "browser": {
+    "engine": "Chromium headless",
+    "real_application": true,
+    "synthetic_data_only": true,
+    "viewports": [
+      360,
+      390,
+      768,
+      1440
+    ],
+    "removal": {
+      "viewports": [
+        {
+          "width": 360,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 390,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 768,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 1440,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        }
+      ],
+      "stale_version_dialog": true,
+      "controlled_503_preserves_state_and_retry": true,
+      "stars_maximum_8_and_single_layer": true,
+      "reduced_motion_and_modal_suppress": true,
+      "booking_snapshots_preserved": true,
+      "javascript_errors": []
+    },
+    "business_scenarios": [
+      "interactions: saved-id highlight and booked scene only after server success,503 preserves fields, rapid day selection settles, mixed-category count, dialog focus and month transition.",
+      "notes real UI: memo/task/goals, steps and explicit completion, pin5/max3, archive/restore, search,503 retry, two-tab conflict, four widths and compact viewport.",
+      "Tycoon: SVG animation, 4 widths, motion preference/reload/OS, goal steps, dates, modal deferral, notification acknowledgement.",
+      "lean: navigation/config separation, authoritative missing data, shared completion from visit, returning client, two categories/custom price/address, catalogue change keeps history, default dashboard/Today actions above fold, four widths.",
+      "closeout: real chemistry, photos/time, separate notes,503 retry, cancel/move, explicit exceptions, partial day, two tabs, four widths, closure persistence and reopening."
+    ],
+    "captured_routes": 62,
+    "restart_persistence": true,
+    "platform_preview_verified": false
+  },
+  "migrations_unchanged": [
+    "V10__customer_context_and_service_photos.sql",
+    "V11__day_closeout.sql",
+    "V12__notes_and_goals.sql",
+    "V13__costs_equipment_and_vehicle_book.sql",
+    "V14__tycoon_achievements.sql",
+    "V15__reversible_removals.sql",
+    "V1__calendar.sql",
+    "V2__multiple_day_areas.sql",
+    "V3__customers_catalog_bookings.sql",
+    "V4__weekly_area_plans.sql",
+    "V5__service_prices_and_chemical_forecasts.sql",
+    "V6__actual_chemical_usage.sql",
+    "V7__dashboard_costs.sql",
+    "V8__fuel_journal_and_receipts.sql",
+    "V9__workday_completion_and_payments.sql"
+  ],
+  "ui_resources_and_security_configuration_unchanged": true,
+  "open_issues": [
+    "Same-domain /crm path support and isolation of PWA scope/cache; see deploy/SAME-DOMAIN-AUDIT.md",
+    "Incremental extraction of CrmRecords, typed projections, data ownership and integration test suites; see ARCHITECTURE.md"
+  ],
+  "github_actions_result": "Not yet verified; local full verify passed."
+}

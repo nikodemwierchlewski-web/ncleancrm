@@ -1,19 +1,20 @@
 package pl.nclean.crm.fuel;
 
+import pl.nclean.crm.shared.DecimalInput;
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.*;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.nclean.crm.dashboard.DashboardService;
 
 @Service
 @Transactional(readOnly=true)
 public class FuelJournalService {
     private final JdbcTemplate db;
     public FuelJournalService(JdbcTemplate db){this.db=db;}
-    public static BigDecimal decimal(String value,int scale,String max,boolean optional){return DashboardService.number(value,scale,new BigDecimal(max),optional);}
+    public static BigDecimal decimal(String value,int scale,String max,boolean optional){return DecimalInput.parse(value,scale,new BigDecimal(max),optional);}
     public static BigDecimal rounded(BigDecimal value){return value.setScale(2,RoundingMode.HALF_UP);}
     private static BigDecimal n(Map<String,Object> row,String key){return (BigDecimal)row.get(key);}
     private static LocalDate day(Map<String,Object> row){return ((java.sql.Date)row.get("day")).toLocalDate();}
@@ -23,7 +24,7 @@ public class FuelJournalService {
     public List<Map<String,Object>> parameters(){return db.queryForList("SELECT * FROM fuel_parameters ORDER BY effective_day DESC,id DESC");}
     public Map<String,Object> parameters(LocalDate date){return db.queryForList("SELECT * FROM fuel_parameters WHERE effective_day<=? ORDER BY effective_day DESC,id DESC LIMIT 1",date).stream().findFirst().orElse(Map.of());}
     @Transactional public void saveParameters(UUID token,LocalDate date,String carRate,String generatorRate,String carFuel,String generatorFuel,String carPrice,String generatorPrice){
-        DashboardService.period(date,"day");if(date.isBefore(DashboardService.today()))throw new IllegalArgumentException("Nowe parametry mogą obowiązywać od dziś lub w przyszłości. Historia pozostaje zachowana.");
+        BusinessDates.period(date,"day");if(date.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Nowe parametry mogą obowiązywać od dziś lub w przyszłości. Historia pozostaje zachowana.");
         fuel(carFuel);fuel(generatorFuel);var cr=decimal(carRate,3,"99999.999",false);var gr=decimal(generatorRate,3,"99999.999",false);var cp=decimal(carPrice,3,"99999.999",false);var gp=decimal(generatorPrice,3,"99999.999",false);
         lock();db.update("INSERT INTO fuel_parameters(request_token,effective_day,car_rate,generator_rate,car_fuel,generator_fuel,car_price,generator_price) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(request_token) DO NOTHING",token,date,cr,gr,carFuel,generatorFuel,cp,gp);
     }
@@ -34,7 +35,7 @@ public class FuelJournalService {
     public List<Map<String,Object>> history(LocalDate before){return db.queryForList("SELECT * FROM fuel_day WHERE day<=? ORDER BY day DESC LIMIT 31",before);}
     public List<Map<String,Object>> audit(LocalDate date){return db.queryForList("SELECT created_at,actor,before_data->>'odometer' old_odometer,after_data->>'odometer' odometer,before_data->>'generator_minutes' old_minutes,after_data->>'generator_minutes' minutes FROM fuel_audit WHERE kind='DAY' AND record_key=? ORDER BY id DESC LIMIT 20",date.toString());}
     @Transactional public void saveDay(LocalDate date,long version,String odometer,int hours,int minutes,boolean confirmed,String actor){
-        DashboardService.period(date,"day");if(date.isAfter(DashboardService.today()))throw new IllegalArgumentException("Rzeczywisty odczyt zapisz najwcześniej w danym dniu.");
+        BusinessDates.period(date,"day");if(date.isAfter(BusinessDates.today()))throw new IllegalArgumentException("Rzeczywisty odczyt zapisz najwcześniej w danym dniu.");
         var km=decimal(odometer,1,"999999999.9",false);if(hours<0||hours>24||minutes<0||minutes>59||hours*60+minutes>1440)throw new IllegalArgumentException("Podaj czas od 0 do 24 godzin; minuty od 0 do 59.");
         lock();var old=daily(date);if(((Number)old.get("version")).longValue()!=version)throw new IllegalArgumentException("Wpis zmienił się w innym oknie. Odśwież formularz.");
         var prev=previous(date);var following=next(date);
@@ -80,9 +81,17 @@ public class FuelJournalService {
     }
     public List<Map<String,Object>> purchases(LocalDate start,LocalDate end){return db.queryForList("SELECT * FROM fuel_purchase WHERE purchased_at>=? AND purchased_at<? ORDER BY purchased_at DESC,id DESC",start.atStartOfDay(),end.plusDays(1).atStartOfDay());}
     public Map<String,Object> purchase(long id){return db.queryForList("SELECT * FROM fuel_purchase WHERE id=?",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznane tankowanie."));}
+    /** Convert JDBC values at the read-model boundary, before they reach the HTTP adapter. */
+    public Map<String,Object> purchaseForEdit(long id) {
+        var result = new LinkedHashMap<String,Object>(purchase(id));
+        if (result.get("purchased_at") instanceof java.sql.Timestamp timestamp) {
+            result.put("purchased_at", timestamp.toLocalDateTime());
+        }
+        return result;
+    }
     public record Purchase(Long id,long version,UUID token,LocalDateTime time,String target,String fuel,String amount,String litres,String price,boolean full,String odometer,boolean complete,String note,UUID receipt){}
     @Transactional public long savePurchase(Purchase p,String actor){
-        if(p.time()==null||p.time().isAfter(LocalDateTime.now(ZoneId.of("Europe/Warsaw")).plusMinutes(5)))throw new IllegalArgumentException("Podaj datę i godzinę zakupu, bez przyszłych tankowań.");DashboardService.period(p.time().toLocalDate(),"day");fuel(p.fuel());
+        if(p.time()==null||p.time().isAfter(LocalDateTime.now(ZoneId.of("Europe/Warsaw")).plusMinutes(5)))throw new IllegalArgumentException("Podaj datę i godzinę zakupu, bez przyszłych tankowań.");BusinessDates.period(p.time().toLocalDate(),"day");fuel(p.fuel());
         if(p.target()==null||!Set.of("CAR","GENERATOR","SHARED").contains(p.target()))throw new IllegalArgumentException("Wybierz przeznaczenie paliwa.");
         var amount=decimal(p.amount(),2,"9999999999.99",false);var litres=decimal(p.litres(),3,"9999999.999",true);var price=decimal(p.price(),3,"9999999.999",true);var odo=decimal(p.odometer(),1,"999999999.9",true);
         if(litres!=null&&litres.signum()==0||price!=null&&price.signum()==0)throw new IllegalArgumentException("Litry i cena litra muszą być dodatnie albo pozostawione puste.");

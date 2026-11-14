@@ -1,11 +1,11 @@
 package pl.nclean.crm.notes;
 
+import pl.nclean.crm.shared.BusinessDates;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.nclean.crm.dashboard.DashboardService;
 
 @Service
 @Transactional(readOnly=true)
@@ -14,7 +14,7 @@ public class NoteService {
     public record Entry(Long id,long version,UUID token,String kind,String title,String content,LocalDate due,boolean pinned,boolean completed,boolean archived,List<Step> steps){
         public String label(){return switch(kind){case "TASK"->"Zadanie";case "GOAL"->"Cel";default->"Notatka";};}
         public long doneSteps(){return steps.stream().filter(Step::done).count();}
-        public boolean overdue(){return !kind.equals("NOTE")&&!completed&&!archived&&due!=null&&due.isBefore(DashboardService.today());}
+        public boolean overdue(){return !kind.equals("NOTE")&&!completed&&!archived&&due!=null&&due.isBefore(BusinessDates.today());}
     }
     public record Page(List<Entry> entries,long total,int page){public boolean more(){return (page+1L)*50<total;}}
     private final JdbcTemplate db;
@@ -38,7 +38,7 @@ public class NoteService {
         if(token==null||!Set.of("NOTE","TASK","GOAL").contains(Objects.toString(kind,"")))throw new IllegalArgumentException("Wybierz rodzaj wpisu.");
         title=title==null?"":title.strip();content=content==null?"":content;
         if(title.isBlank()||title.length()>160||content.length()>5000)throw new IllegalArgumentException("Wpisz tytuł do 160 znaków i treść do 5000 znaków.");
-        if(due!=null)DashboardService.period(due,"day");
+        if(due!=null)BusinessDates.period(due,"day");
         if(steps==null||steps.size()>30||(!kind.equals("GOAL")&&!steps.isEmpty()))throw new IllegalArgumentException("Do celu dodaj maksymalnie 30 kroków. Usuń kroki przed zmianą rodzaju wpisu.");
         var ids=new HashSet<UUID>();for(var step:steps)if(step.id==null||!ids.add(step.id)||step.text==null||step.text.isBlank()||step.text.length()>300)throw new IllegalArgumentException("Kroki muszą mieć różne identyfikatory i tekst od 1 do 300 znaków.");
         lock();

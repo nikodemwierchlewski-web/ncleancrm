@@ -14,6 +14,7 @@ public class RemovalController {
  ResponseEntity<?> change(@RequestParam String kind,@RequestParam long id,@RequestParam long version,@RequestParam(defaultValue="false") boolean restore,@RequestParam(defaultValue="false") boolean confirmed,Principal actor){
   if(!confirmed)return ResponseEntity.badRequest().body(Map.of("message","Potwierdź wybraną operację."));
   try{return ResponseEntity.ok(removal.change(kind,id,version,restore,actor.getName()));}
+  catch(pl.nclean.crm.shared.removal.RemovalNotFoundException ex){return ResponseEntity.status(404).body(Map.of("message",ex.getMessage()));}
   catch(IllegalStateException ex){return ResponseEntity.status(409).body(Map.of("message",ex.getMessage()));}
   catch(IllegalArgumentException ex){return ResponseEntity.badRequest().body(Map.of("message",ex.getMessage()));}
  }

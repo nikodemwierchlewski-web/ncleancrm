@@ -1,12 +1,13 @@
 package pl.nclean.crm.costs;
 
+import pl.nclean.crm.shared.DecimalInput;
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.*;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.nclean.crm.dashboard.DashboardService;
 
 @Service
 @Transactional(readOnly=true)
@@ -18,8 +19,8 @@ public class CostService {
     private void lock(){db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
     private static String text(Map<String,String> p,String key,int max,boolean required){String v=p.getOrDefault(key,"").strip();if(v.length()>max||required&&v.isBlank())throw new IllegalArgumentException("Sprawdź opis i długość pól.");return v;}
     private static Long id(Map<String,String> p,String key){String v=p.get(key);return v==null||v.isBlank()?null:Long.valueOf(v);}
-    private static BigDecimal number(String s,int scale,String max,boolean optional){return DashboardService.number(s,scale,new BigDecimal(max),optional);}
-    private static LocalDate date(String value,boolean required){if(value==null||value.isBlank()){if(required)throw new IllegalArgumentException("Wybierz datę.");return null;}var day=LocalDate.parse(value);DashboardService.period(day,"day");return day;}
+    private static BigDecimal number(String s,int scale,String max,boolean optional){return DecimalInput.parse(s,scale,new BigDecimal(max),optional);}
+    private static LocalDate date(String value,boolean required){if(value==null||value.isBlank()){if(required)throw new IllegalArgumentException("Wybierz datę.");return null;}var day=LocalDate.parse(value);BusinessDates.period(day,"day");return day;}
     public Map<String,Object> entry(long id){return db.queryForList("SELECT * FROM cost_entry WHERE id=?",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznany wydatek."));}
     public Map<String,Object> asset(long id){return db.queryForList("SELECT * FROM equipment_item WHERE id=?",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznany sprzęt."));}
     public List<Map<String,Object>> assets(){return db.queryForList("SELECT a.*,COALESCE((SELECT SUM(amount) FROM cost_entry e WHERE e.asset_id=a.id AND NOT e.cancelled AND e.effect='INVESTMENT'),0) purchase_total,COALESCE((SELECT SUM(amount) FROM cost_entry e WHERE e.asset_id=a.id AND NOT e.cancelled AND e.category<>'EQUIPMENT_PURCHASE'),0) maintenance_total FROM equipment_item a ORDER BY active DESC,name,id");}
@@ -50,12 +51,12 @@ public class CostService {
     @Transactional public void checkMonthCategories(YearMonth month,Set<String> proposed){lock();for(String used:db.queryForList("SELECT DISTINCT covered_category FROM cost_entry WHERE covered_month=? AND NOT cancelled",String.class,month.atDay(1)))if(!proposed.contains(used))throw new IllegalArgumentException("Ten rodzaj kosztu miesięcznego ma przypisany rachunek. Najpierw zmień powiązanie lub anuluj rachunek w Kosztach i inwestycjach.");}
     @Transactional public long save(Map<String,String> p,String actor){
         String category=p.get("category");if(!CATEGORIES.containsKey(Objects.toString(category,"")))throw new IllegalArgumentException("Wybierz rodzaj wydatku. Paliwo zapisuj w istniejącym formularzu tankowania.");
-        var day=date(p.get("spent_on"),true);if(day.isAfter(DashboardService.today()))throw new IllegalArgumentException("Zakup lub rachunek zapisz najwcześniej w dniu zdarzenia.");String title=text(p,"title",160,true),supplier=text(p,"supplier",160,false),note=text(p,"note",2000,false);
+        var day=date(p.get("spent_on"),true);if(day.isAfter(BusinessDates.today()))throw new IllegalArgumentException("Zakup lub rachunek zapisz najwcześniej w dniu zdarzenia.");String title=text(p,"title",160,true),supplier=text(p,"supplier",160,false),note=text(p,"note",2000,false);
         BigDecimal amount=number(p.get("amount"),2,"9999999999.99",false),quantity=number(p.get("quantity"),3,"99999999999.999",true),odo=number(p.get("odometer"),1,"999999999.9",true);
         if(quantity!=null&&quantity.signum()==0)throw new IllegalArgumentException("Ilość musi być dodatnia lub pusta.");if(odo!=null&&!category.startsWith("CAR_"))throw new IllegalArgumentException("Przebieg w tym formularzu dotyczy samochodu.");
         Long id=id(p,"id"),asset=id(p,"asset_id"),chemical=id(p,"chemical_id");long version=Long.parseLong(p.getOrDefault("version","0"));UUID token=UUID.fromString(Objects.toString(p.get("token"),""));UUID receipt=p.getOrDefault("receipt_id","").isBlank()?null:UUID.fromString(p.get("receipt_id"));
         String effect=category.equals("EQUIPMENT_PURCHASE")?"INVESTMENT":category.equals("CHEMISTRY")?"PURCHASE_ONLY":"OPERATING";LocalDate month=null;String covered=null;
-        if(p.containsKey("covered")){if(!effect.equals("OPERATING"))throw new IllegalArgumentException("Ten zakup nie jest kosztem miesięcznym.");month=YearMonth.parse(p.get("covered_month")).atDay(1);DashboardService.period(month,"day");covered=text(p,"covered_category",20,true);effect="COVERED";}
+        if(p.containsKey("covered")){if(!effect.equals("OPERATING"))throw new IllegalArgumentException("Ten zakup nie jest kosztem miesięcznym.");month=YearMonth.parse(p.get("covered_month")).atDay(1);BusinessDates.period(month,"day");covered=text(p,"covered_category",20,true);effect="COVERED";}
         lock();if(id==null){var replay=db.queryForList("SELECT id FROM cost_entry WHERE request_token=?",Long.class,token);if(!replay.isEmpty())return replay.get(0);}
         var old=id==null?null:entry(id);if(old!=null&&(((Number)old.get("version")).longValue()!=version||(Boolean)old.get("cancelled")))throw new IllegalArgumentException("Wpis zmienił się lub jest anulowany. Zachowaj pola i sprawdź aktualny stan.");
         if(month!=null&&db.queryForObject("SELECT count(*) FROM dashboard_month m JOIN dashboard_month_cost c ON c.month=m.month WHERE m.month=? AND m.configured AND c.category=?",Integer.class,month,covered)==0)throw new IllegalArgumentException("Wybierz skonfigurowany koszt miesięczny tego rodzaju. Nie tworzymy drugiego kosztu.");

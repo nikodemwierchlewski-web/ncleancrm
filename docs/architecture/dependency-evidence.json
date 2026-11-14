@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-14",
+  "baseline_commit": "b5b646b",
+  "scope": "Compiled Java business classes, HTTP controllers excluded from cycle graph as composition adapters; ui/security excluded as application configuration. All production classes included in controller/shared rules.",
+  "before": {
+    "business_classes": 53,
+    "acyclic": false,
+    "cycle_details": [
+      "Cycle detected: Slice costs -> \n                Slice dashboard -> \n                Slice costs\n  1. Dependencies of Slice costs\n    - Method <pl.nclean.crm.costs.CostService.number(java.lang.String, int, java.lang.String, boolean)> calls method <pl.nclean.crm.dashboard.DashboardService.number(java.lang.String, int, java.math.BigDecimal, boolean)> in (CostService.java:21)\n    - Method <pl.nclean.crm.costs.CostService.date(java.lang.String, boolean)> calls method <pl.nclean.crm.dashboard.DashboardService.period(java.time.LocalDate, java.lang.String)> in (CostService.java:22)\n    - Method <pl.nclean.crm.costs.CostService.save(java.util.Map, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.today()> in (CostService.java:53)\n    - Method <pl.nclean.crm.costs.CostService.save(java.util.Map, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.period(java.time.LocalDate, java.lang.String)> in (CostService.java:58)\n  2. Dependencies of Slice dashboard\n    - Constructor <pl.nclean.crm.dashboard.DashboardService.<init>(org.springframework.jdbc.core.JdbcTemplate, pl.nclean.crm.fuel.FuelJournalService, pl.nclean.crm.costs.CostService)> has parameter of type <pl.nclean.crm.costs.CostService> in (DashboardService.java:0)\n    - Field <pl.nclean.crm.dashboard.DashboardService.entries> has type <pl.nclean.crm.costs.CostService> in (DashboardService.java:0)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.costs.CostService.investments(java.time.LocalDate, java.time.LocalDate)> in (DashboardService.java:82)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.costs.CostService.operating(java.time.LocalDate, java.time.LocalDate)> in (DashboardService.java:82)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.costs.CostService.operatingMarketing(java.time.LocalDate, java.time.LocalDate)> in (DashboardService.java:82)\n    - Method <pl.nclean.crm.dashboard.DashboardService.saveMonth(java.time.YearMonth, long, java.util.List)> calls method <pl.nclean.crm.costs.CostService.checkMonthCategories(java.time.YearMonth, java.util.Set)> in (DashboardService.java:101)",
+      "Cycle detected: Slice dashboard -> \n                Slice fuel -> \n                Slice dashboard\n  1. Dependencies of Slice dashboard\n    - Constructor <pl.nclean.crm.dashboard.DashboardService.<init>(org.springframework.jdbc.core.JdbcTemplate, pl.nclean.crm.fuel.FuelJournalService, pl.nclean.crm.costs.CostService)> has parameter of type <pl.nclean.crm.fuel.FuelJournalService> in (DashboardService.java:0)\n    - Field <pl.nclean.crm.dashboard.DashboardService.journal> has type <pl.nclean.crm.fuel.FuelJournalService> in (DashboardService.java:0)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.fuel.FuelJournalService.usage(java.time.LocalDate, java.time.LocalDate)> in (DashboardService.java:64)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.fuel.FuelJournalService$DayUsage.carCost()> in (DashboardService.java:73)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.fuel.FuelJournalService$DayUsage.carKnown()> in (DashboardService.java:73)\n    - Method <pl.nclean.crm.dashboard.DashboardService.summary(java.time.LocalDate, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.fuel.FuelJournalService$DayUsage.generatorCost()> in (DashboardService.java:75)\n  2. Dependencies of Slice fuel\n    - Method <pl.nclean.crm.fuel.FuelJournalService.decimal(java.lang.String, int, java.lang.String, boolean)> calls method <pl.nclean.crm.dashboard.DashboardService.number(java.lang.String, int, java.math.BigDecimal, boolean)> in (FuelJournalService.java:16)\n    - Method <pl.nclean.crm.fuel.FuelJournalService.saveParameters(java.util.UUID, java.time.LocalDate, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.period(java.time.LocalDate, java.lang.String)> in (FuelJournalService.java:26)\n    - Method <pl.nclean.crm.fuel.FuelJournalService.saveParameters(java.util.UUID, java.time.LocalDate, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.today()> in (FuelJournalService.java:26)\n    - Method <pl.nclean.crm.fuel.FuelJournalService.saveDay(java.time.LocalDate, long, java.lang.String, int, int, boolean, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.period(java.time.LocalDate, java.lang.String)> in (FuelJournalService.java:37)\n    - Method <pl.nclean.crm.fuel.FuelJournalService.saveDay(java.time.LocalDate, long, java.lang.String, int, int, boolean, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.today()> in (FuelJournalService.java:37)\n    - Method <pl.nclean.crm.fuel.FuelJournalService.savePurchase(pl.nclean.crm.fuel.FuelJournalService$Purchase, java.lang.String)> calls method <pl.nclean.crm.dashboard.DashboardService.period(java.time.LocalDate, java.lang.String)> in (FuelJournalService.java:85)"
+    ],
+    "module_edges": [
+      "context -> dashboard",
+      "context -> fuel",
+      "costs -> dashboard",
+      "dashboard -> costs",
+      "dashboard -> fuel",
+      "fuel -> dashboard",
+      "help -> dashboard",
+      "help -> work",
+      "notes -> dashboard",
+      "notes -> tycoon",
+      "records -> context",
+      "records -> dashboard",
+      "records -> tycoon",
+      "removal -> costs",
+      "removal -> fuel",
+      "tycoon -> dashboard",
+      "work -> dashboard",
+      "work -> records",
+      "work -> tycoon"
+    ]
+  },
+  "after": {
+    "business_classes": 74,
+    "acyclic": true,
+    "cycle_details": [],
+    "module_edges": [
+      "context -> fuel",
+      "context -> records",
+      "context -> shared",
+      "costs -> shared",
+      "dashboard -> costs",
+      "dashboard -> fuel",
+      "dashboard -> shared",
+      "fuel -> shared",
+      "help -> shared",
+      "help -> work",
+      "notes -> shared",
+      "notes -> tycoon",
+      "records -> shared",
+      "records -> tycoon",
+      "removal -> shared",
+      "tycoon -> shared",
+      "work -> records",
+      "work -> shared",
+      "work -> tycoon"
+    ]
+  }
+}

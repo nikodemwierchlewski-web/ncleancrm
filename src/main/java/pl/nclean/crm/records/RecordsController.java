@@ -13,18 +13,15 @@ public class RecordsController {
  private final CrmRecords data;
  private final ChemistryService chemistry;
  private final ActualUsageService actualUsage;
- public RecordsController(CrmRecords data,ChemistryService chemistry,ActualUsageService actualUsage,org.springframework.jdbc.core.JdbcTemplate jdbc){this.data=data;this.chemistry=chemistry;this.actualUsage=actualUsage;this.jdbc=jdbc;}
- private final org.springframework.jdbc.core.JdbcTemplate jdbc;
+ public RecordsController(CrmRecords data,ChemistryService chemistry,ActualUsageService actualUsage){this.data=data;this.chemistry=chemistry;this.actualUsage=actualUsage;}
  static Long id(Map<String,String> p,String key){String v=p.get(key);return v==null||v.isBlank()?null:Long.valueOf(v);}
- void contextSource(long id,Map<String,String> p){if(!p.containsKey("source"))return;String source=pl.nclean.crm.context.ContextService.source(p.get("source"));String referral=source.equals("REFERRAL")?p.getOrDefault("referral_note","").strip():"";if(referral.length()>200)throw new IllegalArgumentException("Polecenie: maksymalnie 200 znaków.");jdbc.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,id);}
  static long version(Map<String,String> p){return Long.parseLong(p.getOrDefault("version","0"));}
  static String required(Map<String,String> p,String key){String value=p.get(key);if(value==null||value.isBlank())throw new IllegalArgumentException("Uzupełnij wymagane dane formularza.");return value;}
  void common(Model m){m.addAttribute("categories",data.categories());m.addAttribute("services",data.services());m.addAttribute("chemicals",data.materials());m.addAttribute("recipes",data.recipes());m.addAttribute("standardCosts",data.standardCosts());m.addAttribute("usageSuggestions",actualUsage.suggestions());}
  @GetMapping("/customers") String customers(@RequestParam(defaultValue="") String query,@RequestParam(defaultValue="0") int page,Model m){if(query.length()>120)throw new IllegalArgumentException("Szukaj po nazwie lub telefonie — do 120 znaków.");var rows=data.customerPage(query,page,false);m.addAttribute("hasNext",rows.size()>25);m.addAttribute("page",page);m.addAttribute("customers",rows.stream().limit(25).toList());m.addAttribute("query",query);return "records/customers";}
  @PostMapping("/customers/search") String search(@RequestParam String query,Model m){if(query.length()>120)throw new IllegalArgumentException("Szukaj po nazwie lub telefonie — do 120 znaków.");return "redirect:/customers?query="+java.net.URLEncoder.encode(query,java.nio.charset.StandardCharsets.UTF_8);}
  @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customerPage(query,0,true).stream().map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
- @org.springframework.transaction.annotation.Transactional
- @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){long saved=data.saveCustomer(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"));contextSource(saved,p);return "redirect:/customers";}
+ @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){data.saveCustomerProfile(new CustomerProfileCommand(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"),p.containsKey("source"),p.get("source"),p.get("referral_note")));return "redirect:/customers";}
  @GetMapping("/more") String more(){return "settings/more";}
  @GetMapping("/settings") String settings(){return "settings/index";}
  @GetMapping("/settings/services") String services(Model m){common(m);m.addAttribute("removedCatalogue",data.removedCatalogue());return "records/services";}

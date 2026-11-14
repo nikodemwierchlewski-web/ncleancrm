@@ -26,6 +26,11 @@ Reakcje interfejsu na klikanie: [Cleaning Tycoon — interakcje](docs/TYCOON-INT
 
 Graficzny wygląd ncLEAN jest stały dla całej aplikacji. [Animacje, odznaki i postęp](docs/CLEANING-TYCOON-PROGRESS.md), [pobieralny podgląd DEMO](preview/README.md). Aktualna demonstracja symuluje zapis w pamięci, a prawdziwy CRM zapisuje dane w PostgreSQL.
 
+## Architektura i dalsza rozbudowa
+
+[Zasady modułów](docs/architecture/ARCHITECTURE.md), [audyt i wykonana refaktoryzacja](docs/architecture/AUDIT.md), [prompt etapu](docs/architecture/REFACTOR-PROMPT.md), [wkład w projekt](CONTRIBUTING.md).
+Testy ArchUnit w zwykłym `mvnw test` i `verify` pilnują granic modułów.
+
 ## Windows — pierwsze uruchomienie
 
 Zainstaluj JDK 17, ustaw `JAVA_HOME` i uruchom Docker Desktop z kontenerami Linux oraz Compose v2. W PowerShell, w katalogu repozytorium:

@@ -1,8 +1,9 @@
 package pl.nclean.crm.dashboard;
 
+import pl.nclean.crm.shared.DecimalInput;
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.*;
 import java.time.*;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -15,14 +16,14 @@ public class DashboardService {
     private final pl.nclean.crm.costs.CostService entries;
     private final pl.nclean.crm.fuel.FuelJournalService journal;
     public DashboardService(JdbcTemplate db,pl.nclean.crm.fuel.FuelJournalService journal,pl.nclean.crm.costs.CostService entries){this.entries=entries;this.db=db;this.journal=journal;}
-    public static LocalDate today(){return LocalDate.now(ZoneId.of("Europe/Warsaw"));}
+    public static LocalDate today(){return BusinessDates.today();}
     public record Period(LocalDate start,LocalDate end,String range){
         public LocalDate previous(){return switch(range){case "week"->start.minusWeeks(1);case "month"->start.minusMonths(1);default->start.minusDays(1);};}
         public LocalDate next(){return switch(range){case "week"->start.plusWeeks(1);case "month"->start.plusMonths(1);default->start.plusDays(1);};}
     }
     public static Period period(LocalDate date,String range){
-        if(date==null||date.getYear()<2000||date.getYear()>2100)throw new IllegalArgumentException("Wybierz datę w latach 2000–2100.");
-        return switch(range){case "day"->new Period(date,date,"day");case "week"->new Period(date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)),"week");case "month"->new Period(date.withDayOfMonth(1),YearMonth.from(date).atEndOfMonth(),"month");default->throw new IllegalArgumentException("Wybierz dzień, tydzień lub miesiąc.");};
+        var period = BusinessDates.period(date,range);
+        return new Period(period.start(),period.end(),period.range());
     }
     public record Slice(String name,String color,BigDecimal amount,BigDecimal percentage){}
     public record Summary(Period period,String mode,List<Map<String,Object>> orders,int planned,int done,int cancelled,
@@ -91,8 +92,7 @@ public class DashboardService {
     public record Cost(String name,String category,BigDecimal amount){}
     private static void changed(int count){if(count!=1)throw new IllegalArgumentException("Dane zostały zmienione w innym oknie. Odśwież stronę przed ponownym zapisem.");}
     public static BigDecimal number(String value,int scale,BigDecimal max,boolean nullable){
-        if(value==null||value.isBlank()){if(nullable)return null;throw new IllegalArgumentException("Uzupełnij wymagane kwoty i parametry.");}
-        try{var n=new BigDecimal(value.replace(',','.')).setScale(scale,RoundingMode.UNNECESSARY);if(n.signum()<0||n.compareTo(max)>0)throw new NumberFormatException();return n;}catch(ArithmeticException|NumberFormatException ex){throw new IllegalArgumentException("Podaj nieujemną liczbę, maksymalnie "+max+", do "+scale+" miejsc po przecinku.");}
+        return DecimalInput.parse(value,scale,max,nullable);
     }
     @Transactional public void saveMonth(YearMonth month,long version,List<Cost> costs){
         if(month.getYear()<2000||month.getYear()>2100||month.isBefore(YearMonth.from(today())))throw new IllegalArgumentException("Zamkniętych miesięcy nie można zmieniać. Wybierz bieżący lub przyszły miesiąc.");

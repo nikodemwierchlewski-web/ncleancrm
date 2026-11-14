@@ -1,5 +1,6 @@
 package pl.nclean.crm.records;
 
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.*;
 import java.time.*;
 import java.util.*;
@@ -18,7 +19,7 @@ public class CrmRecords {
  public List<ChemistryService.Material> materialsForBooking(long id){return chemistry.materialsForBooking(id);}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
  public Map<Long,BigDecimal> standardCosts(){return chemistry.standardCosts();}
- public static void validateCompletionDay(LocalDate day){if(day==null||day.isAfter(pl.nclean.crm.dashboard.DashboardService.today()))throw new IllegalArgumentException("Przyszła wizyta pozostaje zaplanowana. Najpierw popraw termin.");}
+ public static void validateCompletionDay(LocalDate day){if(day==null||day.isAfter(BusinessDates.today()))throw new IllegalArgumentException("Przyszła wizyta pozostaje zaplanowana. Najpierw popraw termin.");}
  public List<Map<String,Object>> customers(String query){
   String q=query==null?"":query.strip();
   return db.queryForList("SELECT * FROM crm_customer WHERE position(lower(?) in lower(name))>0 OR position(? in phone)>0 ORDER BY active DESC,name,id",q,q.replaceAll("[\\s()-]",""));
@@ -77,6 +78,16 @@ public class CrmRecords {
   if(id==null)return db.queryForObject("INSERT INTO crm_customer(name,phone,address,notes) VALUES (?,?,?,?) RETURNING id",Long.class,name,number,address,notes);
   changed(db.update("UPDATE crm_customer SET name=?,phone=?,address=?,notes=?,active=?,version=version+1 WHERE id=? AND version=?",name,number,address,notes,active,id,version));return id;
  }
+ @Transactional public long saveCustomerProfile(CustomerProfileCommand command) {
+  long saved=saveCustomer(command.id(),command.version(),command.name(),command.phone(),command.address(),command.notes(),command.active());
+  if(command.updateSource()) {
+   String source=CustomerAcquisitionSource.normalize(command.source());
+   String referral=source.equals("REFERRAL")?(command.referralNote()==null?"":command.referralNote().strip()):"";
+   if(referral.length()>200)throw new IllegalArgumentException("Polecenie: maksymalnie 200 znaków.");
+   db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,saved);
+  }
+  return saved;
+ }
  @Transactional public void category(Long id,String name){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=text(name,100,true);if(id==null)db.update("INSERT INTO service_category(name) VALUES (?)",name);else changed(db.update("UPDATE service_category SET name=?,version=version+1 WHERE removed_at IS NULL AND id=?",name,id));}
  @Transactional public void service(Long id,long version,long category,String name,String unit,String price,int minutes,boolean active){
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=text(name,120,true);unit=text(unit,20,true);BigDecimal amount=money(price);
@@ -94,7 +105,7 @@ public class CrmRecords {
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
-  address=text(address,240,true);source=pl.nclean.crm.context.ContextService.source(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
+  address=text(address,240,true);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
   if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
   var quotes=new ArrayList<ChemistryService.Quote>();boolean allDefined=true;BigDecimal chemistryTotal=BigDecimal.ZERO;

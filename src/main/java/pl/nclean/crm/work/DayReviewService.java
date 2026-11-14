@@ -1,12 +1,13 @@
 package pl.nclean.crm.work;
 
+import pl.nclean.crm.shared.DecimalInput;
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.nclean.crm.dashboard.DashboardService;
 import pl.nclean.crm.records.*;
 
 @Service
@@ -17,7 +18,7 @@ public class DayReviewService {
     public DayReviewService(JdbcTemplate db,WorkService work,CrmRecords records,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.work=work;this.records=records;this.actual=actual;this.achievements=achievements;}
     public record Review(LocalDate day,List<Map<String,Object>> orders,List<Map<String,Object>> moves,int complete,String fingerprint,boolean closed,boolean changed){}
     public Review review(LocalDate day){
-        DashboardService.period(day,"day");
+        BusinessDates.period(day,"day");
         var orders=work.orders(day);int complete=0;
         for(var order:orders){
             long id=((Number)order.get("id")).longValue();var missing=new ArrayList<String>();
@@ -46,12 +47,12 @@ public class DayReviewService {
     private String fingerprint(LocalDate day){return db.queryForObject(FINGERPRINT_SQL,String.class,day,day,day,day,day);}
     /** Uses the same canonical fingerprint as closing a day; payments deliberately do not affect it. */
     public Optional<Review> latestOpenBefore(LocalDate day){
-        DashboardService.period(day,"day");
+        BusinessDates.period(day,"day");
         var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE removed_at IS NULL AND day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
         return dates.isEmpty()?Optional.empty():Optional.of(review(dates.get(0).toLocalDate()));
     }
     @Transactional public void close(LocalDate day,String expected,String actor){
-        if(day.isAfter(DashboardService.today()))throw new IllegalArgumentException("Dzień możesz zamknąć najwcześniej w dniu pracy.");
+        if(day.isAfter(BusinessDates.today()))throw new IllegalArgumentException("Dzień możesz zamknąć najwcześniej w dniu pracy.");
         // Prevent a new booking or photo/measurement write between validation and closure.
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
         db.execute("LOCK TABLE booking,booking_item,booking_actual_chemical,booking_photo,booking_move,day_review IN SHARE ROW EXCLUSIVE MODE");
@@ -78,7 +79,7 @@ public class DayReviewService {
                 if(mode.equals("ZERO"))zero.add(new int[]{pos});
                 if(mode.equals("MEASURED")){
                     var values=new LinkedHashMap<Long,BigDecimal>();String prefix="usage_"+pos+"_";
-                    p.forEach((key,value)->{if(key.startsWith(prefix)&&!value.isBlank())values.put(Long.parseLong(key.substring(prefix.length())),DashboardService.number(value,3,new BigDecimal("99999999999.999"),false));});
+                    p.forEach((key,value)->{if(key.startsWith(prefix)&&!value.isBlank())values.put(Long.parseLong(key.substring(prefix.length())),DecimalInput.parse(value,3,new BigDecimal("99999999999.999"),false));});
                     if(values.isEmpty())throw new IllegalArgumentException("Podaj ilości albo wybierz Nie użyto chemii.");
                     measured.add(new WorkService.Measurement(pos,Long.parseLong(p.get("actualVersion_"+pos)),values));
                 }

@@ -1,4 +1,7 @@
 package pl.nclean.crm.context;
+
+import pl.nclean.crm.shared.BusinessDates;
+
 import java.util.*;
 import java.time.*;
 import java.security.Principal;
@@ -13,7 +16,7 @@ public class ContextController {
  private final ContextService context;
  public ContextController(ContextService context){this.context=context;}
  @GetMapping("/search") String search(@RequestParam(defaultValue="") String q,Model m){m.addAttribute("query",q);m.addAttribute("results",context.search(q));return "context/search";}
- @GetMapping("/callbacks") String callbacks(Model m){var customers=context.callbacks();m.addAttribute("customers",customers);var tokens=new HashMap<Long,UUID>();customers.forEach(c->tokens.put(((Number)c.get("id")).longValue(),UUID.randomUUID()));m.addAttribute("contactTokens",tokens);m.addAttribute("next",pl.nclean.crm.dashboard.DashboardService.today().plusMonths(1));m.addAttribute("token",UUID.randomUUID());return "context/callbacks";}
+ @GetMapping("/callbacks") String callbacks(Model m){var customers=context.callbacks();m.addAttribute("customers",customers);var tokens=new HashMap<Long,UUID>();customers.forEach(c->tokens.put(((Number)c.get("id")).longValue(),UUID.randomUUID()));m.addAttribute("contactTokens",tokens);m.addAttribute("next",BusinessDates.today().plusMonths(1));m.addAttribute("token",UUID.randomUUID());return "context/callbacks";}
  @PostMapping("/callbacks/{id}") String contact(@PathVariable long id,@RequestParam long version,@RequestParam UUID token,@RequestParam LocalDate next,@RequestParam(defaultValue="") String note,Model m,HttpServletResponse response){try{context.contact(id,version,token,next,note);return "redirect:/callbacks?saved=1";}catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("error",ex.getMessage());return callbacks(m);}}
  @PostMapping("/work/{id}/photos") @ResponseBody ResponseEntity<Map<String,Object>> upload(@PathVariable long id,@RequestParam String stage,@RequestParam UUID token,@RequestParam MultipartFile image,@RequestParam long version,Principal actor){try{var photo=context.upload(id,stage,token,image,actor.getName(),version);return ResponseEntity.ok(Map.of("id",photo,"saved",true,"version",version+1));}catch(IllegalArgumentException ex){return ResponseEntity.badRequest().body(Map.of("error",ex.getMessage()));}}
  @PostMapping("/work/{id}/photos/{photo}/delete") String delete(@PathVariable long id,@PathVariable UUID photo,Principal actor){context.delete(id,photo,actor.getName());return "redirect:/work/"+id+"#photos";}

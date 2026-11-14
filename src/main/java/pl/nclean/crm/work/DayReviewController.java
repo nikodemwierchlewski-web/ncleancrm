@@ -1,5 +1,6 @@
 package pl.nclean.crm.work;
 
+import pl.nclean.crm.shared.BusinessDates;
 import java.time.*;
 import java.util.*;
 import java.security.Principal;
@@ -16,7 +17,7 @@ public class DayReviewController {
     private final DayReviewService service;private final WorkService work;private final CrmRecords records;private final ContextService context;private final DashboardService dashboard;
     public DayReviewController(DayReviewService service,WorkService work,CrmRecords records,ContextService context,DashboardService dashboard){this.service=service;this.work=work;this.records=records;this.context=context;this.dashboard=dashboard;}
     @GetMapping("/day-closeout") String page(@RequestParam(required=false) LocalDate date,@RequestParam(required=false) Long order,Model m){
-        var day=date==null?DashboardService.today():date;var review=service.review(day);m.addAttribute("review",review);m.addAttribute("date",day);m.addAttribute("today",DashboardService.today());m.addAttribute("summary",dashboard.summary(day,"day","actual"));
+        var day=date==null?BusinessDates.today():date;var review=service.review(day);m.addAttribute("review",review);m.addAttribute("date",day);m.addAttribute("today",BusinessDates.today());m.addAttribute("summary",dashboard.summary(day,"day","actual"));
         if(order!=null&&review.orders().stream().noneMatch(o->((Number)o.get("id")).longValue()==order))throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,"Wizyta nie należy do tego dnia lub nie istnieje.");
         var chosen=review.orders().stream().filter(o->order!=null&&((Number)o.get("id")).longValue()==order).findFirst().orElseGet(()->review.orders().stream().filter(o->!Boolean.TRUE.equals(o.get("complete"))).findFirst().orElse(review.orders().isEmpty()?null:review.orders().get(0)));
         if(chosen!=null){long id=((Number)chosen.get("id")).longValue();var items=records.items(id);m.addAttribute("forecastHints",records.forecastHints(id));m.addAttribute("order",work.order(id));m.addAttribute("items",items);m.addAttribute("chemicals",records.materialsForBooking(id));m.addAttribute("actualFields",records.actualFields(Map.of(id,items),records.chemicals(id),records.actuals(id)));m.addAttribute("photos",context.photos(id));m.addAttribute("photoTime",context.time(id));m.addAttribute("photoToken",UUID.randomUUID());}

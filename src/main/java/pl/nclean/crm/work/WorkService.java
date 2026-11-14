@@ -1,12 +1,13 @@
 package pl.nclean.crm.work;
 
+import pl.nclean.crm.shared.DecimalInput;
+import pl.nclean.crm.shared.BusinessDates;
 import java.math.*;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.nclean.crm.dashboard.DashboardService;
 import pl.nclean.crm.records.ActualUsageService;
 
 @Service
@@ -15,7 +16,7 @@ public class WorkService {
     private final JdbcTemplate db;private final ActualUsageService actual;
     private final pl.nclean.crm.tycoon.AchievementService achievements;
     public WorkService(JdbcTemplate db,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.actual=actual;this.achievements=achievements;}
-    public static BigDecimal money(String value){return DashboardService.number(value,2,new BigDecimal("9999999999.99"),false);}
+    public static BigDecimal money(String value){return DecimalInput.parse(value,2,new BigDecimal("9999999999.99"),false);}
     public static Integer minutes(String value){if(value==null||value.isBlank())return null;try{int n=Integer.parseInt(value);if(n<0||n>10080)throw new NumberFormatException();return n;}catch(NumberFormatException ex){throw new IllegalArgumentException("Podaj czas od 0 do 10080 minut lub pozostaw brak danych.");}}
     private void guard(){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
     private Map<String,Object> locked(long id,long version){var b=db.queryForList("SELECT * FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));if(((Number)b.get("version")).longValue()!=version)throw new IllegalArgumentException("Zlecenie zmieniło się w innym oknie. Zachowano dane; odśwież przed ponowną edycją.");return b;}
@@ -52,13 +53,13 @@ public class WorkService {
     }
     public BigDecimal paid(long id){return db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id);}
     @Transactional public long pay(long id,UUID token,LocalDate date,String value,String method,String note){
-        DashboardService.period(date,"day");if(date.isAfter(DashboardService.today())||method==null||!Set.of("CASH","TRANSFER","CARD").contains(method)||note==null||note.length()>500)throw new IllegalArgumentException("Sprawdź datę, metodę i notatkę płatności.");var amount=money(value);if(amount.signum()==0)throw new IllegalArgumentException("Wpłata musi być większa od zera.");
+        BusinessDates.period(date,"day");if(date.isAfter(BusinessDates.today())||method==null||!Set.of("CASH","TRANSFER","CARD").contains(method)||note==null||note.length()>500)throw new IllegalArgumentException("Sprawdź datę, metodę i notatkę płatności.");var amount=money(value);if(amount.signum()==0)throw new IllegalArgumentException("Wpłata musi być większa od zera.");
         var b=db.queryForList("SELECT * FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
         var replay=db.queryForList("SELECT id,booking_id FROM booking_payment WHERE request_token=?",token);if(!replay.isEmpty()){if(((Number)replay.get(0).get("booking_id")).longValue()!=id)throw new IllegalArgumentException("Token należy do innego zlecenia.");return ((Number)replay.get(0).get("id")).longValue();}
         if("CANCELLED".equals(b.get("status")))throw new IllegalArgumentException("Nie można dopisać wpłaty do anulowanego zlecenia.");var due=(BigDecimal)(b.get("final_total")==null?b.get("total"):b.get("final_total"));if(paid(id).add(amount).compareTo(due)>0)throw new IllegalArgumentException("Wpłata przekracza pozostałą kwotę. Popraw cenę końcową lub kwotę wpłaty.");
         return db.queryForObject("INSERT INTO booking_payment(booking_id,request_token,paid_on,amount,method,note) VALUES (?,?,?,?,?,?) RETURNING id",Long.class,id,token,date,amount,method,note.strip());
     }
-    @Transactional public void reverse(long id,long payment,UUID token,LocalDate date,String note){DashboardService.period(date,"day");if(date.isAfter(DashboardService.today())||note==null||note.isBlank()||note.length()>500)throw new IllegalArgumentException("Podaj datę i powód korekty.");db.queryForList("SELECT id FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id);
+    @Transactional public void reverse(long id,long payment,UUID token,LocalDate date,String note){BusinessDates.period(date,"day");if(date.isAfter(BusinessDates.today())||note==null||note.isBlank()||note.length()>500)throw new IllegalArgumentException("Podaj datę i powód korekty.");db.queryForList("SELECT id FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id);
         var replay=db.queryForList("SELECT booking_id,reverses FROM booking_payment WHERE request_token=?",token);if(!replay.isEmpty()){if(((Number)replay.get(0).get("booking_id")).longValue()!=id||!Objects.equals(replay.get(0).get("reverses"),payment))throw new IllegalArgumentException("Token należy do innej operacji płatniczej.");return;}
         var p=db.queryForList("SELECT * FROM booking_payment WHERE id=? AND booking_id=? AND reverses IS NULL",payment,id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznana wpłata."));
         if(date.isBefore(((java.sql.Date)p.get("paid_on")).toLocalDate()))throw new IllegalArgumentException("Korekta nie może poprzedzać wpłaty.");
