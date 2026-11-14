@@ -1,0 +1,159 @@
+{
+  "checks": [
+    "standalone figure and one-click current-screen tour",
+    "another pointer cannot finish or move the active drag",
+    "drag threshold, raised hand, landing, no accidental tour, normalized preferences",
+    "position survives reload and route",
+    "pointercancel preserves prior preference and closes dragging state",
+    "keyboard arrows, Home, Enter, options reset",
+    "28 route/viewport checks and one figure, bounded and no overflow",
+    "figure inside modal, automatic form tour, preserved draft",
+    "390x430 save remains reachable",
+    "settings reset and system reduced motion",
+    "CDP touch drag, no accidental tap, deliberate mobile tap opens help"
+  ],
+  "views": [
+    {
+      "route": "/calendar",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/customers",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/settings",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/settings/areas",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/notes",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/costs",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/dashboard",
+      "width": 360,
+      "stowed": false
+    },
+    {
+      "route": "/calendar",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/customers",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/settings",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/settings/areas",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/notes",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/costs",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/dashboard",
+      "width": 390,
+      "stowed": false
+    },
+    {
+      "route": "/calendar",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/customers",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/settings",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/settings/areas",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/notes",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/costs",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/dashboard",
+      "width": 768,
+      "stowed": false
+    },
+    {
+      "route": "/calendar",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/customers",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/settings",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/settings/areas",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/notes",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/costs",
+      "width": 1440,
+      "stowed": false
+    },
+    {
+      "route": "/dashboard",
+      "width": 1440,
+      "stowed": false
+    }
+  ],
+  "javascript_errors": [],
+  "booking_rows": 8
+}

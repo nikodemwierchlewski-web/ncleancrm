@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-14",
+  "maven_verify": {
+    "unit_mvc": 36,
+    "postgres_testcontainers": 85,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "real_ui_scenarios": 11,
+  "real_ui_views": 28,
+  "widths": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "short_viewport": [
+    390,
+    430
+  ],
+  "input": [
+    "mouse",
+    "keyboard",
+    "Chromium CDP touch emulation"
+  ],
+  "business_rows_unchanged": 8,
+  "capture_existing_business_flows": "passed with restart",
+  "preview_replay": "passed; drag, tours, position persistence and reset, booking, nested sandbox; no JS errors",
+  "no_pr_created": true,
+  "limitations": [
+    "No physical Android/iOS device",
+    "No physical software keyboard",
+    "axe incomplete needs manual assessment",
+    "No verified Codex embedded browser panel"
+  ]
+}

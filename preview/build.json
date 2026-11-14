@@ -1,14 +1,14 @@
 {
-  "repository": "nikodemwierchlewski-web/ncleancrm",
-  "branch": "feature/ncleanek-guide",
-  "code_commit": "6b9285e05007f23c776b24072668d890f0cd7b3c",
-  "generated_utc": "2026-11-13T11:14:53.159341+00:00",
+  "code_commit": "2eee5abaf4a6d8a5af9679cab90c3b27f2631614",
+  "branch": "feature/ncleanek-floating",
+  "generated_utc": "2026-11-14T09:57:36.652687+00:00",
+  "helper": "ncLEANEK — draggable character",
+  "mode": "synthetic DEMO, simulated saves in memory, no database connection",
   "views": 62,
-  "helper": "ncLEANEK",
-  "mode": "DEMO: synthetic data, simulated saves in memory, no PostgreSQL connection",
-  "html_sha256": "a8a23c0c2b970272780fb1a8ae66e026c4bf4185d2876b338fcf62466d986433",
-  "jar_sha256": "0dc6ce074df8d7c091a999fd6972f5013aec7cee874abf74eafe68bcb54f365f",
-  "artifact": "ncleanek-demo.zip",
-  "zip_bytes": 674409,
-  "zip_sha256": "032dd1888ec50ec451f009c9bafb12e60a6a665befd1b1cf4bac5df64bcfc89f"
+  "html_sha256": "cd4e1495d8837ba1270b1d35a3e31ce1c8fd4247345f2ad55c853f1e0994e155",
+  "jar_sha256": "e618697a3406b58cef0208cb6317690825837c40d580478032b6f0eb8ccd5f5a",
+  "artifact": "ncleanek-floating-demo.zip",
+  "zip_sha256": "6cb78a2f93a2d9ea8f60bd16a22429c96fe4e23c093829ab71a8949ba048c94d",
+  "zip_bytes": 682930,
+  "html_bytes": 2775674
 }

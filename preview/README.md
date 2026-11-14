@@ -1,9 +1,9 @@
-# Podgląd ncLEAN CRM z pomocnikiem ncLEANEK
+# Aktualny podgląd: ruchomy ncLEANEK
 
-Aktualna paczka: [ncleanek-demo.zip](ncleanek-demo.zip). Pobierz, wypakuj i otwórz index.html w aktualnym Chrome lub Edge.
+[Jeden plik HTML](ncleanek-floating.html) lub [ZIP](ncleanek-floating-demo.zip). Wypakuj ZIP i otwórz index.html albo pobierz pojedynczy HTML i otwórz w aktualnej przeglądarce wykonującej JavaScript.
 
-Przycisk z postacią w nagłówku otwiera ncLEANKA. Uruchom samouczek albo znaki ? przy opcjach. Ustawienia → Wygląd i aplikacja zawierają ukrycie/przywrócenie pomocnika i ograniczenie animacji. Zachowano klikalny kalendarz, rezerwacje, klientów, ustawienia, wykonanie, podsumowanie, koszty i notatki.
+Kliknij/tapnij ludzika, aby od razu zobaczyć podpowiedzi bieżącego ekranu. Przeciąganie uruchamia pozę podnoszenia za rękę i lotu. W Opcjach są przypomnienia, reset i zmiana strony. Strzałki przesuwają, Home resetuje, Enter otwiera pomoc. Przy małej ilości miejsca postać zmniejsza się lub czasowo ustępuje polom formularza.
 
-To eksport 62 widoków prawdziwej aplikacji ze wspólnymi stylami i skryptami. Dane są syntetyczne, zapis jest symulowany w pamięci. Przypomnienia DEMO dotyczą przykładowego dnia. Odświeżenie resetuje sesję; ta paczka nie łączy się z PostgreSQL. Nie wpisuj prawdziwych danych klientów.
+To syntetyczna demonstracja 62 widoków istniejącej aplikacji, z zapisem symulowanym w pamięci. Odświeżenie resetuje sesję; paczka nie łączy się z bazą. Nie wpisuj rzeczywistych danych klientów. Widok pliku w menedżerze telefonu może nie uruchamiać JavaScript — nie jest równoważny przeglądarce. Nie uruchomiono publicznego hostingu.
 
-[Instrukcja i weryfikacja](../docs/NCLEANEK.md). [Commit i sumy](build.json). Starsze paczki pozostają archiwalne.
+[Wyniki testów i instrukcja](../docs/NCLEANEK-FLOATING-RESULTS.md). [Commit i sumy kontrolne](build.json). Starsze paczki pozostają archiwalne.
