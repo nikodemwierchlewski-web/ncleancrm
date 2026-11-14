@@ -1,14 +1,14 @@
 {
-  "code_commit": "2eee5abaf4a6d8a5af9679cab90c3b27f2631614",
+  "code_commit": "c79775d52f683226c5ee49c2c7d4d28170bb45c3",
   "branch": "feature/ncleanek-floating",
-  "generated_utc": "2026-11-14T09:57:36.652687+00:00",
-  "helper": "ncLEANEK — draggable character",
+  "generated_utc": "2026-11-14T10:29:36.645644+00:00",
+  "helper": "ncLEANEK — fixed-size bottom rail, horizontal drag and day closeout reminder",
   "mode": "synthetic DEMO, simulated saves in memory, no database connection",
   "views": 62,
-  "html_sha256": "cd4e1495d8837ba1270b1d35a3e31ce1c8fd4247345f2ad55c853f1e0994e155",
-  "jar_sha256": "e618697a3406b58cef0208cb6317690825837c40d580478032b6f0eb8ccd5f5a",
+  "html_sha256": "03dc809b3b01ed308e8f8df14917736b52a4ce4b4dc4fb03c5e2a79751a522eb",
+  "jar_sha256": "e64bdadbbfc7beb05d417fd4dab959a8d0d242718e67032452d6fcaaddf7fc9c",
   "artifact": "ncleanek-floating-demo.zip",
-  "zip_sha256": "6cb78a2f93a2d9ea8f60bd16a22429c96fe4e23c093829ab71a8949ba048c94d",
-  "zip_bytes": 682930,
-  "html_bytes": 2775674
+  "zip_sha256": "1bd7a8c978d7700b2a4e8245e7f861898caacadc4952658c664bc37e018c5dcb",
+  "zip_bytes": 683412,
+  "html_bytes": 2779335
 }
