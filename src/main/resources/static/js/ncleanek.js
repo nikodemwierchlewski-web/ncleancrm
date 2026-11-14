@@ -10,7 +10,8 @@
  const panel=el('section',null,'ncleanek-panel');panel.id='ncleanek-panel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-labelledby','ncleanek-title');
  if(typeof panel.showPopover==='function')panel.setAttribute('popover','manual');
  const header=el('div',null,'ncleanek-panel-heading'),portrait=el('img');portrait.src='/pixel/ncleanek.svg';portrait.width=32;portrait.height=40;portrait.alt='';
- const close=button('×',()=>hide());close.setAttribute('aria-label','Zamknij pomoc ncLEANKA');header.append(portrait,el('strong','ncLEANEK'),close);
+ const options=button('Opcje',()=>home(opener||launch));options.classList.add('ncleanek-options');
+ const close=button('×',()=>hide());close.setAttribute('aria-label','Zamknij pomoc ncLEANKA');header.append(portrait,el('strong','ncLEANEK'),options,close);
  const title=el('h2');title.id='ncleanek-title';title.tabIndex=-1;const content=el('div');panel.append(header,title,content);document.body.append(panel);
  const status=el('span',null,'sr-only');status.setAttribute('role','status');launch.append(status);
  let restoring=false;
@@ -38,7 +39,7 @@
   if(data?.focused){const p=el('p',data.focused.message);content.append(p);}
   if(data?.reminder&&prefs.muted!==today()&&Date.now()>=snooze){const box=el('div',null,'ncleanek-reminder');box.append(el('p',data.reminder.message));const link=el('a','Przejdź do dokumentacji →','button primary');link.href=/^\/day-closeout\?/.test(data.reminder.url)?data.reminder.url:'/day-closeout';box.append(link,button('Później',()=>{snooze=Date.now()+20*60*1000;try{sessionStorage.setItem('nclean.guide.snooze-until',String(snooze));}catch{}badge();home(opener);}),button('Wycisz na dziś',()=>{prefs.muted=today();savePrefs();home(opener);}));content.append(box);}
   else if(!data)content.append(el('p','Przypomnienia pojawią się po odczycie danych. Samouczek działa niezależnie od połączenia.'));
-  const k=screen();content.append(button(prefs.seen.includes(k)?'Przypomnij mi ten ekran':'Pokaż mi ten ekran',()=>startTour()));content.append(button('Ukryj ncLEANKA',()=>{prefs.hidden=true;savePrefs();hide();}));content.append(el('p','Pomoc przywrócisz w Ustawienia → Wygląd i aplikacja.','field-help'));place();
+  const k=screen();content.append(button(prefs.seen.includes(k)?'Przypomnij mi ten ekran':'Pokaż mi ten ekran',()=>startTour()));content.append(button('Przywróć położenie',()=>document.dispatchEvent(new Event('ncleanek:position-reset'))),button('Przenieś na drugą stronę',()=>document.dispatchEvent(new Event('ncleanek:position-side'))));content.append(button('Ukryj ncLEANKA',()=>{prefs.hidden=true;savePrefs();hide();}));content.append(el('p','Pomoc przywrócisz w Ustawienia → Wygląd i aplikacja.','field-help'));place();
  }
  function startTour(){tourKey=screen();tour=(catalog.tours[tourKey]||catalog.tours.fallback).filter(s=>visible(s[0]));step=0;mode='tour';pinned=true;renderStep();}
  function renderStep(direction=1){clearTarget();while(step>=0&&step<tour.length&&!visible(tour[step][0]))step+=direction;
@@ -49,7 +50,11 @@
  function bindTips(){for(const def of catalog.tips)for(const n of document.querySelectorAll(def[0])){if(n.dataset.ncleanekBound)continue;n.dataset.ncleanekBound='true';const help=button('?',()=>{});help.className='ncleanek-help';help.setAttribute('aria-label','Pomoc: '+def[1]);help.setAttribute('aria-haspopup','dialog');help.setAttribute('aria-controls',panel.id);help.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();tip(def,help,true);});help.addEventListener('focus',()=>{if(!restoring&&mode!=='tour')tip(def,help,false);});help.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&mode!=='tour'){clearTimeout(hoverTimer);hoverTimer=setTimeout(()=>tip(def,help,false),350);}});help.addEventListener('pointerleave',()=>{clearTimeout(hoverTimer);if(mode==='tip'&&!pinned)hoverTimer=setTimeout(()=>hide(false),180);});help.addEventListener('blur',()=>{if(mode==='tip'&&!pinned)hoverTimer=setTimeout(()=>hide(false),180);});const anchor=n.matches('input,select')?(n.closest('label')||n.parentElement):n;if(anchor.matches('button,a,summary'))anchor.after(help);else{if(anchor.tagName==='LABEL')anchor.classList.add('ncleanek-field-help');anchor.append(help);}}}
  panel.addEventListener('toggle',e=>{if(e.newState==='closed'&&!panel.hidden)hide(false);});
  panel.addEventListener('pointerenter',()=>clearTimeout(hoverTimer));panel.addEventListener('pointerleave',()=>{if(mode==='tip'&&!pinned)hide(false);});
- launch.addEventListener('click',()=>panel.hidden?home(launch):hide());
+ function currentHelp(){if(!panel.hidden){hide();return;}hide(false);opener=launch;startTour();}
+ launch.addEventListener('click',currentHelp);
+ document.addEventListener('ncleanek:activate',currentHelp);
+ document.addEventListener('ncleanek:dragstart',()=>hide(false));
+ document.addEventListener('ncleanek:options',()=>home(launch));
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){e.preventDefault();e.stopImmediatePropagation();hide();}},true);
  document.addEventListener('close',e=>{if(e.target.contains?.(panel)&&e.target!==panel)hide(false);},true);
  document.addEventListener('click',e=>{const open=e.target.closest('[data-ncleanek-open]'),reset=e.target.closest('[data-ncleanek-reset]');if(open)home(open);if(reset){prefs.seen=[];prefs.muted='';snooze=0;try{sessionStorage.removeItem('nclean.guide.snooze-until');}catch{}savePrefs();document.querySelector('[data-ncleanek-preference-status]').textContent='Propozycje samouczka przywrócono. Otwórz pomoc na wybranym ekranie.';}});

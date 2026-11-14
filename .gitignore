@@ -12,3 +12,5 @@
 
 /deploy/secrets.properties
 /deploy/tls/
+
+/scripts/__pycache__/

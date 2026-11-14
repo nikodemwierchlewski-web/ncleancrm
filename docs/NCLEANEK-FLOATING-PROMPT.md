@@ -1,0 +1,14 @@
+# Prompt wykonawczy: ruchomy ncLEANEK
+
+Rozbuduj istniejącego pomocnika ncLEAN CRM. Wykorzystaj bieżący kod, samouczki, przypomnienia i ustawienia. Pracuj na osobnej gałęzi, bez zmiany danych, schematu, OWNER lub CSRF.
+
+1. Zastąp przycisk w nagłówku samodzielnym ludzikiem widocznym nad interfejsem. Zachowaj imię ncLEANEK. Grafika ma mieć przezroczyste otoczenie, bez kafelka, ramki i tła przycisku. Techniczny element sterujący powinien zachować obsługę klawiatury i czytników ekranu.
+2. Jedno kliknięcie lub dotknięcie uruchamia podpowiedzi/samouczek aktualnego ekranu. W otwartym formularzu pomoc dotyczy tego formularza. Nie wymagaj drugiego kliknięcia w „Pokaż mi ten ekran”. Zachowaj dostęp do przypomnień i opcji.
+3. Użyj Pointer Events dla myszy, dotyku i pióra. Rozróżniaj kliknięcie od przeciągnięcia. Przeciągnięcie i anulowanie gestu nie mogą otworzyć pomocy ani wysłać formularza. Przewijanie poza postacią działa normalnie.
+4. Przy podnoszeniu postać wyciąga rękę do kursora, zwisa pod dłonią, przechyla się w kierunku ruchu i porusza nogami. Po odłożeniu krótko ląduje. Bez silnika gry, dźwięków i niekontrolowanej fizyki. Dodaj spokojne przywitanie oraz reakcję po rzeczywiście potwierdzonym zapisie.
+5. Ogranicz pozycję do widocznego ekranu i uwzględnij pasek nawigacji oraz klawiaturę ekranową. Przy bliskim upuszczeniu przyciągaj do krawędzi. Przy kolizji z polem, przyciskiem, linkiem lub panelem pomocy znajdź najbliższe wolne miejsce. Gdy miejsca brakuje, zmniejsz postać, a przy klawiaturze/długim formularzu czasowo schowaj zamiast blokować zapis. Nie zapisuj automatycznych zmian pozycji jako preferencji użytkownika.
+6. Zapamiętuj wyłącznie znormalizowane współrzędne postaci. Przy zmianie ekranu/rozmiaru przywróć bezpieczną pozycję. Dodaj reset położenia i przeniesienie na drugą stronę. Zachowaj ukrywanie i ograniczenie ruchu. Żadnych danych klientów lub szkiców w ustawieniach położenia.
+7. Zapewnij obsługę klawiaturą: Enter/Spacja otwierają pomoc, strzałki przesuwają, Home przywraca pozycję. Dotyk minimum44px, widoczny fokus i krótka dostępna instrukcja. Ruch systemowo ograniczony zachowuje statyczną pozę podnoszenia i wszystkie funkcje. Pauzuj dekoracje w tle.
+8. Postać i pomoc działają wewnątrz istniejących dialogów, bez duplikowania ludzików i bez obchodzenia modalności. Użyj wspólnych modułów. Brak zapisu biznesowego z samego kliknięcia, podnoszenia lub samouczka.
+9. Sprawdź prawdziwą aplikację i aktualny eksport HTML: klik, mały ruch, długi drag, anulowanie, granice, obie strony, pamięć i reset pozycji, modal, osiem wizyt, wpisany szkic, zapis, mysz/dotyk/klawiatura, ograniczenie ruchu, cztery szerokości360/390/768/1440 oraz krótki viewport. Raportuj rzeczywiste wyniki, nie deklaruj testu fizycznego telefonu bez urządzenia.
+10. Przygotuj kod, opis PR i klikalny ZIP na podstawie zmienionej aplikacji. Sprawdź pobraną paczkę w przeglądarce. Nie wdrażaj ani nie łącz produkcji nclean.pl.

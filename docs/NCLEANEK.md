@@ -4,9 +4,9 @@ ncLEANEK jest pomocnikiem ncLEAN CRM. Zachowano obecną grafikę, a nazwy „Tyc
 
 ## Jak korzystać
 
-- **Przycisk z postacią w nagłówku:** otwiera pomoc dla aktualnego ekranu. Na komputerze widnieje też nazwa ncLEANEK; na telefonie przycisk ma ikonę i dostępną nazwę.
+- **Ludzik na ekranie:** jedno kliknięcie lub dotknięcie od razu uruchamia podpowiedzi aktualnego ekranu. Możesz przeciągnąć ncLEANKA; podnoszenie za rękę i lądowanie są dekoracją. W panelu użyj Opcje, żeby zobaczyć przypomnienia lub zmienić położenie.
 - **Znak „?” przy opcji:** na komputerze najedź lub ustaw fokus, żeby przeczytać podpowiedź. Kliknięcie przypina pomoc. Na telefonie dotknij znaku. Escape zamyka pomoc i wraca do przycisku; otwarty formularz zostaje.
-- **Pokaż mi ten ekran:** krótki samouczek wskazuje widoczne elementy. Wstecz/Dalej/Gotowe lub Zakończ. Ukryte kroki są pomijane. Pomoc nie wysyła formularza, nie zmienia jego pól i nie wykonuje operacji za właściciela.
+- **Samouczek po kliknięciu ludzika:** krótki samouczek wskazuje widoczne elementy. Wstecz/Dalej/Gotowe lub Zakończ. Ukryte kroki są pomijane. Pomoc nie wysyła formularza, nie zmienia jego pól i nie wykonuje operacji za właściciela.
 - **Pomoc wewnątrz formularza:** po przypięciu wskazówki możesz uruchomić samouczek bieżącego formularza, także w otwartym panelu zlecenia, kosztu lub notatki.
 - **Ustawienia → Wygląd i aplikacja:** ukryj/przywróć ncLEANKA, otwórz pomoc, zresetuj propozycje samouczka lub użyj dotychczasowego ograniczenia animacji.
 
@@ -53,3 +53,14 @@ axe-core 4.10.3: 16 kombinacji przy 360/390/768/1440 px, zero zgłoszonych narus
 [Pobierz zweryfikowany ZIP](https://github.com/nikodemwierchlewski-web/ncleancrm/raw/refs/heads/feature/ncleanek-guide/preview/ncleanek-demo.zip). Pobrano 674409 B, porównano SHA-256 ZIP/HTML z build.json i uruchomiono pobrany HTML w Chromium. Pomoc, samouczek, próbny zapis, Klienci/Ustawienia i preferencje między ekranami przeszły także w zagnieżdżonym sandboxie. [Dowód pobrania](audit/ncleanek-delivery.json).
 
 Gałąź: `feature/ncleanek-guide`, baza: `release/tycoon-0.1`. Utworzenie draft PR przez gh zostało odrzucone: `Post "https://api.github.com/graphql": Forbidden`. Nie powstał numer PR. [Opis PR](NCLEANEK-PR.md), [porównanie zmian](https://github.com/nikodemwierchlewski-web/ncleancrm/compare/release/tycoon-0.1...feature/ncleanek-guide?expand=1). Nie scalano ani nie wdrażano aplikacji.
+
+
+## Przesuwanie ncLEANKA
+
+Mysz, dotyk i pióro korzystają ze wspólnego gestu. Ruch poniżej 8 px pozostaje kliknięciem; po przekroczeniu progu ludzik wyciąga rękę do kursora i zwisa z poruszającymi się nogami. Przeciągnięcie ani anulowanie gestu nie otwierają pomocy. Nowe, świadome tapnięcie działa od razu. Przy systemowym ograniczeniu ruchu poza jest statyczna, ale przesuwanie działa.
+
+Położenie jest zapisywane jako dwie liczby 0–1 w preferencji `nclean.puppet.position.v1`, bez danych klientów. Przy zmianie rozmiaru i otwarciu formularza ncLEANEK szuka wolnego miejsca. Chronione są pola, przyciski, linki i panel pomocy. Przy braku miejsca zmniejsza się lub czasowo chowa, zamiast zasłaniać zapis. Automatyczne dostosowanie nie zmienia zapisanej preferencji użytkownika.
+
+Strzałki przesuwają postać, Home resetuje położenie, Enter/Spacja otwierają pomoc. Reset i przeniesienie na drugą stronę są też w Opcjach oraz Ustawienia → Wygląd i aplikacja. Nie ma nowego modułu biznesowego, migracji ani zmian w OWNER/CSRF.
+
+Weryfikacja tej wersji i aktualny plik: [NCLEANEK-FLOATING-RESULTS.md](NCLEANEK-FLOATING-RESULTS.md). Starsze raporty opisują poprzedni wariant pomocnika.
