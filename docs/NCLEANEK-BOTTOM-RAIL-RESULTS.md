@@ -75,3 +75,9 @@ udostępnienia przeglądarki; cloud Chromium blokuje bezpośrednie `file://`.
 Nie wystawiono publicznego hostingu. Nie zmieniono modeli biznesowych, migracji,
 OWNER ani CSRF, nie podłączono produkcji. Kontynuacja gałęzi
 `feature/ncleanek-floating`; bez Pull Requesta.
+
+Pobrano obie paczki z GitHuba z commitu `560c5f6`, porównano SHA-256 i zawartość
+ZIP. Pobrany HTML przeszedł test przeciągania/pomocy/zapisu próbnego oraz
+zagnieżdżonego sandboxu, a także przypomnień/odłożenia/wyciszenia i odnośnika.
+Próba otwarcia nowego pliku przez `open_in_codex` nie zwróciła potwierdzenia;
+nie uznajemy tego za działający panel. [Dowód dostarczenia](audit/ncleanek-bottom-rail-delivery.json).

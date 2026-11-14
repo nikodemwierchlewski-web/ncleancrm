@@ -1,0 +1,18 @@
+{
+  "artifact_commit": "560c5f6f5ebc6a63c722d6ed3e5995d1d82dce94",
+  "code_commit": "c79775d52f683226c5ee49c2c7d4d28170bb45c3",
+  "html_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/560c5f6/preview/ncleanek-floating.html",
+  "zip_url": "https://github.com/nikodemwierchlewski-web/ncleancrm/raw/560c5f6/preview/ncleanek-floating-demo.zip",
+  "html_sha256": "03dc809b3b01ed308e8f8df14917736b52a4ce4b4dc4fb03c5e2a79751a522eb",
+  "zip_sha256": "1bd7a8c978d7700b2a4e8245e7f861898caacadc4952658c664bc37e018c5dcb",
+  "download_hashes_and_zip_contents": "PASS",
+  "downloaded_browser_preview": "PASS: drag, tours, booking, clients/settings, nested opaque sandbox",
+  "downloaded_browser_reminders": "PASS: postpone/expiry/mute, form draft, correct closeout link",
+  "browser_modes_verified": [
+    "HTTP serving of downloaded HTML",
+    "nested opaque sandbox"
+  ],
+  "codex_panel_open": "Requested for new HTML; no confirmation returned, request cancelled after waiting. No claim of a working panel.",
+  "production_connection": false,
+  "pull_request_created": false
+}
