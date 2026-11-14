@@ -1,17 +1,28 @@
-# Aktualny podgląd: usuwanie pomyłek i niebieskie gwiazdki
+# Aktualny podgląd i paczka dla administratora
 
-[Pojedynczy HTML](nclean-removal-stars.html) lub [ZIP](nclean-removal-stars-demo.zip).
-W ZIP jest index.html i instrukcja. Użyj przeglądarki z JavaScript; systemowy
-menedżer plików telefonu nie zawsze wykonuje skrypty.
+- [Klikalny HTML](nclean-final.html)
+- [Podgląd ZIP: index.html + instrukcja](nclean-final-demo.zip)
+- [Paczka źródłowa dla administratora](nclean-administrator-source.zip)
+- [Wersja źródeł i sumy plików](final-build.json)
+- [Audyt i poprawki](../docs/final-audit/REPORT.md)
+- [Uruchomienie, aktualizacja i odzyskanie danych](../deploy/ops/RUNBOOK.md)
 
-**Kalendarz → zlecenie → Usuń**. Krótkie potwierdzenie, potem Cofnij usunięcie.
-Przyciski kategorii i usług są w rozwijanym Cenniku, a wydatków przy wpisach Kosztów.
-Po zapisie wykonania pojawiają się niebieskie gwiazdki. ncLEANEK pozostaje na
-dolnej krawędzi, porusza się lewo/prawo i ustępuje przyciskom bez przeskakiwania.
+Na Androidzie pobierz ZIP, rozpakuj i otwórz index.html w Chrome z JavaScript.
+Podgląd systemowego menedżera plików może nie wykonywać skryptów. To samodzielny
+HTML z prawdziwych widoków aplikacji i syntetycznych danych. Nie jest hostingiem
+ani zapisem do PostgreSQL. Odświeżenie resetuje stan demonstracji.
 
-63 syntetyczne widoki istniejącej aplikacji. Zapis symulowany w pamięci;
-odświeżenie resetuje sesję, brak połączenia z bazą. Nie wpisuj danych klientów.
-Prawdziwy backend PostgreSQL był testowany oddzielnie. To plik DEMO, nie hosting.
+Menu `⋯` umożliwia eksport/import ćwiczenia JSON: dodane zlecenia, notatki,
+oznaczenia dni i koszty, bez zdjęć oraz szkiców. Nie wpisuj danych klientów.
+Historyczne zlecenie można dodać bez wymyślonego kontaktu; to samo działa
+w prawdziwej aplikacji, gdzie dane i zdjęcia zapisują się w PostgreSQL.
 
-[Instrukcja i wyniki](../docs/REMOVE-AND-CLEAN-STARS-RESULTS.md).
-[Commit i sumy kontrolne](build.json). Starsze HTML i ZIP pozostają archiwalne.
+Paczka źródłowa zawiera kod, Maven Wrapper, migracje V1–V16, dokumentację,
+narzędzia backup/update/restore i ten podgląd. Nie zawiera JAR-a ani haseł.
+Administrator buduje aplikację przez `./mvnw verify` (JDK17, Docker dla testów).
+Pełna paczka z gotowym JAR-em jest osobnym plikiem przekazanym w czacie.
+
+Sprawdzono cztery szerokości, zagnieżdżony sandbox, zapis/edycję, usuwanie/
+przywracanie i ograniczenie animacji. Osobny test potwierdza eksport i ponowne
+wczytanie ćwiczenia oraz rozdzielenie pól i stopki zapisu w pięciu rozmiarach.
+Starsze pliki podglądu w tym katalogu są archiwalne.

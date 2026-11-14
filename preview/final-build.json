@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-14",
+  "source_commit": "a9177ac28cdb022e11ce52867fd6e9e939dda506",
+  "branch": "audit/final-pilot-hardening",
+  "jar_sha256": "3171a703b4a69a923ce9668d753dc64bcd7598ff40070eba15327407a65bba7c",
+  "preview_sha256": "01d8003bf5af18b02d155c03a16648efef5dcb76394da5711260535482fe1503",
+  "verified_tests": 151,
+  "postgres_tests": 101,
+  "accessibility_scans": 58,
+  "production_deployment": false,
+  "preview": "Synthetic HTML; no production persistence",
+  "operations": "See deploy/ops/RUNBOOK.md; no secrets included"
+}

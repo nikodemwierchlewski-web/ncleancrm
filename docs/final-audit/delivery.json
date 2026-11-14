@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-14",
+  "source_commit": "a9177ac28cdb022e11ce52867fd6e9e939dda506",
+  "standalone_offline_document": {
+    "standalone_document": true,
+    "loaded_via": "HTML document injection; file:// navigation blocked by managed browser policy",
+    "offline": true,
+    "calendar_settings_catalogue_navigation": true,
+    "javascript_errors": [],
+    "failed_resource_requests": []
+  },
+  "platform_panel_confirmed": false,
+  "file_protocol_note": "Cloud managed Chromium blocked file:// navigation; document tested offline using supported HTML injection plus HTTP and nested sandbox. Physical Android file opening remains to be checked.",
+  "files": {
+    "nclean-final.html": {
+      "bytes": 2888975,
+      "sha256": "01d8003bf5af18b02d155c03a16648efef5dcb76394da5711260535482fe1503"
+    },
+    "nclean-final-demo.zip": {
+      "bytes": 697464,
+      "sha256": "7bbd39d20dc1b9c5f2551019edcc6e4b777dcea339cb68bdcc7c55fed2d255ee"
+    },
+    "nclean-administrator-source.zip": {
+      "bytes": 1525019,
+      "sha256": "38d6885142e7d5804ef0762729fab2f0aee14457515044b1ebd5bf3c4418aae8"
+    },
+    "ncLEAN-CRM-paczka-dla-administratora.zip": {
+      "bytes": 56094863,
+      "sha256": "db71cbf2c5324c016c1389fa0db5c14da893e41c4668bff991f4db64430c69e1"
+    }
+  }
+}
