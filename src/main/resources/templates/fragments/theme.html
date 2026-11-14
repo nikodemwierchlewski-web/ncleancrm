@@ -1,16 +1,16 @@
 <!doctype html><html xmlns:th="http://www.thymeleaf.org"><head>
-<th:block th:fragment="assets"><script src="/js/session.js" defer></script><th:block th:if="${pixelTycoon}">
-  <link rel="stylesheet" href="/css/tycoon.css">
+<th:block th:fragment="assets"><meta name="crm-base" th:content="@{/}"><script th:src="@{/js/routes.js}"></script><script src="/js/session.js" th:src="@{/js/session.js}" defer></script><th:block th:if="${pixelTycoon}">
+  <link rel="stylesheet" href="/css/tycoon.css" th:href="@{/css/tycoon.css}">
   <meta name="crm-confirmed" th:if="${tycoonSignal != null}" th:attr="data-kind=${tycoonSignal.kind},data-order=${tycoonSignal.id}">
-  <script src="/js/tycoon-motion.js" defer></script>
-  <script src="/js/tycoon.js" defer></script></th:block>
-  <link rel="stylesheet" href="/css/lean.css">
-  <script src="/js/lean.js" defer></script><link rel="stylesheet" href="/css/removal.css"><script src="/js/removal.js" defer></script><link rel="stylesheet" href="/css/ncleanek.css"><script src="/js/ncleanek-content.js" defer></script><link rel="stylesheet" href="/css/ncleanek-puppet.css"><script src="/js/ncleanek-puppet.js" defer></script><script src="/js/ncleanek.js" defer></script>
+  <script src="/js/tycoon-motion.js" th:src="@{/js/tycoon-motion.js}" defer></script>
+  <script src="/js/tycoon.js" th:src="@{/js/tycoon.js}" defer></script></th:block>
+  <link rel="stylesheet" href="/css/lean.css" th:href="@{/css/lean.css}">
+  <script src="/js/lean.js" th:src="@{/js/lean.js}" defer></script><link rel="stylesheet" href="/css/removal.css" th:href="@{/css/removal.css}"><script src="/js/removal.js" th:src="@{/js/removal.js}" defer></script><link rel="stylesheet" href="/css/ncleanek.css" th:href="@{/css/ncleanek.css}"><script src="/js/ncleanek-content.js" th:src="@{/js/ncleanek-content.js}" defer></script><link rel="stylesheet" href="/css/ncleanek-puppet.css" th:href="@{/css/ncleanek-puppet.css}"><script src="/js/ncleanek-puppet.js" th:src="@{/js/ncleanek-puppet.js}" defer></script><script src="/js/ncleanek.js" th:src="@{/js/ncleanek.js}" defer></script>
 </th:block>
 </head><body>
 <figure th:fragment="base" th:if="${pixelTycoon}" class="tycoon-base" aria-hidden="true">
   <div><span class="tycoon-base-kicker">NCLEAN</span><strong>Baza ncLEAN</strong><small>Gotowi do działania.</small></div>
-  <img src="/pixel/base.svg" width="560" height="248" alt="">
+  <img src="/pixel/base.svg" th:src="@{/pixel/base.svg}" width="560" height="248" alt="">
 
 </figure>
 <section th:fragment="progress" th:if="${pixelTycoon}" class="tycoon-progress" id="tycoon-progress" th:attr="data-date=${date}" aria-labelledby="tycoon-progress-title">

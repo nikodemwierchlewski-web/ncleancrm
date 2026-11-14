@@ -22,7 +22,7 @@ public class SecurityConfiguration {
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"))
                 .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN)))
-            .formLogin(login -> login.loginPage("/login").permitAll())
+            .formLogin(login -> login.loginPage("/login").defaultSuccessUrl("/calendar", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/login?logout").invalidateHttpSession(true).deleteCookies("NCLEAN_CRM_SESSION"))
             .csrf(Customizer.withDefaults())
             .build();

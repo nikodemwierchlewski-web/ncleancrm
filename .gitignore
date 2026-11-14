@@ -14,3 +14,7 @@
 /deploy/tls/
 
 /scripts/__pycache__/
+
+/deploy/ops/__pycache__/
+/deploy/ops/ops.json
+/deploy/ops/pg_service.conf

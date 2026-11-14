@@ -112,7 +112,7 @@ pozostaje zgodny ze starymi szablonami i testami.
 6. Uporządkować formatowanie dotykanych klas. Bez masowego formatowania razem
    ze zmianą reguł, które utrudniałoby weryfikację zachowania.
 
-Dostosowanie do `https://nclean.pl/crm/` jest osobnym, nadal otwartym etapem:
-ścieżki, cookies, zasoby i scope/cache PWA muszą być izolowane od głównej strony.
-Patrz [audyt wdrożenia](../../deploy/SAME-DOMAIN-AUDIT.md). Testy na ścieżce `/`
-nie potwierdzają gotowości pod `/crm`.
+Obsługa `https://nclean.pl/crm/` została następnie poprawiona i sprawdzona lokalnie
+w HTTPS obok publicznego stubu. Wyniki i nadal wymagany odbiór rzeczywistego
+hostingu: [audyt kandydata do pilotażu](../final-audit/REPORT.md). Testy `/` nie
+zastępują testów `/crm/`; oba warianty pozostają wymagane.

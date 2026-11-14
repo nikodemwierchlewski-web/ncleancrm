@@ -1,0 +1,415 @@
+{
+  "date": "2026-11-14",
+  "timezone": "Europe/Warsaw",
+  "branch": "audit/final-pilot-hardening",
+  "baseline_commit": "87cb61f",
+  "production_contact": false,
+  "maven": {
+    "command": "./mvnw -B -ntp verify",
+    "result": "BUILD SUCCESS",
+    "total": 151,
+    "unit_mvc_architecture": {
+      "totals": {
+        "tests": 50,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "pl.nclean.crm.architecture.ArchitectureTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.calendar.CalendarSecurityTest",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.calendar.RecordsSecurityTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.ContextSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.CostSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.DashboardSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.DashboardTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.DayReviewSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.FuelSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.NoteSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.PhotoNameTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.RemovalSecurityTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.TycoonSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.dashboard.WorkSecurityTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.fuel.ImageOrientationTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.help.GuideSecurityTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.help.GuideServiceTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.removal.RemovalServiceTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "pl.nclean.crm.shared.SharedConventionsTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "postgres_integration": {
+      "totals": {
+        "tests": 101,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "pl.nclean.crm.calendar.CalendarPostgresIT",
+          "tests": 101,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  },
+  "web_boundaries": {
+    "node": "PASS",
+    "template_literal_paths_guard": "PASS",
+    "css_relative_assets_guard": "PASS",
+    "contexts": [
+      "/",
+      "/crm/",
+      "/nested/crm/"
+    ],
+    "foreign_cache_ownership_guard": "PASS"
+  },
+  "browser": {
+    "engine": "Chromium headless",
+    "viewports": [
+      360,
+      390,
+      768,
+      1440
+    ],
+    "real_application_removal": {
+      "viewports": [
+        {
+          "width": 360,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 390,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 768,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        },
+        {
+          "width": 1440,
+          "cancel_delete_undo_booking_catalogue_cost_chemical": true
+        }
+      ],
+      "stale_version_dialog": true,
+      "controlled_503_preserves_state_and_retry": true,
+      "stars_maximum_8_and_single_layer": true,
+      "reduced_motion_and_modal_suppress": true,
+      "booking_snapshots_preserved": true,
+      "javascript_errors": []
+    },
+    "business_workflows": [
+      "interactions: saved-id highlight and booked scene only after server success,503 preserves fields, rapid day selection settles, mixed-category count, dialog focus and month transition.",
+      "notes real UI: memo/task/goals, steps and explicit completion, pin5/max3, archive/restore, search,503 retry, two-tab conflict, four widths and compact viewport.",
+      "Tycoon: SVG animation, 4 widths, motion preference/reload/OS, goal steps, dates, modal deferral, notification acknowledgement.",
+      "lean: navigation/config separation, authoritative missing data, shared completion from visit, returning client, two categories/custom price/address, catalogue change keeps history, default dashboard/Today actions above fold, four widths.",
+      "closeout: real chemistry, photos/time, separate notes,503 retry, cancel/move, explicit exceptions, partial day, two tabs, four widths, closure persistence and reopening."
+    ],
+    "captured_real_views": 62,
+    "https_prefix": {
+      "prefix": "/crm",
+      "https_fixture": true,
+      "production_contact": false,
+      "viewports": [
+        360,
+        390,
+        768,
+        1440
+      ],
+      "routes_per_width": 15,
+      "public_site_preserved": true,
+      "historical_booking_without_fake_customer": true,
+      "photo_upload_and_private_fetch": true,
+      "export": true,
+      "csrf_403": true,
+      "logout": true,
+      "foreign_cache_preserved": true,
+      "service_worker_scope": "https://127.0.0.1:18443/crm/",
+      "manifest_relative": true,
+      "escaped_requests": [],
+      "javascript_errors": [],
+      "cookie": [
+        {
+          "name": "NCLEAN_CRM_SESSION",
+          "path": "/crm",
+          "secure": true,
+          "httpOnly": true,
+          "sameSite": "Strict"
+        }
+      ]
+    }
+  },
+  "operations": {
+    "real_postgresql": true,
+    "real_spring_boot_restarts": true,
+    "service_control": "Test adapter controls real Java process; systemd not installed",
+    "upgrade_V15_to_V16": true,
+    "booking_prices_notes_preserved": true,
+    "photos_receipts_binary_hashes_preserved": true,
+    "restore_new_database": true,
+    "existing_target_refused": true,
+    "corrupt_backup_refused": true,
+    "jar_checksum_refused": true,
+    "backup_failure_preserves_current_release": true,
+    "private_backup_permissions": true,
+    "failed_readiness_stops_without_unsafe_rollback": true
+  },
+  "accessibility": {
+    "engine": "axe-core 4.10.3",
+    "scans": 58,
+    "reported_violations": 0,
+    "manual_review_still_needed": true
+  },
+  "preview": {
+    "four_viewports_and_nested_sandbox": {
+      "viewports": [
+        {
+          "width": 360,
+          "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+          "category_hidden_from_booking": true,
+          "stars_bounded_and_reduced_motion": true
+        },
+        {
+          "width": 390,
+          "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+          "category_hidden_from_booking": true,
+          "stars_bounded_and_reduced_motion": true
+        },
+        {
+          "width": 768,
+          "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+          "category_hidden_from_booking": true,
+          "stars_bounded_and_reduced_motion": true
+        },
+        {
+          "width": 1440,
+          "delete_cancel_undo_booking_service_category_cost_and_new_booking": true,
+          "category_hidden_from_booking": true,
+          "stars_bounded_and_reduced_motion": true
+        }
+      ],
+      "nested_opaque_sandbox": true,
+      "javascript_errors": []
+    },
+    "exercise_transfer_and_footer": {
+      "export_import_exercise": true,
+      "invalid_import_preserves_state": true,
+      "historical_unknown_client": true,
+      "save_row_never_overlaps_fields": true,
+      "viewports": [
+        [
+          360,
+          640
+        ],
+        [
+          390,
+          844
+        ],
+        [
+          768,
+          844
+        ],
+        [
+          1440,
+          900
+        ],
+        [
+          390,
+          430
+        ]
+      ],
+      "javascript_errors": []
+    },
+    "mode": "Synthetic HTML simulation; no real CRM database",
+    "platform_panel_open_confirmed": false,
+    "platform_panel_note": "Panel-open invocation did not return confirmation in this session; verified artifact independently in Chromium."
+  },
+  "migrations_unchanged": [
+    {
+      "file": "V10__customer_context_and_service_photos.sql",
+      "sha256": "a0ccdd8bc7ca228a63bb95681dac06f9387263f2765630f293ba422e66fe174d"
+    },
+    {
+      "file": "V11__day_closeout.sql",
+      "sha256": "64dc14c9be34c1d96d20523576b16f47816888804252d0900a379693835f19e6"
+    },
+    {
+      "file": "V12__notes_and_goals.sql",
+      "sha256": "2c4bd0ad588e044b5eb2099646460492c99c59e95bffa1fd2c62a4ea89b06e19"
+    },
+    {
+      "file": "V13__costs_equipment_and_vehicle_book.sql",
+      "sha256": "c581c183b5a37480c72d5f9ec883d1776080687bdc104a1e9ff453bf8b812df4"
+    },
+    {
+      "file": "V14__tycoon_achievements.sql",
+      "sha256": "0df33f71bdf64d9df01d5d44483b13836a99f41824e2d2244ac137bc85b34cb6"
+    },
+    {
+      "file": "V15__reversible_removals.sql",
+      "sha256": "6adf5fdf3325f7397d2e07616bfc3dc66b1ec9f7dc9c0a2994e181ec3c038c49"
+    },
+    {
+      "file": "V1__calendar.sql",
+      "sha256": "0fe2c1b537568ad3536693e75034a8ae03e4ece372dcfe6225f5acdcc1f2beb9"
+    },
+    {
+      "file": "V2__multiple_day_areas.sql",
+      "sha256": "6eb0012b7dc775ed7bd1031cc70c4a5b579156a6b1f3edaba90dc0cc60ea7d00"
+    },
+    {
+      "file": "V3__customers_catalog_bookings.sql",
+      "sha256": "39f6886fae3658801e3cf0b26be9b49dcee26096d70224f7b337a16f08c650ff"
+    },
+    {
+      "file": "V4__weekly_area_plans.sql",
+      "sha256": "59de21c663fccb599320f1cbb6053ec64aa14e2b59bd4ef7be78823a78461fee"
+    },
+    {
+      "file": "V5__service_prices_and_chemical_forecasts.sql",
+      "sha256": "4f03b9bcbefc6955bf885b48b40f4ab45daa933087301ed82c9737e32aa17e2d"
+    },
+    {
+      "file": "V6__actual_chemical_usage.sql",
+      "sha256": "ea3c52c41d7787abc62ec0eba599529e366a2ef1d117034f7b37f6cebddb9a8c"
+    },
+    {
+      "file": "V7__dashboard_costs.sql",
+      "sha256": "4d3b1c7b3dd1bd7224673cb9eb9745acf1555c42cfa33dcf856f8414dd9c5e82"
+    },
+    {
+      "file": "V8__fuel_journal_and_receipts.sql",
+      "sha256": "8a637c9cd1b0da0f350eed4ab6e21a5034a652e1ad9d2e224f202bb2b8cebced"
+    },
+    {
+      "file": "V9__workday_completion_and_payments.sql",
+      "sha256": "b5afb765872cb14fea7bc155e3cfe3af96132e13bcba6373adfa197521f91997"
+    }
+  ],
+  "migration_added": "V16__historical_bookings.sql",
+  "runtime_jar_sha256": "3171a703b4a69a923ce9668d753dc64bcd7598ff40070eba15327407a65bba7c",
+  "limits": [
+    "Actual CMS repository and host/proxy/VPN not verified",
+    "Physical Android and native gallery/keyboard require administrator acceptance",
+    "Current CVE advisory scan not completed",
+    "No production-load certification",
+    "No deployment or Pull Request",
+    "Server backup schedule/offsite copy/grants must be configured by administrator"
+  ]
+}

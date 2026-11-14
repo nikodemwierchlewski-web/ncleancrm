@@ -87,7 +87,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -112,7 +112,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -232,7 +232,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(15, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(16, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -782,7 +782,9 @@ class CalendarPostgresIT {
             return start(false);
         }
 
-        static RunningApp start(boolean pixelTycoon) {
+        static RunningApp start(boolean pixelTycoon) { return start(pixelTycoon, ""); }
+
+        static RunningApp start(boolean pixelTycoon, String contextPath) {
             // Do not inherit database URLs, active profiles, or config files from the caller.
             var environment = new StandardEnvironment();
             environment.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
@@ -797,11 +799,12 @@ class CalendarPostgresIT {
                 Map.entry("crm.admin.password-hash", PASSWORD_HASH),
                 Map.entry("server.address", "127.0.0.1"),
                 Map.entry("server.port", "0"),
+                Map.entry("server.servlet.context-path", contextPath),
                 Map.entry("spring.main.banner-mode", "off"))));
             var context = new SpringApplicationBuilder(CrmApplication.class)
                 .environment(environment).web(WebApplicationType.SERVLET).registerShutdownHook(false).run();
             int port = ((ServletWebServerApplicationContext) context).getWebServer().getPort();
-            return new RunningApp(context, URI.create("http://127.0.0.1:" + port));
+            return new RunningApp(context, URI.create("http://127.0.0.1:" + port + contextPath));
         }
 
         Browser browser() { return new Browser(base); }
@@ -964,9 +967,9 @@ class CalendarPostgresIT {
         old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
         var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
+        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(15,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(16,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -1069,7 +1072,7 @@ class CalendarPostgresIT {
         old.update("INSERT INTO memo_entry(request_token,kind,title,completed) VALUES (?,'GOAL','Historyczny cel',true)",UUID.randomUUID());
         var before=old.queryForList("SELECT * FROM booking ORDER BY id");var goal=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->assertNull(row.remove("removed_at")));assertEquals(before,after);assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
+        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->{assertNull(row.remove("removed_at"));assertEquals(false,row.remove("historical"));});assertEquals(before,after);assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
         assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE origin='HISTORY' AND notified_at IS NOT NULL",Integer.class));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));
@@ -1174,6 +1177,69 @@ class CalendarPostgresIT {
         var form=reviewFields(id);days.save(id,yesterday,form,OWNER);days.close(yesterday,days.review(yesterday).fingerprint(),OWNER);assertTrue(days.latestOpenBefore(today).isEmpty());assertFalse(guide.context(yesterday,id).containsKey("reminder"));
         jdbc.update("UPDATE booking SET version=version+1 WHERE id=?",id);assertEquals(yesterday,days.latestOpenBefore(today).orElseThrow().day());assertTrue(guide.context(yesterday,id).containsKey("reminder"));assertEquals(404,browser.get("/help/context?date="+today+"&order="+id).statusCode());
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(yesterday,app.context().getBean(pl.nclean.crm.work.DayReviewService.class).latestOpenBefore(today).orElseThrow().day());
+    }
+
+    @Test void historicalEntryKeepsUnknownContactAndMeasurementsAndPhotosAfterRestart() throws Exception {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        var day=DashboardService.today().minusMonths(8);long service=estimateService("Dawna kanapa");
+        var token=UUID.randomUUID();
+        long id=records.book(token,day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Archiwum",true);
+        assertEquals(id,records.book(token,day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Archiwum",true));
+        var row=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);
+        assertNull(row.get("customer_id"));assertEquals("Klient nieustalony",row.get("customer_name"));
+        assertEquals("",row.get("phone"));assertEquals("DONE",row.get("status"));
+        assertNull(row.get("final_total"));assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));
+        assertEquals(0,app.context().getBean(pl.nclean.crm.tycoon.AchievementService.class).performedCount());
+        assertFalse(app.context().getBean(pl.nclean.crm.help.GuideService.class).context(DashboardService.today(),null).containsKey("reminder"));
+        assertFalse(app.context().getBean(pl.nclean.crm.help.GuideService.class).context(day,id).containsKey("reminder"));
+        var photos=app.context().getBean(pl.nclean.crm.context.ContextService.class);
+        var image=photos.upload(id,"BEFORE",UUID.randomUUID(),serviceImage("stare-zdjecie.jpg"),OWNER,0);
+        byte[] bytes=jdbc.queryForObject("SELECT image FROM booking_photo WHERE id=?",byte[].class,image);
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertArrayEquals(bytes,jdbc.queryForObject("SELECT image FROM booking_photo WHERE id=?",byte[].class,image));
+        assertNull(jdbc.queryForObject("SELECT final_total FROM booking WHERE id=?",BigDecimal.class,id));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?",Integer.class,token));
+        var browser=app.browser();browser.login();assertEquals(200,browser.get("/work/"+id).statusCode());
+        assertTrue(browser.get("/work/"+id).body().contains("Wpis historyczny"));
+    }
+
+    @Test void addingHistoryToClosedOrdinaryDayDoesNotCreateAnOldReminder() {
+        var day=DashboardService.today().minusDays(1);long ordinary=workBooking("Zamknięty dzień",day);
+        var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
+        review.save(ordinary,day,reviewFields(ordinary),OWNER);review.close(day,review.review(day).fingerprint(),OWNER);
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Dopisane archiwum");
+        long history=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true);
+        var guide=app.context().getBean(pl.nclean.crm.help.GuideService.class);
+        assertFalse(guide.context(DashboardService.today(),null).containsKey("reminder"));
+        assertFalse(guide.context(day,null).containsKey("reminder"));
+        assertFalse(guide.context(day,history).containsKey("reminder"));
+        jdbc.update("UPDATE booking SET completion_note='Rzeczywista korekta' WHERE id=?",ordinary);
+        assertTrue(guide.context(DashboardService.today(),null).containsKey("reminder"));
+    }
+
+    @Test void historicalModeRejectsTodayAndDoesNotWeakenOrdinaryBookingValidation() {
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Walidacja historii");
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"","","Adres",Map.of(service,BigDecimal.ONE)));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
+    }
+
+    @Test void realServletPrefixKeepsPagesAssetsJsonSessionAndCsrfInsideCrm() throws Exception {
+        long id=workBooking("Prefiks",DashboardService.today().minusDays(1));
+        app.close();app=RunningApp.start(false,"/crm");jdbc=app.context().getBean(JdbcTemplate.class);
+        var browser=app.browser();browser.login();
+        for(String route:List.of("/calendar","/customers","/settings","/settings/areas","/settings/services","/dashboard","/fuel","/costs","/notes","/search","/callbacks","/work/"+id,"/day-closeout")){
+            var response=browser.get(route);assertEquals(200,response.statusCode(),route);
+            assertFalse(Pattern.compile("(?:href|src|action)=\"/(?!crm/)").matcher(response.body()).find(),route);
+        }
+        assertTrue(browser.get("/calendar").body().contains("content=\"/crm/\""));
+        assertEquals(200,browser.get("/js/routes.js").statusCode());
+        assertTrue(browser.get("/offline.html").body().contains("href=\"/crm/calendar\""));
+        assertTrue(browser.get("/manifest.webmanifest").body().contains("\"scope\":\"./\""));
+        var guide=browser.get("/help/context");assertEquals(200,guide.statusCode());
+        assertTrue(guide.body().contains("/crm/day-closeout"));
+        assertEquals(403,browser.settings("/customers",Map.of("name","Odrzucony","phone","500000099"),false).statusCode());
+        assertEquals(200,browser.get("/session").statusCode());
     }
 
     @Test void customerProfileAndSourceAreOneAtomicCommand() {
@@ -1319,7 +1385,7 @@ class CalendarPostgresIT {
         String schema="legacy_v14_closed_day";var source=new DriverManagerDataSource(POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema,POSTGRES.getUsername(),POSTGRES.getPassword());var old=new JdbcTemplate(source);
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("14").load().migrate();long person=old.queryForObject("INSERT INTO crm_customer(name,phone) VALUES ('Klient testowy','500000099') RETURNING id",Long.class);var day=DashboardService.today().minusDays(1);
         old.update("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,status,total) VALUES (?,?,?,TIME '10:00','Klient testowy','500000099','Adres testowy','CANCELLED',100)",UUID.randomUUID(),person,day);
-        var field=pl.nclean.crm.work.DayReviewService.class.getDeclaredField("FINGERPRINT_SQL");field.setAccessible(true);String current=(String)field.get(null),legacy=current.replace("b.removed_at IS NULL AND ","").replace("removed_at IS NULL AND ","").replace("to_jsonb(b)-'removed_at'","to_jsonb(b)");String fingerprint=old.queryForObject(legacy,String.class,day,day,day,day,day);
+        var field=pl.nclean.crm.work.DayReviewService.class.getDeclaredField("FINGERPRINT_SQL");field.setAccessible(true);String current=(String)field.get(null),legacy=current.replace("b.removed_at IS NULL AND ","").replace("removed_at IS NULL AND ","").replace("to_jsonb(b)-'removed_at'-'historical'","to_jsonb(b)");String fingerprint=old.queryForObject(legacy,String.class,day,day,day,day,day);
         old.update("INSERT INTO day_review(day,fingerprint,closed_by) VALUES (?,?,?)",day,fingerprint,OWNER);Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(fingerprint,old.queryForObject(current,String.class,day,day,day,day,day));assertEquals(fingerprint,old.queryForObject("SELECT fingerprint FROM day_review",String.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NOT NULL",Integer.class));
     }
 
@@ -1335,7 +1401,7 @@ class CalendarPostgresIT {
         }
 
         HttpResponse<String> get(String path) throws IOException, InterruptedException {
-            return http.send(HttpRequest.newBuilder(base.resolve(path)).timeout(Duration.ofSeconds(15)).GET().build(),
+            return http.send(HttpRequest.newBuilder(base.resolve(base.getPath()+path)).timeout(Duration.ofSeconds(15)).GET().build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         }
 
@@ -1346,7 +1412,7 @@ class CalendarPostgresIT {
                 else pairs.add(encode(name) + "=" + encode(value.toString()));
             });
             String body = String.join("&", pairs);
-            return http.send(HttpRequest.newBuilder(base.resolve(path)).timeout(Duration.ofSeconds(15))
+            return http.send(HttpRequest.newBuilder(base.resolve(base.getPath()+path)).timeout(Duration.ofSeconds(15))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));

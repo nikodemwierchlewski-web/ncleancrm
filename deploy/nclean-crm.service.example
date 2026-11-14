@@ -8,7 +8,7 @@ Type=simple
 User=nclean-crm
 Group=nclean-crm
 WorkingDirectory=/opt/nclean-crm
-ExecStart=/usr/bin/java -Duser.timezone=Europe/Warsaw -jar /opt/nclean-crm/current/nclean-crm.jar --spring.profiles.active=prod --spring.config.import=file:/etc/nclean-crm/secrets.properties
+ExecStart=/usr/bin/java -Duser.timezone=Europe/Warsaw -jar /opt/nclean-crm/current/nclean-crm.jar --spring.profiles.active=prod --server.servlet.context-path=/crm --server.tomcat.remoteip.port-header=X-Forwarded-Port --spring.config.import=file:/etc/nclean-crm/secrets.properties
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=45

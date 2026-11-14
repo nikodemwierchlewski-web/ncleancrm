@@ -102,10 +102,14 @@ public class CrmRecords {
   return book(token,day,starts,customer,name,number,address,quantities,prices,forecasts,"UNKNOWN","","");
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note){
+  return book(token,day,starts,customer,name,number,address,quantities,prices,forecasts,source,referral,note,false);
+ }
+ @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note,boolean historical){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
-  address=text(address,240,true);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
+  if(historical && !day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny wymaga daty wcześniejszej niż dzisiaj.");
+  address=text(address,240,!historical);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
   if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
   var quotes=new ArrayList<ChemistryService.Quote>();boolean allDefined=true;BigDecimal chemistryTotal=BigDecimal.ZERO;
@@ -118,10 +122,16 @@ public class CrmRecords {
    var quote=chemistry.quote(entry.getKey(),qty,forecasts.get(entry.getKey()));quotes.add(quote);allDefined&=quote.defined();if(quote.cost()!=null)chemistryTotal=chemistryTotal.add(quote.cost());
    BigDecimal amount=((BigDecimal)line.get("price")).multiply(qty).setScale(2,RoundingMode.HALF_UP);line.put("quantity",qty);line.put("amount",amount);lines.add(line);total=total.add(amount);
   }
-  if(customer==null){customer=saveCustomer(null,0,name,number,address,"",true);db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,customer);}
-  var people=db.queryForList("SELECT * FROM crm_customer WHERE id=? AND active=TRUE",customer);if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
-  var person=people.get(0);
-  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total) VALUES (?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,name==null||name.isBlank()?person.get("name"):text(name,120,true),number==null||number.isBlank()?person.get("phone"):phone(number),address,total);
+  Map<String,Object> person=Map.of();
+  if(customer==null && !historical){customer=saveCustomer(null,0,name,number,address,"",true);db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,customer);}
+  if(customer!=null){
+   var people=db.queryForList("SELECT * FROM crm_customer WHERE id=? AND active=TRUE",customer);
+   if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
+   person=people.get(0);
+  }
+  String visitName=name==null||name.isBlank()?Objects.toString(person.get("name"),"Klient nieustalony"):text(name,120,true);
+  String visitPhone=number==null||number.isBlank()?Objects.toString(person.get("phone"),""):phone(number);
+  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,historical,status) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,visitName,visitPhone,address,total,historical,historical?"DONE":"PLANNED");
   db.update("UPDATE booking SET work_note=? WHERE id=?",note,id);
   for(int i=0;i<lines.size();i++){
    var line=lines.get(i);var quote=quotes.get(i);
@@ -135,7 +145,8 @@ public class CrmRecords {
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
   if("DONE".equals(status))validateCompletionDay(day);
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
+  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source,b.historical FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
+  if(Boolean.TRUE.equals(before.get(0).get("historical"))&&!day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny musi pozostać w przeszłości.");
   if(status.equals("CANCELLED")&&db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia. Anulowanie nie usuwa należności ani historii wpłat.");
   changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
   boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);

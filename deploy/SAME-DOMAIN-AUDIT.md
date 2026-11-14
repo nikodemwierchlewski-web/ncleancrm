@@ -1,3 +1,7 @@
+> Raport historyczny sprzed napraw. Aktualny etap naprawił ścieżki i PWA oraz
+> zweryfikował HTTPS `/crm/` obok publicznego stubu. Wyniki i pozostałe warunki
+> wdrożenia: [końcowy audyt](../docs/final-audit/REPORT.md).
+
 # Audyt: ncLEAN CRM pod nclean.pl/crm/ — 14.11.2026
 
 **Decyzja: technicznie możliwe bez subdomeny; aktualny kandydat NIE jest gotowy

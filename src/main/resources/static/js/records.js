@@ -209,6 +209,13 @@
   });
   $('#edit-contact').addEventListener('click', () => { fields.hidden = !fields.hidden; if (!fields.hidden) contactName.focus(); });
 
+  const historical=form.querySelector('#booking-historical');
+  const historicalState=()=>{
+    const active=historical.checked;
+    for(const input of [contactName,phone,address])input.required=!active;
+    form.querySelector('#historical-help').hidden=!active;
+  };
+  historical.addEventListener('change',historicalState);historicalState();
   const sourceGroup=document.querySelector('#booking-source'),referralGroup=document.querySelector('#booking-referral');
   const sourceState=()=>{if(sourceGroup)sourceGroup.hidden=!!customer.value;if(referralGroup)referralGroup.hidden=!!customer.value||form.elements.source.value!=='REFERRAL';};
   new MutationObserver(sourceState).observe(fields,{attributes:true,attributeFilter:['hidden']});form.elements.source?.addEventListener('change',sourceState);sourceState();
@@ -222,7 +229,7 @@
     }
     window.NcleanForms.submit(form, status, () => {
       const day = encodeURIComponent(form.elements.namedItem('day').value);
-      location.href = `${$('.daily') ? '/calendar' : '/orders'}?day=${day}&saved=1`;
+      location.href = Nclean.url(`${$('.daily') ? '/calendar' : '/orders'}?day=${day}&saved=1`);
     });
   });
 })();

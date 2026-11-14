@@ -20,7 +20,7 @@ Opis dotychczasowej obsługi kalendarza: [docs/KALENDARZ.md](docs/KALENDARZ.md).
 
 Stos: Java 17, Spring Boot 3.5.16, Spring MVC, Thymeleaf, Spring Security, PostgreSQL 17 i Flyway. JPA/Hibernate jest używane obok JdbcTemplate, który obsługuje większość modułów operacyjnych. Cennik i kategorie są edytowalne w PostgreSQL; początkowa oferta pochodzi z migracji SQL. Maven Wrapper pobiera Maven 3.9.11 i sprawdza jego SHA-256. Nie ma Reacta ani osobnej aplikacji SPA.
 
-Aktualny cel wdrożenia: **https://nclean.pl/crm/**, bez subdomeny. [Audyt zgodności ścieżek](deploy/SAME-DOMAIN-AUDIT.md) i [plan wdrożenia](deploy/README.md). Obecny kod wymaga dostosowania adresów i PWA przed takim wdrożeniem. Starszy audyt ogólny: [docs/AUDYT-GOTOWOSCI.md](docs/AUDYT-GOTOWOSCI.md).
+Aktualny cel wdrożenia: **https://nclean.pl/crm/**, bez subdomeny. [Audyt zgodności ścieżek](deploy/SAME-DOMAIN-AUDIT.md) i [plan wdrożenia](deploy/README.md). Obsługa adresów i izolacja PWA zostały poprawione i sprawdzone lokalnie pod `/crm/` z HTTPS oraz publicznym stubem strony. Odbiór rzeczywistego serwera nadal należy do administratora. [Aktualny audyt](docs/final-audit/REPORT.md), [instrukcja operacyjna](deploy/ops/RUNBOOK.md). Starszy audyt ogólny: [docs/AUDYT-GOTOWOSCI.md](docs/AUDYT-GOTOWOSCI.md).
 
 Reakcje interfejsu na klikanie: [Cleaning Tycoon — interakcje](docs/TYCOON-INTERACTIONS.md).
 
@@ -63,7 +63,7 @@ Inicjalizator wymaga terminala, aby ukryć wpisywane hasło. Przy kolejnych uruc
 - Aplikacja używa bazy `nclean_crm` i konta `crm_dev`, bez uprawnień superużytkownika, tworzenia baz i ról. Osobne konto `crm_bootstrap` służy do pierwszej inicjalizacji kontenera.
 - Hasła bazy są przekazywane do Compose z lokalnych plików sekretów. Kontrola gotowości sprawdza rzeczywiste połączenie konta `crm_dev`, a nie tylko otwarty port.
 - Profil `local` wymaga `.local/application-local.properties` i ustawia lokalny adres bazy. Nie kopiuj do tego środowiska poświadczeń CMS. Pliki `.env` nie są automatycznie wczytywane przez Spring; [env.example](env.example) dokumentuje zmienne dla ręcznej konfiguracji.
-- Flyway uruchamia migracje V1–V15 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. V7 dodaje koszty dashboardu i historyczne wyceny rzeczywistych pomiarów. V8 dodaje dziennik licznika/agregatu, tankowania, prywatne zdjęcia rachunków i audyt korekt. V9 dodaje wykonanie, cenę końcową, czas, audyt zlecenia i rejestr wpłat. V10 dodaje kontekst klienta i zdjęcia usług; V11 zamknięcie dnia; V12 notatki i cele; V13 książeczkę samochodu, sprzęt i koszty jednorazowe; V14 postęp i osiągnięcia; V15 odwracalne usuwanie i audyt. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
+- Flyway uruchamia migracje V1–V16 przy pierwszym starcie. Niezmieniona V1 tworzy `district`, `day_district` i pięć przykładowych obszarów. V2 rozszerza klucz przypisań do pary dzień–obszar, zachowując dotychczasowe dane. V3 dodaje kartotekę, cennik i rezerwacje; V4 wersje tygodniowego planu i znaczniki wyjątków; V5 środki, standardy, ceny uzgodnione i prognozy. V6 dodaje osobne rzeczywiste pomiary, bez kopiowania prognoz. V7 dodaje koszty dashboardu i historyczne wyceny rzeczywistych pomiarów. V8 dodaje dziennik licznika/agregatu, tankowania, prywatne zdjęcia rachunków i audyt korekt. V9 dodaje wykonanie, cenę końcową, czas, audyt zlecenia i rejestr wpłat. V10 dodaje kontekst klienta i zdjęcia usług; V11 zamknięcie dnia; V12 notatki i cele; V13 książeczkę samochodu, sprzęt i koszty jednorazowe; V14 postęp i osiągnięcia; V15 odwracalne usuwanie i audyt; V16 jawne wpisy historyczne bez fikcyjnej kartoteki klienta. Istniejąca baza otrzymuje jedynie brakujące migracje. Hibernate waliduje schemat (`ddl-auto=validate`); Flyway `clean` jest wyłączony.
 - Logowanie wymaga loginu oraz poprawnego hasha BCrypt. Operacje zapisu i wylogowania wymagają POST z CSRF; odczyt kalendarza wymaga roli OWNER.
 
 Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa kontener, ale zachowuje wolumen; `docker compose up -d --wait` korzysta z zapisanej bazy. **`docker compose down -v` usuwa dane** — nie używaj go do zwykłego restartu. Nie usuwaj również plików `.local/`, jeśli chcesz dalej korzystać z istniejącej bazy i tych samych haseł.
@@ -71,7 +71,7 @@ Zatrzymanie aplikacji przez `Ctrl+C` zachowuje dane. `docker compose down` usuwa
 ## Testy
 
 ```sh
-./mvnw test          # testy MVC, bez Dockera i połączenia z bazą
+./mvnw test          # jednostkowe, MVC i architektury, bez Dockera i połączenia z bazą
 ./mvnw clean verify  # dodatkowo testy integracyjne, wymaga działającego Dockera
 ```
 

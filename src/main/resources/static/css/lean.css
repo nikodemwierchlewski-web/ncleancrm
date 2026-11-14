@@ -30,3 +30,16 @@
 .access-page{max-width:500px}.access-page form{display:grid;gap:16px}.access-page input{min-height:44px;width:100%}.access-page label{display:grid;gap:6px}.eyebrow,.card-description,.calendar-weekdays>span,.settings-card small{color:#425f70!important}.eyebrow{font-size:12px!important}.daily .desktop-title.sr-only{display:block!important}.allocation-warning{padding:12px;background:#fff4df;color:#69420c;border:1px solid #b2884a}.allocation-warning button{min-height:44px}
 /* Settings metadata remains readable outdoors, including the older areas layout. */
 .page-description,.settings-note{font-size:14px;line-height:1.65;color:#425f70}.area-preview>span:first-child,.work-area-details code,.count-badge,.state-label,.weekly-grid small{font-size:12px;color:#425f70}.state-label.active{color:#285c3c}.work-area h3{font-size:16px}.settings-note span{color:#425f70}.count-badge{white-space:nowrap}
+/* Calendar artwork stays visible without pushing the work list below the first screen. */
+.daily>.tycoon-base{min-height:0;padding:8px 16px;grid-template-columns:minmax(0,1fr) minmax(160px,300px)}
+.daily>.tycoon-base :is(img,svg.tycoon-world){height:96px}
+.daily .booking-chip .booking-customer,.daily .booking-chip .booking-address{color:#3e5c68}
+@media(max-width:767px){.daily>.tycoon-base{padding:6px 12px;grid-template-columns:minmax(0,1fr) 132px}.daily>.tycoon-base :is(img,svg.tycoon-world){height:68px}.daily>.tycoon-base strong{font-size:20px;margin-top:2px}}
+/* Separate the scrollable fields from the save row: neither can cover the other. */
+#booking-editor[open]{display:flex;flex-direction:column;overflow:hidden;height:min(740px,calc(var(--available-height,100dvh) - 24px))}
+#booking-editor>.dialog-heading{position:static;flex-shrink:0}
+#booking-editor>.dialog-content{display:flex;flex:1;min-height:0;overflow:hidden;padding-top:0}
+#booking-editor #booking-form{display:flex;flex-direction:column;flex:1;min-height:0;gap:0}
+#booking-editor .booking-layout{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:14px 4px 20px;scroll-padding:12px 0 24px}
+#booking-editor #booking-form .booking-submit{position:static;flex-shrink:0;margin-top:0;padding-top:10px}
+@media(max-width:767px){#booking-editor[open]{height:calc(var(--available-height,100dvh) - 12px)}}

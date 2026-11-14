@@ -26,15 +26,16 @@ public class GuideService {
         if(day.isAfter(today))return result;
         if(order!=null){final long id=order;var row=review.orders().stream().filter(o->((Number)o.get("id")).longValue()==id).findFirst().orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
             var missing=(List<?>)row.get("missing");if(!missing.isEmpty())result.put("focused",Map.of("message","Do uzupełnienia: "+String.join(", ",missing.stream().map(Object::toString).toList())+".","url","/day-closeout?date="+day+"&order="+id));
+            if(Boolean.TRUE.equals(row.get("historical")))return result;
         }
         boolean outcomesKnown=review.orders().stream().noneMatch(o->"PLANNED".equals(o.get("status")));
-        if(!review.orders().isEmpty()&&!review.closed()&&(day.isBefore(today)||now.getHour()>=18||outcomesKnown))result.put("reminder",reminder(review));
+        if(days.needsReminder(review)&&(day.isBefore(today)||now.getHour()>=18||outcomesKnown))result.put("reminder",reminder(review));
         else if(day.equals(today))days.latestOpenBefore(today).ifPresent(previous->result.put("reminder",reminder(previous)));
         return result;
     }
     private Map<String,Object> reminder(DayReviewService.Review review){
-        int missing=review.orders().size()-review.complete();String url="/day-closeout?date="+review.day();
-        var first=review.orders().stream().filter(o->!Boolean.TRUE.equals(o.get("complete"))).findFirst();if(first.isPresent())url+="&order="+first.get().get("id");
+        int missing=(int)review.orders().stream().filter(o->!Boolean.TRUE.equals(o.get("historical"))&&!Boolean.TRUE.equals(o.get("complete"))).count();String url="/day-closeout?date="+review.day();
+        var first=review.orders().stream().filter(o->!Boolean.TRUE.equals(o.get("historical"))&&!Boolean.TRUE.equals(o.get("complete"))).findFirst();if(first.isPresent())url+="&order="+first.get().get("id");
         return Map.of("date",review.day().toString(),"missing",missing,"message",missing>0?"W dniu "+review.day()+" pozostało wizyt do uzupełnienia: "+missing+".":"Dzień "+review.day()+" jest uzupełniony. Możesz go zamknąć.","url",url);
     }
 }

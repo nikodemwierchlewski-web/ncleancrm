@@ -46,7 +46,7 @@ public class RecordsController {
   var chemicalLines=data.bookingRows("chemicals",ids).stream().collect(java.util.stream.Collectors.groupingBy(o->((Number)o.get("booking_id")).longValue()));ids.forEach(id->{lines.computeIfAbsent(id,k->new ArrayList<>());chemicalLines.computeIfAbsent(id,k->new ArrayList<>());});m.addAttribute("bookingChemicals",chemicalLines);
   var actualRows=data.bookingRows("actuals",ids);
   m.addAttribute("actualRows",actualRows);m.addAttribute("actualFields",data.actualFields(lines,chemicalLines.values().stream().flatMap(List::stream).toList(),actualRows));
-  if(p.containsKey("repeat")){long source=Long.parseLong(p.get("repeat"));var previous=data.booking(source);var person=data.customer(((Number)previous.get("customer_id")).longValue());if(!Boolean.TRUE.equals(person.get("active")))throw new IllegalArgumentException("Klient jest nieaktywny.");m.addAttribute("repeatPerson",person);m.addAttribute("repeatAddress",previous.get("address"));m.addAttribute("repeatItems",data.items(source));}
+  if(p.containsKey("repeat")){long source=Long.parseLong(p.get("repeat"));var previous=data.booking(source);if(previous.get("customer_id")==null)throw new IllegalArgumentException("Najpierw wybierz klienta dla nowego zlecenia. Wpis historyczny nie ma kontaktu.");var person=data.customer(((Number)previous.get("customer_id")).longValue());if(!Boolean.TRUE.equals(person.get("active")))throw new IllegalArgumentException("Klient jest nieaktywny.");m.addAttribute("repeatPerson",person);m.addAttribute("repeatAddress",previous.get("address"));m.addAttribute("repeatItems",data.items(source));}
   m.addAttribute("day",day==null?LocalDate.now(ZoneId.of("Europe/Warsaw")):day);m.addAttribute("token",UUID.randomUUID());return "records/orders";
  }
  @PostMapping("/orders") String book(@RequestParam Map<String,String> p,org.springframework.web.servlet.mvc.support.RedirectAttributes redirect){long id=createBooking(p);redirect.addFlashAttribute("tycoonSignal",Map.of("kind","booked","id",id));return "redirect:/orders?day="+p.get("day");}
@@ -63,7 +63,7 @@ public class RecordsController {
     forecasts.put(service,new ChemistryService.Forecast(mode.equals("defined"),usage));
    }
   }
-  return data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""));
+  return data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""),"true".equals(p.get("historical")));
  }
  @PostMapping(value="/orders",params="calendar",produces="application/json") @ResponseBody
  Map<String,Object> calendarBook(@RequestParam Map<String,String> p){return Map.of("saved",true,"id",createBooking(p),"motion","booked");}

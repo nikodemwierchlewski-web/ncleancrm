@@ -37,18 +37,30 @@ public class DayReviewService {
     }
     private static final String FINGERPRINT_SQL="""
         SELECT md5(jsonb_build_array(
-          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
+          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at'-'historical' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
           (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(to_jsonb(m) ORDER BY id),'[]') FROM booking_move m WHERE from_day=?)
         )::text)
         """;
+    private static final String REGULAR_FINGERPRINT_SQL=FINGERPRINT_SQL
+        .replace("b.removed_at IS NULL AND ","NOT b.historical AND b.removed_at IS NULL AND ")
+        .replace("FROM booking WHERE removed_at IS NULL AND ","FROM booking WHERE NOT historical AND removed_at IS NULL AND ")
+        .replace("FROM booking_move m WHERE from_day=?","FROM booking_move m WHERE booking_id IN (SELECT id FROM booking WHERE NOT historical) AND from_day=?");
+    /** Historical additions alone must not reopen reminders for previously closed ordinary work. */
+    public boolean needsReminder(Review review){
+        if(review.closed()||review.orders().stream().allMatch(o->Boolean.TRUE.equals(o.get("historical"))))return false;
+        var saved=db.queryForList("SELECT fingerprint FROM day_review WHERE day=?",String.class,review.day());
+        if(saved.isEmpty())return true;
+        String ordinary=db.queryForObject(REGULAR_FINGERPRINT_SQL,String.class,review.day(),review.day(),review.day(),review.day(),review.day());
+        return !saved.get(0).equals(ordinary);
+    }
     private String fingerprint(LocalDate day){return db.queryForObject(FINGERPRINT_SQL,String.class,day,day,day,day,day);}
     /** Uses the same canonical fingerprint as closing a day; payments deliberately do not affect it. */
     public Optional<Review> latestOpenBefore(LocalDate day){
         BusinessDates.period(day,"day");
-        var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE removed_at IS NULL AND day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
+        var dates=db.queryForList("SELECT d.day FROM (SELECT DISTINCT day FROM booking WHERE NOT historical AND removed_at IS NULL AND day<?) d LEFT JOIN day_review r ON r.day=d.day WHERE r.fingerprint IS DISTINCT FROM ("+FINGERPRINT_SQL.replace("?","d.day")+") AND r.fingerprint IS DISTINCT FROM ("+REGULAR_FINGERPRINT_SQL.replace("?","d.day")+") ORDER BY d.day DESC LIMIT 1",java.sql.Date.class,day);
         return dates.isEmpty()?Optional.empty():Optional.of(review(dates.get(0).toLocalDate()));
     }
     @Transactional public void close(LocalDate day,String expected,String actor){

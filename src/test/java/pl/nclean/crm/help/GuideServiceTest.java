@@ -9,7 +9,7 @@ class GuideServiceTest {
     final DayReviewService days=mock(DayReviewService.class);
     final WorkService work=mock(WorkService.class);
     final LocalDate today=LocalDate.of(2026,11,13);
-    GuideService at(int hour){return new GuideService(days,work,Clock.fixed(today.atTime(hour,0).atZone(ZoneId.of("Europe/Warsaw")).toInstant(),ZoneId.of("Europe/Warsaw")));}
+    GuideService at(int hour){doAnswer(call->{var r=call.getArgument(0,DayReviewService.Review.class);return !r.closed()&&!r.orders().isEmpty();}).when(days).needsReminder(any());return new GuideService(days,work,Clock.fixed(today.atTime(hour,0).atZone(ZoneId.of("Europe/Warsaw")).toInstant(),ZoneId.of("Europe/Warsaw")));}
     DayReviewService.Review review(LocalDate day,String status,List<String> missing,boolean closed){
         Map<String,Object> order=new LinkedHashMap<>(Map.of("id",7L,"status",status,"missing",missing,"complete",missing.isEmpty()));
         return new DayReviewService.Review(day,List.of(order),List.of(),missing.isEmpty()?1:0,"fingerprint",closed,false);

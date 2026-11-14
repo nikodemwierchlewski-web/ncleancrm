@@ -78,7 +78,7 @@
   }
   function choose(day) {
     if (!cellFor(day)) {
-      location.href = `/calendar?day=${encodeURIComponent(day)}`;
+      location.href = Nclean.url(`/calendar?day=${encodeURIComponent(day)}`);
       return;
     }
     select(day);
@@ -135,7 +135,7 @@
     $('#toggle-month').setAttribute('aria-expanded', String(shown));
   });
   $('#jump-month').addEventListener('change', event => {
-    if (event.target.validity.valid && event.target.value) location.href = `/calendar?month=${event.target.value}`;
+    if (event.target.validity.valid && event.target.value) location.href = Nclean.url(`/calendar?month=${event.target.value}`);
   });
   for (const [id, delta] of [['previous-week', -7], ['next-week', 7]]) {
     $(`#${id}`).addEventListener('click', () => {
@@ -152,7 +152,7 @@
     event.preventDefault();
     window.NcleanForms.submit(form, form.querySelector('.save-error'), () => {
       const day = form.querySelector('[name=day]')?.value || selected;
-      location.href = `/calendar?day=${encodeURIComponent(day)}&saved=1`;
+      location.href = Nclean.url(`/calendar?day=${encodeURIComponent(day)}&saved=1`);
     });
   });
   const updateHeight = () => document.documentElement.style.setProperty('--available-height', `${window.visualViewport?.height || innerHeight}px`);

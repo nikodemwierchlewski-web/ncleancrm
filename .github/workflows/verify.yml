@@ -3,7 +3,7 @@ on:
   pull_request:
   workflow_dispatch:
   push:
-    branches: [main, 'refactor/**']
+    branches: [main, 'refactor/**', 'audit/**']
 permissions:
   contents: read
 jobs:
@@ -17,6 +17,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      - name: URL and service-worker isolation checks
+        run: node scripts/test-web-boundaries.cjs
       - name: Unit, MVC and isolated PostgreSQL integration tests
         run: ./mvnw -B -ntp verify
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

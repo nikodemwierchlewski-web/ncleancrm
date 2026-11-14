@@ -1,0 +1,12 @@
+# Install outside Git. Passwords belong in a separate PGPASSFILE (mode 0600).
+[nclean_crm_backup]
+host=127.0.0.1
+port=5432
+dbname=nclean_crm
+user=REPLACE_BACKUP_ROLE
+
+[nclean_crm_restore]
+host=127.0.0.1
+port=5432
+dbname=nclean_crm
+user=REPLACE_RESTORE_ROLE_WITH_CREATEDB

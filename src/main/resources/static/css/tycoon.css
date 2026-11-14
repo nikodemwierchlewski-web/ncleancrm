@@ -1,7 +1,7 @@
 /* Optional ncLEAN Pixel Tycoon experiment. Included only when explicitly enabled. */
 @font-face {
   font-family: Pixelify;
-  src: url('/font/PixelifySans.ttf') format('truetype');
+  src: url('../font/PixelifySans.ttf') format('truetype');
   font-weight: 400 700;
   font-display: swap;
 }
@@ -99,12 +99,12 @@ input[type=checkbox], input[type=radio] { accent-color: #087eb8; box-shadow: non
 .settings-home .settings-links > a { position: relative; padding-left: 78px; }
 .settings-home .settings-links > a::before {
   content: ''; position: absolute; width: 44px; height: 44px; left: 18px; top: 20px;
-  background: url('/pixel/extractor.svg') center / contain no-repeat; image-rendering: pixelated;
+  background: url('../pixel/extractor.svg') center / contain no-repeat; image-rendering: pixelated;
 }
-.settings-home .settings-links > a[href='/fuel']::before { background-image: url('/pixel/van.svg'); }
-.settings-home .settings-links > a[href='/settings/services']::before { background-image: url('/pixel/sofa.svg'); }
-.settings-home .settings-links > a[href='/dashboard']::before { background-image: url('/pixel/coin.svg'); }
-.settings-home .settings-links > a[href='/settings/costs']::before { background-image: url('/pixel/coin.svg'); }
+.settings-home .settings-links > a[href$='/fuel']::before { background-image: url('../pixel/van.svg'); }
+.settings-home .settings-links > a[href$='/settings/services']::before { background-image: url('../pixel/sofa.svg'); }
+.settings-home .settings-links > a[href$='/dashboard']::before { background-image: url('../pixel/coin.svg'); }
+.settings-home .settings-links > a[href$='/settings/costs']::before { background-image: url('../pixel/coin.svg'); }
 .records details > summary::after { font-family: Pixelify, monospace; font-size: 22px; color: #648f93; }
 .records details[open] > summary { border-bottom: 1px dashed #becdc5; padding-bottom: 8px; }
 .notice, .visit-note, .cost-effect { border-radius: 3px; background: #edf5e4; border-color: #a8c8a9; }
@@ -324,7 +324,7 @@ dialog{opacity:0;translate:0 6px;transition:opacity 160ms ease-out,translate 160
 dialog[open]{opacity:1;translate:0 0}
 dialog:not([open]){pointer-events:none}
 @starting-style{dialog[open]{opacity:0;translate:0 6px}}
-form[aria-busy=true] :is(.save-error,#customer-search-status,.review-error,.note-error)::before{content:"";display:inline-block;vertical-align:middle;width:24px;height:20px;margin-right:6px;background:url('/pixel/loading.svg') center/contain no-repeat;animation:tycoon-pending 600ms steps(2,end) infinite}
+form[aria-busy=true] :is(.save-error,#customer-search-status,.review-error,.note-error)::before{content:"";display:inline-block;vertical-align:middle;width:24px;height:20px;margin-right:6px;background:url('../pixel/loading.svg') center/contain no-repeat;animation:tycoon-pending 600ms steps(2,end) infinite}
 @keyframes tycoon-pending{50%{transform:translateY(-2px)}}
 .tycoon-world :is(.pixel-worker,.pixel-nozzle,.pixel-booked){transform-box:fill-box;transform-origin:center}
 .tycoon-toast img{animation:tycoon-badge-pop 350ms ease-out}

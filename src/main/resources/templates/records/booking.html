@@ -19,6 +19,8 @@
     <details id="chemistry-forecast" class="forecast-section"><summary>Ile chemii przewidujesz zużyć? <span id="forecast-total">Nie określono</span></summary><p class="field-help">Sprawdź lub popraw podpowiedź. To przewidywany koszt chemii, bez pozostałych kosztów wykonania.</p><div id="forecast-items"></div></details>
     <section class="booking-contact" aria-labelledby="contact-heading">
       <h3 id="contact-heading">Klient i termin</h3>
+      <label class="check"><input type="checkbox" name="historical" value="true" id="booking-historical"> Wpisuję dawną realizację</label>
+      <p id="historical-help" class="field-help" hidden>Wybierz wcześniejszą datę. Imię, telefon i adres mogą pozostać puste. Zapiszemy wykonaną wizytę bez tworzenia fikcyjnego klienta. Kwota końcowa i zużycie pozostaną niepotwierdzone do uzupełnienia.</p>
       <input type="hidden" name="customer" id="booking-customer">
       <div id="customer-picker">
         <label for="customer-search">Telefon lub klient</label>

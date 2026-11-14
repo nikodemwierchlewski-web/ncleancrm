@@ -1,0 +1,10 @@
+{
+  "base_dir": "/opt/nclean-crm",
+  "backup_dir": "/var/backups/nclean-crm",
+  "expected_database": "nclean_crm",
+  "db_service": "nclean_crm_backup",
+  "restore_service": "nclean_crm_restore",
+  "restore_owner": "nclean_crm_migrator",
+  "health_url": "http://127.0.0.1:8081/crm/login",
+  "health_timeout": 90
+}

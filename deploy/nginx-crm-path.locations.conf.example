@@ -1,7 +1,7 @@
 # Include INSIDE the EXISTING HTTPS server block for nclean.pl.
 # Keep its TLS certificate, public website upstream and all other locations.
 # Requires an application actually configured AND adapted for context-path=/crm.
-# Current audit: NOT READY for production; see SAME-DOMAIN-AUDIT.md.
+# Prefix passed local HTTPS fixture tests; operator must validate the actual host/CMS.
 location = /crm {
     access_log /var/log/nginx/nclean-crm-access.log nclean_crm_path;
     return 308 /crm/$is_args$args;

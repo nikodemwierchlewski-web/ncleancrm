@@ -31,7 +31,7 @@
    try{if(result.removed)sessionStorage.setItem(key,JSON.stringify({kind:result.kind,id:result.id,version:result.version,at:Date.now()}));else sessionStorage.removeItem(key);}catch{}
    dialog.dataset.completed='true';document.dispatchEvent(new CustomEvent('nclean:removed',{detail:result}));
    const route=result.kind==='booking'?'/calendar?day='+encodeURIComponent(result.day):['category','service','chemical'].includes(result.kind)?'/settings/services':location.pathname+location.search;
-   location.assign(route);
+   location.assign(Nclean.url(route));
   }catch(e){error.textContent=e.message;}finally{busy=false;accept.disabled=false;cancel.disabled=false;dialog.removeAttribute('aria-busy');}
  });
  try{
@@ -39,7 +39,7 @@
   if(saved&&Date.now()-saved.at<300000&&['booking','category','service','chemical','expense','fuel','equipment'].includes(saved.kind)&&Number.isSafeInteger(saved.id)&&Number.isSafeInteger(saved.version)){
    const csrf=document.querySelector('input[name=_csrf]')?.value;if(!csrf)return;
    const notice=document.createElement('div');notice.className='removal-notice';notice.setAttribute('role','status');const copy=document.createElement('span');copy.textContent='Usunięto z bieżących widoków.';
-   const form=document.createElement('form');form.className='removal-form';form.method='post';form.action='/manage/remove';form.dataset.removalLabel='Ostatnio usunięty wpis';
+   const form=document.createElement('form');form.className='removal-form';form.method='post';form.action=Nclean.url('/manage/remove');form.dataset.removalLabel='Ostatnio usunięty wpis';
    for(const [name,value]of Object.entries({kind:saved.kind,id:saved.id,version:saved.version,restore:'true',_csrf:csrf})){const i=document.createElement('input');i.type='hidden';i.name=name;i.value=String(value);form.append(i);}
    const undo=document.createElement('button');undo.type='submit';undo.className='button secondary';undo.textContent='Cofnij usunięcie';form.append(undo);notice.append(copy,form);document.querySelector('main')?.prepend(notice);
   }

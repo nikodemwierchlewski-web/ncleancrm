@@ -61,7 +61,7 @@
     pendingScene=kind;removeFeedback();
     feedback=document.createElement('aside');feedback.className='tycoon-action-feedback tycoon-base';feedback.setAttribute('role','status');
     const text=document.createElement('strong');text.textContent=kind==='day'?'Dzień sprawdzony ✓':kind==='completed'?'Zapisano wykonanie ✓':'Zapisano zlecenie ✓';
-    const image=document.createElement('img');image.src=window.NcleanMotion.artwork||'/pixel/base.svg';image.alt='';image.width=140;image.height=62;
+    const image=document.createElement('img');image.src=window.NcleanMotion.artwork||Nclean.url('/pixel/base.svg');image.alt='';image.width=140;image.height=62;
     feedback.append(text,image);root.classList.add('tycoon-feedback-active');document.body.append(feedback);window.NcleanMotion.hydrate?.(image);
     feedbackTimer=setTimeout(removeFeedback,2200);
   }
