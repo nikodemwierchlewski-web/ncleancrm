@@ -1,0 +1,21 @@
+{
+  "unit_mvc": {
+    "tests": 36,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "postgresql_integration": {
+    "tests": 85,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "verify": "BUILD SUCCESS",
+  "verify_log_sha256": "5c883c161bddda1a2c1fa207b95ab43c9834ff4eea5dd4f70669fd62186c03cb",
+  "jar_sha256": "e64bdadbbfc7beb05d417fd4dab959a8d0d242718e67032452d6fcaaddf7fc9c",
+  "final_resource_check": "Packaged resources equal working sources; final semantic group fix and package rechecked in browsers.",
+  "isolated_postgresql": "empty day no reminder; eight yesterday visits pending; booking rows unchanged",
+  "physical_phone_tested": false,
+  "pull_request_created": false
+}

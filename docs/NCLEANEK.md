@@ -40,7 +40,7 @@ Nie badano fizycznego telefonu, klawiatury Android/iOS, pełnego czytnika ekranu
 
 ## Podgląd
 
-Aktualna paczka: `preview/ncleanek-demo.zip`. Wypakuj ZIP i otwórz index.html w aktualnym Chrome lub Edge. To syntetyczna demonstracja 62 widoków istniejącej aplikacji, z symulowanym zapisem w pamięci. Preferencje pomocnika zachowują się między ekranami tej demonstracji; odświeżenie resetuje sesję. Nie wpisuj prawdziwych danych klientów.
+Aktualna paczka: `preview/ncleanek-floating-demo.zip`. Wypakuj ZIP i otwórz index.html w aktualnym Chrome lub Edge. To syntetyczna demonstracja 62 widoków istniejącej aplikacji, z symulowanym zapisem w pamięci. Preferencje pomocnika zachowują się między ekranami tej demonstracji; odświeżenie resetuje sesję. Nie wpisuj prawdziwych danych klientów.
 
 Wbudowany panel Codexa w tej sesji nie udostępnia przeglądarki użytkownikowi. HTML sprawdzamy oddzielnie w Chromium, również w ramce sandbox. Nie wdrażamy produkcji ani nie łączymy bazy nclean.pl.
 
@@ -57,10 +57,12 @@ Gałąź: `feature/ncleanek-guide`, baza: `release/tycoon-0.1`. Utworzenie draft
 
 ## Przesuwanie ncLEANKA
 
-Mysz, dotyk i pióro korzystają ze wspólnego gestu. Ruch poniżej 8 px pozostaje kliknięciem; po przekroczeniu progu ludzik wyciąga rękę do kursora i zwisa z poruszającymi się nogami. Przeciągnięcie ani anulowanie gestu nie otwierają pomocy. Nowe, świadome tapnięcie działa od razu. Przy systemowym ograniczeniu ruchu poza jest statyczna, ale przesuwanie działa.
+Mysz, dotyk i pióro korzystają ze wspólnego gestu. Domyślnie ncLEANEK stoi w prawym dolnym rogu, nad mobilną nawigacją. Można przesuwać go tylko lewo/prawo, bez ruchu w pionie. Ruch poniżej 8 px pozostaje kliknięciem; po przekroczeniu progu ludzik przyjmuje pozę podnoszenia. Pole dotykowe ma zawsze 44×60 px. Przeciągnięcie ani anulowanie gestu nie otwierają pomocy. Nowe, świadome tapnięcie działa od razu. Przy systemowym ograniczeniu ruchu poza jest statyczna, ale przesuwanie działa.
 
-Położenie jest zapisywane jako dwie liczby 0–1 w preferencji `nclean.puppet.position.v1`, bez danych klientów. Przy zmianie rozmiaru i otwarciu formularza ncLEANEK szuka wolnego miejsca. Chronione są pola, przyciski, linki i panel pomocy. Przy braku miejsca zmniejsza się lub czasowo chowa, zamiast zasłaniać zapis. Automatyczne dostosowanie nie zmienia zapisanej preferencji użytkownika.
+Położenie jest zapisywane jako dwie liczby 0–1 w preferencji `nclean.puppet.position.v1`, bez danych klientów. Wykorzystujemy tylko współrzędną poziomą; pionowe położenie wynika z dolnej krawędzi ekranu. Nie ma wyszukiwania wolnego miejsca, przyciągania ani automatycznych zmian rozmiaru. Przewijanie i otwarcie formularza nie przestawiają ludzika. W kolizji z przyciskiem zapisu lub aktywnym polem postać blednie i przepuszcza kliknięcia, zachowując położenie. Po zmianie rozmiaru ekranu zachowana jest preferencja pozioma.
 
-Strzałki przesuwają postać, Home resetuje położenie, Enter/Spacja otwierają pomoc. Reset i przeniesienie na drugą stronę są też w Opcjach oraz Ustawienia → Wygląd i aplikacja. Nie ma nowego modułu biznesowego, migracji ani zmian w OWNER/CSRF.
+Strzałki lewo/prawo przesuwają postać, Home przywraca prawy dolny róg, Enter/Spacja otwierają pomoc. Reset i przeniesienie na drugą stronę są też w Opcjach oraz Ustawienia → Wygląd i aplikacja. Nie ma nowego modułu biznesowego, migracji ani zmian w OWNER/CSRF.
 
-Weryfikacja tej wersji i aktualny plik: [NCLEANEK-FLOATING-RESULTS.md](NCLEANEK-FLOATING-RESULTS.md). Starsze raporty opisują poprzedni wariant pomocnika.
+Aktualne zachowanie i testy: [NCLEANEK-BOTTOM-RAIL-RESULTS.md](NCLEANEK-BOTTOM-RAIL-RESULTS.md). Starsze raporty opisują poprzedni wariant pomocnika.
+
+Przypomnienie „Dokończ dzień” pojawia się bez otwierania okna, gdy istniejący endpoint `/help/context` zgłasza zaległość. Prowadzi do pierwszej wizyty z brakami lub do zamknięcia uzupełnionego dnia. × odkłada je na 20 minut; Opcje pozwalają wyciszyć je na dziś. Nie pokazujemy chmurki w otwartym formularzu ani podczas pomocy lub przeciągania. Przypomnienia działają tylko w otwartej aplikacji.

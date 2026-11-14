@@ -1,0 +1,255 @@
+{
+  "views": [
+    {
+      "width": 360,
+      "whole_view": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": [
+              {
+                "target": [
+                  "#agenda-orders > .completed.booking-chip[data-order=\"1\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #60778a, background color: #edf3ea, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > strong"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-customer"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.01 (foreground color: #60778a, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "aria-valid-attr-value",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      "companion": {
+        "violations": [],
+        "incomplete": []
+      }
+    },
+    {
+      "width": 390,
+      "whole_view": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": [
+              {
+                "target": [
+                  "#agenda-orders > .completed.booking-chip[data-order=\"1\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #60778a, background color: #edf3ea, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > strong"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-customer"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.01 (foreground color: #60778a, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "aria-valid-attr-value",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      "companion": {
+        "violations": [],
+        "incomplete": []
+      }
+    },
+    {
+      "width": 768,
+      "whole_view": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": [
+              {
+                "target": [
+                  "#agenda-orders > .completed.booking-chip[data-order=\"1\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #60778a, background color: #edf3ea, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > strong"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-customer"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.01 (foreground color: #60778a, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "aria-valid-attr-value",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 5
+          }
+        ]
+      },
+      "companion": {
+        "violations": [],
+        "incomplete": []
+      }
+    },
+    {
+      "width": 1440,
+      "whole_view": {
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": [
+              {
+                "target": [
+                  "#agenda-orders > .completed.booking-chip[data-order=\"1\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.13 (foreground color: #60778a, background color: #edf3ea, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > strong"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-customer"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-address"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.01 (foreground color: #60778a, background color: #f0eee5, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "target": [
+                  "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > small"
+                ],
+                "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #5b707e, background color: #f0eee5, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ]
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "aria-valid-attr-value",
+            "nodes": 1
+          },
+          {
+            "id": "color-contrast",
+            "nodes": 13
+          }
+        ]
+      },
+      "companion": {
+        "violations": [],
+        "incomplete": []
+      }
+    }
+  ],
+  "previous_downloaded_preview_390_baseline": [
+    {
+      "id": "color-contrast",
+      "targets": [
+        [
+          "#agenda-orders > .completed.booking-chip[data-order=\"1\"] > .booking-address"
+        ],
+        [
+          "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > strong"
+        ],
+        [
+          "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-customer"
+        ],
+        [
+          "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > .booking-address"
+        ],
+        [
+          "#agenda-orders > .cancelled.booking-chip[data-order=\"2\"] > small"
+        ]
+      ]
+    }
+  ],
+  "note": "The unchanged booking-card text has existing contrast issues; these are not attributed to ncLEANEK. Incomplete items are not passed."
+}

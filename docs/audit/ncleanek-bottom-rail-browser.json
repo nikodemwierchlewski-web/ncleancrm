@@ -1,0 +1,151 @@
+{
+  "route_width_checks": [
+    {
+      "width": 360,
+      "route": "/calendar",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/customers",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/settings",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/settings/areas",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/notes",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/costs",
+      "stable": true
+    },
+    {
+      "width": 360,
+      "route": "/dashboard",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/calendar",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/customers",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/settings",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/settings/areas",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/notes",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/costs",
+      "stable": true
+    },
+    {
+      "width": 390,
+      "route": "/dashboard",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/calendar",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/customers",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/settings",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/settings/areas",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/notes",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/costs",
+      "stable": true
+    },
+    {
+      "width": 768,
+      "route": "/dashboard",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/calendar",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/customers",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/settings",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/settings/areas",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/notes",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/costs",
+      "stable": true
+    },
+    {
+      "width": 1440,
+      "route": "/dashboard",
+      "stable": true
+    }
+  ],
+  "drag_drop_checks": 27,
+  "cancel_foreign_pointer": true,
+  "horizontal_keyboard_home_and_resize": true,
+  "form_draft_and_save_accessible": true,
+  "touch_drag_and_tap": true,
+  "reduced_motion": true,
+  "javascript_errors": []
+}

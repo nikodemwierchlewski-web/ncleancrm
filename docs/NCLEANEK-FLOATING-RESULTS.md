@@ -1,5 +1,7 @@
 # Testy i podgląd ruchomego ncLEANKA — 14.11.2026
 
+> Raport pierwszego wariantu swobodnego przeciągania. Aktualne poprawki cofania/rozmiaru i ruch wyłącznie w poziomie: [NCLEANEK-BOTTOM-RAIL-RESULTS.md](NCLEANEK-BOTTOM-RAIL-RESULTS.md).
+
 Zamiast elementu w nagłówku ncLEANEK jest samodzielną postacią nad interfejsem. Kliknięcie od razu uruchamia podpowiedzi aktualnego ekranu lub otwartego formularza. Przeciąganie podnosi go za rękę; poruszają się nogi i zmienia przechylenie, po odłożeniu następuje krótkie lądowanie. W trybie ograniczonego ruchu poza jest statyczna, a sterowanie nadal działa.
 
 W panelu **Opcje** pozostają przypomnienia, wyciszenie, ukrywanie, reset położenia i przeniesienie na drugą stronę. Ustawienia zawierają te same polecenia. Strzałki przesuwają postać, Home przywraca pozycję; Enter/Spacja otwierają pomoc. Przy krawędzi działa lekkie przyciąganie. Położenie zapisujemy jako dwie liczby 0–1, bez danych klientów i bez zapisywania szkiców.

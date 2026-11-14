@@ -1,0 +1,30 @@
+{
+  "before": {
+    "x": 250,
+    "y": 270,
+    "width": 76,
+    "height": 112
+  },
+  "during": {
+    "x": 143,
+    "y": 289.90625,
+    "width": 76,
+    "height": 112
+  },
+  "after": {
+    "x": 143,
+    "y": 270,
+    "width": 76,
+    "height": 112
+  },
+  "scroll": {
+    "x": 143,
+    "y": 270,
+    "width": 44,
+    "height": 60
+  },
+  "expected_delta": {
+    "x": -70,
+    "y": 0
+  }
+}
