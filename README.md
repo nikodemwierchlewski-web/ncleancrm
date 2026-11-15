@@ -1,8 +1,10 @@
 # ncLEAN CRM — wersja 0.1
 
+Aktualne uproszczenia: [opcje na żądanie, plan dnia i wyniki weryfikacji](docs/lean-disclosure/REPORT.md).
+
 Uporządkowany układ codziennej pracy: [Lean workspace — obsługa i weryfikacja](docs/LEAN-WORKSPACE.md). Nawigacja: Dzisiaj, Kalendarz, Klienci, Więcej. Kalendarz pozostaje ekranem startowym.
 
-Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn i stały panel dnia, a na telefonie kompaktowy pasek tygodnia i plan wybranego dnia. Formularz zachowuje usługi z kilku kategorii i podpowiada klienta w jednym polu. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
+Kalendarz obsługuje logowanie właściciela, przypisanie wielu kolorowych obszarów pracy do dnia oraz ustawienia nazw, kolorów i aktywności obszarów. Na komputerze miesiąc ma układ 7 kolumn i stały panel dnia, a na telefonie ten sam widok miesiąca i otwierany panel wybranego dnia. Formularz zachowuje usługi z kilku kategorii i podpowiada klienta w jednym polu. Zlecenia są widoczne bezpośrednio w kalendarzu; krótki formularz pozwala wybrać usługi z cennika i istniejącego lub nowego klienta. Przypisania są zapisywane w PostgreSQL i pozostają po restarcie aplikacji. To osobna aplikacja i baza, bez połączenia z produkcyjnym CMS nclean.pl.
 
 Nowe opcje: tygodniowy plan obszarów z wyjątkami, ceny uzgadniane w rezerwacji oraz standardy i prognozy chemii. Instrukcja: [docs/PLAN-CENNIK-CHEMIA.md](docs/PLAN-CENNIK-CHEMIA.md). Wyniki sprawdzenia: [docs/WERYFIKACJA-PLANU-I-PROGNOZ.md](docs/WERYFIKACJA-PLANU-I-PROGNOZ.md).
 

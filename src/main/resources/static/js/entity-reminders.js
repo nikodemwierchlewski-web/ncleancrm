@@ -7,9 +7,9 @@
  const node=(tag,attrs={},text)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
  const input=(name,value,type='hidden')=>node('input',{name,value,type});
  const label=(text,child)=>{const e=node('label',{},text);e.append(child);return e;};
- const error=(section,text)=>section.querySelector('[data-reminder-error]').textContent=text;
+ const error=(section,text)=>{section.querySelector('[data-reminder-error]').textContent=text;if(text&&!text.startsWith('Zapisano'))section.querySelector('.reminder-disclosure').open=true;};
  async function json(path,options){const r=await fetch(url(path),{...options,headers:{Accept:'application/json',...options?.headers}});if(!r.ok||r.redirected){let message;try{message=(await r.json()).message;}catch{}throw Error(message||'Nie udało się pobrać przypomnień. Sprawdź sesję i połączenie.');}return r.json();}
- function reindex(section){[...section.querySelectorAll('.entity-reminder-row')].forEach((row,i)=>row.querySelectorAll('[data-field]').forEach(n=>n.name='entity_'+n.dataset.field+'_'+i));section.querySelector('[data-reminder-add]').disabled=section.querySelectorAll('.entity-reminder-row').length>=10;}
+ function reindex(section){[...section.querySelectorAll('.entity-reminder-row')].forEach((row,i)=>row.querySelectorAll('[data-field]').forEach(n=>n.name='entity_'+n.dataset.field+'_'+i));const count=section.querySelectorAll('.entity-reminder-row').length;section.querySelector('[data-reminder-add]').disabled=count>=10;section.querySelector('[data-reminder-count]').textContent=count===0?'Brak':count===1?'1 przypomnienie':count<5?count+' przypomnienia':count+' przypomnień';}
  function modeState(row){const offset=row.querySelector('[data-field="mode"]').value==='OFFSET';for(const key of ['amount','unit']){const field=row.querySelector(`[data-field="${key}"]`);field.disabled=!offset;field.closest('label').hidden=!offset;}const at=row.querySelector('[data-field="at"]');at.disabled=offset;at.required=!offset;at.closest('label').hidden=offset;}
  function field(tag,key,attrs={}){return node(tag,{'data-field':key,...attrs});}
  function row(section,spec={id:token(),offsetMinutes:30}){
@@ -30,7 +30,7 @@
    if(save)save.addEventListener('click',async()=>{if(loading)return;const invalid=[...section.querySelectorAll('input,select')].find(i=>!i.disabled&&!i.checkValidity());if(invalid){invalid.reportValidity();return;}loading=true;const fields=[...section.querySelectorAll('input,select,button')].map(n=>({n,disabled:n.disabled}));const body=new URLSearchParams();for(const n of section.querySelectorAll('input,select'))if(n.name&&!n.disabled)body.set(n.name,n.value);body.set('sourceType',section.dataset.reminderSource);body.set('sourceId',id);body.set('_csrf',csrf()||'');fields.forEach(({n})=>n.disabled=true);
     try{const p=await json('/api/v1/reminders',{method:'POST',body});section.querySelector('[name="entity_version"]').value=p.version;error(section,'Zapisano przypomnienia.');}catch(e){error(section,e.message);}finally{fields.forEach(({n,disabled})=>n.disabled=disabled);loading=false;reindex(section);}
    });
-  }catch(e){error(section,e.message+' Zamknij i otwórz wpis ponownie.');/* Never submit an unloaded reminder set. */}
+  }catch(e){section.querySelector('[data-reminder-count]').textContent='Nie odczytano';error(section,e.message+' Zamknij i otwórz wpis ponownie.');/* Never submit an unloaded reminder set. */}
   finally{loading=false;if(submit)submit.disabled=false;}
  }}
  window.NcleanReminders=Object.freeze({mount});mount();

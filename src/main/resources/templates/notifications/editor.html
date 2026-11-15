@@ -1,8 +1,8 @@
 <!doctype html><html lang="pl" xmlns:th="http://www.thymeleaf.org"><body>
 <section th:fragment="editor(type,id)" class="entity-reminders card" th:attr="data-reminder-source=${type},data-reminder-id=${id}">
-<header><h2 th:if="${type == 'BOOKING'}">Przypomnienia</h2><h3 th:if="${type == 'MEMO'}">Przypomnienia</h3><span class="field-help">Opcjonalnie · do 10</span></header>
+<details class="reminder-disclosure lean-disclosure"><summary><h2 th:if="${type == 'BOOKING'}">Przypomnienia</h2><h3 th:if="${type == 'MEMO'}">Przypomnienia</h3><span data-reminder-count>Ładowanie…</span></summary>
 <p class="field-help">Przed terminem lub o konkretnej godzinie. Czas w Polsce. Zmiana terminu przesuwa przypomnienia względne.</p>
 <div data-entity-reminder-rows></div><p class="reminder-error" role="status" data-reminder-error>Wczytywanie przypomnień…</p>
 <button type="button" class="button secondary" data-reminder-add disabled>+ Przypomnienie</button><button type="button" class="button primary" data-reminder-save th:if="${type == 'BOOKING'}" disabled>Zapisz przypomnienia</button>
 <p class="field-help" th:if="${type == 'MEMO'}">Zapiszesz razem z notatką lub celem.</p>
-</section></body></html>
+</details></section></body></html>

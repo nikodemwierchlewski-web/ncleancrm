@@ -9,6 +9,7 @@ def verify_today_workspace(page, base, output):
     def note(kind,title,pin=False,main=False,reminder=False,steps=()):
         page.goto(base+'/notes');page.locator('[data-note-new]').click();f=page.locator('#note-form')
         f.locator('[name=kind]').select_option(kind);f.locator('[name=title]').fill(title)
+        if pin or main:f.locator('.note-options>summary').click()
         if pin:f.locator('[name=todayPinned]').check()
         if main:f.locator('[name=mainGoal]').check()
         for text in steps:f.locator('#add-note-step').click();f.locator('[data-step-text]').last.fill(text)
@@ -40,7 +41,7 @@ def verify_today_workspace(page, base, output):
         assert 'Pixelify' not in page.locator('.today-date').evaluate('e=>getComputedStyle(e).fontFamily')
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
         page.screenshot(path=str(output/('today-'+str(width)+'.png')),full_page=True)
-        page.locator('[data-finance-filter]').select_option('week');page.locator('.finance-filters').get_by_role('button',name='Pokaż',exact=True).click();expect(page.locator('[data-chart-select] option')).to_have_count(7);assert day in page.locator('[data-chart-select] option').evaluate_all('options=>options.map(o=>o.dataset.date)');page.locator('[data-chart-select]').select_option('0');expect(page.locator('[data-chart-value]')).to_contain_text('przychód')
+        page.locator('.finance-filter-disclosure>summary').click();page.locator('[data-finance-filter]').select_option('week');page.locator('.finance-filters').get_by_role('button',name='Pokaż',exact=True).click();expect(page.locator('[data-chart-select] option')).to_have_count(7);assert day in page.locator('[data-chart-select] option').evaluate_all('options=>options.map(o=>o.dataset.date)');page.locator('.chart-days>summary').click();page.locator('[data-chart-select]').select_option('0');expect(page.locator('[data-chart-value]')).to_contain_text('przychód')
         page.goto(base+'/calendar?day='+day);expect(page.locator('#month-overview')).to_be_visible();expect(page.locator('#week-strip')).to_have_count(0);assert len(page.locator('.calendar-grid').evaluate('e=>getComputedStyle(e).gridTemplateColumns.split(" ")'))==7
         if width<=900:
             expect(page.locator('#agenda-slot')).not_to_be_visible();page.locator('[data-select-day="'+day+'"]').first.click();expect(page.locator('#agenda-sheet')).to_be_visible();expect(page.locator('#agenda-orders [data-order]')).not_to_have_count(0);page.locator('#agenda-orders [data-order]').first.click();expect(page.locator('#order-editor')).to_be_visible();page.locator('#order-editor [data-close]').first.click();expect(page.locator('#agenda-sheet')).to_be_visible();page.locator('#agenda-sheet [data-close]').click();expect(page.locator('#agenda-sheet')).not_to_be_visible();expect(page.locator('[data-select-day="'+day+'"]').first).to_be_focused()

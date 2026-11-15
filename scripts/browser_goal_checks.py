@@ -8,7 +8,7 @@ def verify_main_goal(page, base, output):
     form = page.locator('#note-form')
     form.locator('[name=kind]').select_option('GOAL')
     form.locator('[name=title]').fill('Przygotować sezon — cel testowy')
-    form.locator('[name=pinned]').check()
+    form.locator('.note-options>summary').click();form.locator('[name=pinned]').check()
     for text in ('Wybrać zdjęcia', 'Uzupełnić ofertę'):
         form.locator('#add-note-step').click()
         form.locator('[data-step-text]').last.fill(text)
@@ -74,6 +74,8 @@ def verify_main_goal(page, base, output):
     form = page.locator('#note-form')
     form.locator('[name=kind]').select_option('GOAL')
     form.locator('[name=title]').fill('Cel bez kroków')
+
+    if not form.locator('.note-options').evaluate('e=>e.open'):form.locator('.note-options>summary').click()
     form.locator('[name=mainGoal]').check()
     form.get_by_role('button', name='Zapisz', exact=True).click()
     expect(page.locator('#note-editor')).not_to_be_visible()

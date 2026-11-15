@@ -13,5 +13,5 @@
  svg.append(el('text',{x:120,y:135,'text-anchor':'middle',class:'donut-total'},new Intl.NumberFormat('pl-PL',{maximumFractionDigits:2}).format(total)+' zł'));
  if(total===0){const empty=document.createElement('p');empty.className='chart-empty';empty.textContent='Brak przychodu z wykonanych usług w tym zakresie. Zapisane koszty nadal wpływają na wynik obok.';svg.after(empty);}
  function pick(index){const p=points[index];if(!p)return;select.value=String(index);caption.textContent=p.date.split('-').reverse().join('.')+' · przychód '+format.format(p.revenue)+' · wynik '+format.format(p.profit);for(const cell of cells)cell.n.setAttribute('opacity',cell.index<0||cell.index===index?1:.55);}
- svg.addEventListener('click',e=>{const g=e.target.closest('[data-chart-index]');if(g&&Number(g.dataset.chartIndex)>=0)pick(Number(g.dataset.chartIndex));});select.addEventListener('change',()=>pick(Number(select.value)));pick(points.length-1);
+ svg.addEventListener('click',e=>{const g=e.target.closest('[data-chart-index]');if(g&&Number(g.dataset.chartIndex)>=0){chart.querySelector('.chart-days').open=true;pick(Number(g.dataset.chartIndex));}});select.addEventListener('change',()=>pick(Number(select.value)));pick(points.length-1);
 })();

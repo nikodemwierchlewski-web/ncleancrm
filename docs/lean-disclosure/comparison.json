@@ -1,0 +1,378 @@
+[
+  {
+    "height": 928,
+    "controls": 5,
+    "scrollHeight": 924,
+    "fields": 3,
+    "version": "before",
+    "width": 360,
+    "route": "/today",
+    "planY": 1416,
+    "filterClicks": 1
+  },
+  {
+    "height": 1524,
+    "controls": 21,
+    "scrollHeight": 1524,
+    "fields": 4,
+    "version": "before",
+    "width": 360,
+    "route": "/work/1"
+  },
+  {
+    "height": 950,
+    "controls": 17,
+    "scrollHeight": 950,
+    "fields": 4,
+    "version": "before",
+    "width": 360,
+    "route": "/costs"
+  },
+  {
+    "height": 1410,
+    "controls": 11,
+    "scrollHeight": 1410,
+    "fields": 4,
+    "version": "before",
+    "width": 360,
+    "route": "/fuel"
+  },
+  {
+    "height": 1045,
+    "controls": 11,
+    "scrollHeight": 1045,
+    "fields": 7,
+    "version": "before",
+    "width": 360,
+    "route": "/notes"
+  },
+  {
+    "height": 928,
+    "controls": 5,
+    "scrollHeight": 924,
+    "fields": 3,
+    "version": "before",
+    "width": 390,
+    "route": "/today",
+    "planY": 1416,
+    "filterClicks": 1
+  },
+  {
+    "height": 1524,
+    "controls": 21,
+    "scrollHeight": 1524,
+    "fields": 4,
+    "version": "before",
+    "width": 390,
+    "route": "/work/1"
+  },
+  {
+    "height": 869,
+    "controls": 17,
+    "scrollHeight": 869,
+    "fields": 4,
+    "version": "before",
+    "width": 390,
+    "route": "/costs"
+  },
+  {
+    "height": 1374,
+    "controls": 11,
+    "scrollHeight": 1374,
+    "fields": 4,
+    "version": "before",
+    "width": 390,
+    "route": "/fuel"
+  },
+  {
+    "height": 1045,
+    "controls": 11,
+    "scrollHeight": 1045,
+    "fields": 7,
+    "version": "before",
+    "width": 390,
+    "route": "/notes"
+  },
+  {
+    "height": 906,
+    "controls": 5,
+    "scrollHeight": 902,
+    "fields": 3,
+    "version": "before",
+    "width": 768,
+    "route": "/today",
+    "planY": 1409,
+    "filterClicks": 1
+  },
+  {
+    "height": 1496,
+    "controls": 21,
+    "scrollHeight": 1496,
+    "fields": 4,
+    "version": "before",
+    "width": 768,
+    "route": "/work/1"
+  },
+  {
+    "height": 820,
+    "controls": 17,
+    "scrollHeight": 820,
+    "fields": 4,
+    "version": "before",
+    "width": 768,
+    "route": "/costs"
+  },
+  {
+    "height": 1241,
+    "controls": 11,
+    "scrollHeight": 1241,
+    "fields": 4,
+    "version": "before",
+    "width": 768,
+    "route": "/fuel"
+  },
+  {
+    "height": 897,
+    "controls": 11,
+    "scrollHeight": 897,
+    "fields": 7,
+    "version": "before",
+    "width": 768,
+    "route": "/notes"
+  },
+  {
+    "height": 917,
+    "controls": 5,
+    "scrollHeight": 913,
+    "fields": 3,
+    "version": "before",
+    "width": 1440,
+    "route": "/today",
+    "planY": 1195,
+    "filterClicks": 1
+  },
+  {
+    "height": 1496,
+    "controls": 21,
+    "scrollHeight": 1496,
+    "fields": 4,
+    "version": "before",
+    "width": 1440,
+    "route": "/work/1"
+  },
+  {
+    "height": 802,
+    "controls": 17,
+    "scrollHeight": 802,
+    "fields": 4,
+    "version": "before",
+    "width": 1440,
+    "route": "/costs"
+  },
+  {
+    "height": 1223,
+    "controls": 11,
+    "scrollHeight": 1223,
+    "fields": 4,
+    "version": "before",
+    "width": 1440,
+    "route": "/fuel"
+  },
+  {
+    "height": 897,
+    "controls": 11,
+    "scrollHeight": 897,
+    "fields": 7,
+    "version": "before",
+    "width": 1440,
+    "route": "/notes"
+  },
+  {
+    "height": 746,
+    "controls": 3,
+    "scrollHeight": 742,
+    "fields": 0,
+    "version": "after",
+    "width": 360,
+    "route": "/today",
+    "planY": 249,
+    "filterClicks": 2
+  },
+  {
+    "height": 1327,
+    "controls": 20,
+    "scrollHeight": 1327,
+    "fields": 4,
+    "version": "after",
+    "width": 360,
+    "route": "/work/1"
+  },
+  {
+    "height": 744,
+    "controls": 12,
+    "scrollHeight": 744,
+    "fields": 0,
+    "version": "after",
+    "width": 360,
+    "route": "/costs"
+  },
+  {
+    "height": 1195,
+    "controls": 13,
+    "scrollHeight": 1195,
+    "fields": 4,
+    "version": "after",
+    "width": 360,
+    "route": "/fuel"
+  },
+  {
+    "height": 701,
+    "controls": 8,
+    "scrollHeight": 701,
+    "fields": 3,
+    "version": "after",
+    "width": 360,
+    "route": "/notes"
+  },
+  {
+    "height": 746,
+    "controls": 3,
+    "scrollHeight": 742,
+    "fields": 0,
+    "version": "after",
+    "width": 390,
+    "route": "/today",
+    "planY": 249,
+    "filterClicks": 2
+  },
+  {
+    "height": 1327,
+    "controls": 20,
+    "scrollHeight": 1327,
+    "fields": 4,
+    "version": "after",
+    "width": 390,
+    "route": "/work/1"
+  },
+  {
+    "height": 683,
+    "controls": 12,
+    "scrollHeight": 683,
+    "fields": 0,
+    "version": "after",
+    "width": 390,
+    "route": "/costs"
+  },
+  {
+    "height": 1195,
+    "controls": 13,
+    "scrollHeight": 1195,
+    "fields": 4,
+    "version": "after",
+    "width": 390,
+    "route": "/fuel"
+  },
+  {
+    "height": 701,
+    "controls": 8,
+    "scrollHeight": 701,
+    "fields": 3,
+    "version": "after",
+    "width": 390,
+    "route": "/notes"
+  },
+  {
+    "height": 729,
+    "controls": 3,
+    "scrollHeight": 725,
+    "fields": 0,
+    "version": "after",
+    "width": 768,
+    "route": "/today",
+    "planY": 261,
+    "filterClicks": 2
+  },
+  {
+    "height": 1395,
+    "controls": 20,
+    "scrollHeight": 1395,
+    "fields": 4,
+    "version": "after",
+    "width": 768,
+    "route": "/work/1"
+  },
+  {
+    "height": 638,
+    "controls": 12,
+    "scrollHeight": 638,
+    "fields": 0,
+    "version": "after",
+    "width": 768,
+    "route": "/costs"
+  },
+  {
+    "height": 1152,
+    "controls": 13,
+    "scrollHeight": 1152,
+    "fields": 4,
+    "version": "after",
+    "width": 768,
+    "route": "/fuel"
+  },
+  {
+    "height": 684,
+    "controls": 8,
+    "scrollHeight": 684,
+    "fields": 3,
+    "version": "after",
+    "width": 768,
+    "route": "/notes"
+  },
+  {
+    "height": 740,
+    "controls": 3,
+    "scrollHeight": 736,
+    "fields": 0,
+    "version": "after",
+    "width": 1440,
+    "route": "/today",
+    "planY": 266,
+    "filterClicks": 2
+  },
+  {
+    "height": 1395,
+    "controls": 20,
+    "scrollHeight": 1395,
+    "fields": 4,
+    "version": "after",
+    "width": 1440,
+    "route": "/work/1"
+  },
+  {
+    "height": 619,
+    "controls": 12,
+    "scrollHeight": 619,
+    "fields": 0,
+    "version": "after",
+    "width": 1440,
+    "route": "/costs"
+  },
+  {
+    "height": 1152,
+    "controls": 13,
+    "scrollHeight": 1152,
+    "fields": 4,
+    "version": "after",
+    "width": 1440,
+    "route": "/fuel"
+  },
+  {
+    "height": 684,
+    "controls": 8,
+    "scrollHeight": 684,
+    "fields": 3,
+    "version": "after",
+    "width": 1440,
+    "route": "/notes"
+  }
+]
