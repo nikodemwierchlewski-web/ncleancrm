@@ -1,3 +1,9 @@
+# Audyt użytkowy 15.11.2026
+
+Aktualny [HTML](nclean-user-journey.html), [ZIP](nclean-user-journey.zip), [raport](../docs/user-journey-audit/REPORT.md).
+
+Poniższe paczki pochodzą z wcześniejszego etapu 14.11.2026.
+
 # Aktualny podgląd i paczka dla administratora
 
 - [Klikalny HTML](nclean-final.html)
