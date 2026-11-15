@@ -19,3 +19,7 @@ Integracje obejmują zmianę terminu i anulowanie wizyty, oddzielenie odczytu od
 Powiadomienia są na razie wewnątrz otwartej aplikacji. Nie uruchomiono SMS, push ani aplikacji Android; kontrakt i potrzebny dalszy etap opisano w `REMINDERS-ANDROID-CONTRACT.md`. Testy telefonu wykonano w Chromium przy odpowiednich szerokościach, bez fizycznego urządzenia.
 
 Aktualna sesja nie udostępnia działającego mechanizmu otwarcia serwera jako podglądu Codexa. Osobny HTML jest demonstracją z syntetycznymi danymi opartą na przechwyconych widokach serwera oraz tych samych modułach UI. Jego zapisy są symulowane w karcie; eksport JSON próby nie zastępuje PostgreSQL ani backupu zdjęć.
+
+## Podgląd HTML
+
+`preview/nclean-contextual-reminders.html` zawiera 81 przechwyconych widoków prawdziwego serwera, te same moduły UI i jawnie oddzielony transport DEMO. `scripts/verify-entity-preview.py` przeszedł: 360/390/768/1440 px, koło do dnia/tydzień/własne daty, zapis i ponowne otwarcie przypomnień zlecenia oraz nowej notatki z terminem, kalendarz 7 kolumn i dwa zagnieżdżone sandboxy o nieprzezroczystym pochodzeniu. Brak błędów JavaScript. ZIP sprawdzono przez `ZipFile.testzip()`; plik HTML pobiera się z lokalnego serwera HTTP (200). Nie zweryfikowano działania natywnego panelu podglądu Codexa — brak dostępnego narzędzia przeglądarki/otwarcia tego panelu w tej sesji.
