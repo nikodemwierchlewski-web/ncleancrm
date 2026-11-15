@@ -1,0 +1,22 @@
+{
+  "code_revision": "6a36fec",
+  "branch": "feat/pixel-motion-main-goal",
+  "mode": "synthetic HTML demonstration, no PostgreSQL connection",
+  "views": 63,
+  "java_tests": {
+    "unit_mvc_architecture": 50,
+    "postgresql_integration": 106,
+    "failures": 0,
+    "skipped": 0
+  },
+  "viewports": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "axe_scans": 66,
+  "axe_violations": 0,
+  "jar_sha256": "b2af8ee99101df07a9a2b9f3f03b42b0a97b2c0f499db17474c4e61a588725bf",
+  "html_sha256": "0b412288117cf80af325140b9654a1018a4d51a50517255a59598de8ae0d2a61"
+}

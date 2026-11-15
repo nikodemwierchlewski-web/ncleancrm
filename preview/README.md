@@ -1,10 +1,22 @@
-# Audyt użytkowy 15.11.2026
+# Aktualny podgląd: pixelowy interfejs i główny cel
+
+[Otwórz HTML](nclean-pixel-main-goal.html) · [Pobierz ZIP](nclean-pixel-main-goal.zip) · [Raport i obsługa](../docs/pixel-main-goal/REPORT.md).
+
+W prawdziwej aplikacji główny cel jest zapisywany w PostgreSQL (nowa migracja V17).
+HTML jest demonstracją z danymi syntetycznymi, w pamięci karty. Odświeżenie resetuje
+stan; eksport/import ćwiczenia znajduje się w menu `⋯`. Nie wpisuj danych klientów.
+
+Poniższe podglądy i paczki źródłowe to archiwum wcześniejszych etapów. Paczka
+administratora z V1–V16 nie zawiera jeszcze tej aktualizacji; aktualny kod jest
+na gałęzi `feat/pixel-motion-main-goal`.
+
+# Archiwum: audyt użytkowy 15.11.2026
 
 Aktualny [HTML](nclean-user-journey.html), [ZIP](nclean-user-journey.zip), [raport](../docs/user-journey-audit/REPORT.md).
 
 Poniższe paczki pochodzą z wcześniejszego etapu 14.11.2026.
 
-# Aktualny podgląd i paczka dla administratora
+# Archiwum: podgląd i paczka dla administratora
 
 - [Klikalny HTML](nclean-final.html)
 - [Podgląd ZIP: index.html + instrukcja](nclean-final-demo.zip)
