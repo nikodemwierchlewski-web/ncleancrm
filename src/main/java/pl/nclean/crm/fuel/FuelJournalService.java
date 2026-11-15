@@ -28,6 +28,10 @@ public class FuelJournalService {
         fuel(carFuel);fuel(generatorFuel);var cr=decimal(carRate,3,"99999.999",false);var gr=decimal(generatorRate,3,"99999.999",false);var cp=decimal(carPrice,3,"99999.999",false);var gp=decimal(generatorPrice,3,"99999.999",false);
         lock();db.update("INSERT INTO fuel_parameters(request_token,effective_day,car_rate,generator_rate,car_fuel,generator_fuel,car_price,generator_price) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(request_token) DO NOTHING",token,date,cr,gr,carFuel,generatorFuel,cp,gp);
     }
+    public String defaultCarFuel(LocalDate day){
+        var last=db.queryForList("SELECT fuel_type FROM fuel_purchase WHERE target='CAR' AND NOT cancelled AND purchased_at<? ORDER BY purchased_at DESC,id DESC LIMIT 1",String.class,day.plusDays(1).atStartOfDay());
+        return last.isEmpty()?(String)parameters(day).getOrDefault("car_fuel","PETROL"):last.get(0);
+    }
     public Map<String,Object> legacyFuel(LocalDate date){return db.queryForList("SELECT * FROM dashboard_fuel WHERE day=?",date).stream().findFirst().orElse(Map.of());}
     public Map<String,Object> daily(LocalDate date){return db.queryForList("SELECT * FROM fuel_day WHERE day=?",date).stream().findFirst().orElse(Map.of("version",-1));}
     public Map<String,Object> previous(LocalDate date){return db.queryForList("SELECT * FROM fuel_day WHERE day<? ORDER BY day DESC LIMIT 1",date).stream().findFirst().orElse(Map.of());}
@@ -90,12 +94,21 @@ public class FuelJournalService {
         return result;
     }
     public record Purchase(Long id,long version,UUID token,LocalDateTime time,String target,String fuel,String amount,String litres,String price,boolean full,String odometer,boolean complete,String note,UUID receipt){}
+    /** Quick entry derives the bill on the server; the legacy route retains incomplete history. */
+    @Transactional public long saveQuickPurchase(Purchase p,boolean override,String actor){
+        var litres=decimal(p.litres(),3,"9999999.999",false);var price=decimal(p.price(),3,"9999999.999",false);
+        if(litres.signum()<=0||price.signum()<=0)throw new IllegalArgumentException("Podaj dodatnią liczbę litrów i cenę za litr.");
+        if("CAR".equals(p.target()))decimal(p.odometer(),1,"999999999.9",false);
+        var calculated=rounded(litres.multiply(price));var amount=override?decimal(p.amount(),2,"9999999999.99",false):calculated;
+        if(amount.subtract(calculated).abs().compareTo(new BigDecimal("0.02"))>0)throw new IllegalArgumentException("Kwota rachunku różni się od litrów × ceny o więcej niż 2 grosze. Sprawdź wpis.");
+        return savePurchase(new Purchase(p.id(),p.version(),p.token(),p.time(),p.target(),p.fuel(),amount.toPlainString(),p.litres(),p.price(),p.full(),p.odometer(),p.complete(),p.note(),p.receipt()),actor);
+    }
     @Transactional public long savePurchase(Purchase p,String actor){
         if(p.time()==null||p.time().isAfter(LocalDateTime.now(ZoneId.of("Europe/Warsaw")).plusMinutes(5)))throw new IllegalArgumentException("Podaj datę i godzinę zakupu, bez przyszłych tankowań.");BusinessDates.period(p.time().toLocalDate(),"day");fuel(p.fuel());
         if(p.target()==null||!Set.of("CAR","GENERATOR","SHARED").contains(p.target()))throw new IllegalArgumentException("Wybierz przeznaczenie paliwa.");
         var amount=decimal(p.amount(),2,"9999999999.99",false);var litres=decimal(p.litres(),3,"9999999.999",true);var price=decimal(p.price(),3,"9999999.999",true);var odo=decimal(p.odometer(),1,"999999999.9",true);
         if(litres!=null&&litres.signum()==0||price!=null&&price.signum()==0)throw new IllegalArgumentException("Litry i cena litra muszą być dodatnie albo pozostawione puste.");
-        if(litres!=null){var calculated=amount.divide(litres,3,RoundingMode.HALF_UP);if(price!=null&&price.subtract(calculated).abs().compareTo(new BigDecimal("0.02"))>0)throw new IllegalArgumentException("Kwota, litry i cena litra nie są zgodne. Popraw dane lub zostaw cenę pustą.");if(calculated.compareTo(new BigDecimal("9999999.999"))>0)throw new IllegalArgumentException("Wyliczona cena litra przekracza limit. Sprawdź kwotę i liczbę litrów.");price=calculated.signum()>0?calculated:null;}
+        if(litres!=null){var calculated=amount.divide(litres,3,RoundingMode.HALF_UP);if(price!=null&&price.subtract(calculated).abs().compareTo(new BigDecimal("0.02"))>0&&rounded(litres.multiply(price)).subtract(amount).abs().compareTo(new BigDecimal("0.02"))>0)throw new IllegalArgumentException("Kwota, litry i cena litra nie są zgodne. Popraw dane lub zostaw cenę pustą.");if(calculated.compareTo(new BigDecimal("9999999.999"))>0)throw new IllegalArgumentException("Wyliczona cena litra przekracza limit. Sprawdź kwotę i liczbę litrów.");if(price==null)price=calculated.signum()>0?calculated:null;}
         if(p.full()&&(!"CAR".equals(p.target())||odo==null))throw new IllegalArgumentException("Tankowanie do pełna wymaga samochodu i odczytu licznika.");
         if(p.note()==null||p.note().length()>1000)throw new IllegalArgumentException("Notatka może mieć do 1000 znaków.");
         lock();if(p.id()==null){var replay=db.queryForList("SELECT id FROM fuel_purchase WHERE request_token=?",p.token());if(!replay.isEmpty())return ((Number)replay.get(0).get("id")).longValue();}

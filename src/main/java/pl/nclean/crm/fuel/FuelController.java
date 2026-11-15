@@ -21,7 +21,10 @@ public class FuelController {
     }
     private String page(LocalDate date,Long purchase,Model m){
         BusinessDates.period(date,"day");m.addAttribute("date",date);populate(date,BusinessDates.period(date,"month"),m);m.addAttribute("journalHistory",fuel.history(date));m.addAttribute("journalAudit",fuel.audit(date));m.addAttribute("purchases",fuel.purchases(date.withDayOfMonth(1),YearMonth.from(date).atEndOfMonth()));m.addAttribute("comparisons",fuel.comparisons(date));m.addAttribute("parameterHistory",fuel.parameters());m.addAttribute("today",BusinessDates.today());
-        m.addAttribute("purchase",purchase==null?Map.of("version",-1,"request_token",UUID.randomUUID(),"purchased_at",date.atTime(LocalTime.now(ZoneId.of("Europe/Warsaw")).withSecond(0).withNano(0)),"target","CAR","fuel_type",fuel.parameters(date).getOrDefault("car_fuel","PETROL"),"full_tank",false,"records_complete",false):fuel.purchaseForEdit(purchase));
+        m.addAttribute("purchase",purchase==null?Map.of("version",-1,"request_token",UUID.randomUUID(),"purchased_at",date.atTime(LocalTime.now(ZoneId.of("Europe/Warsaw")).withSecond(0).withNano(0)),"target","CAR","fuel_type",fuel.defaultCarFuel(date),"full_tank",false,"records_complete",false):fuel.purchaseForEdit(purchase));
+        var editing=purchase==null?null:fuel.purchaseForEdit(purchase);
+        m.addAttribute("purchaseAmountOverride",editing!=null&&editing.get("litres")!=null&&editing.get("litre_price")!=null&&((java.math.BigDecimal)editing.get("amount")).compareTo(FuelJournalService.rounded(((java.math.BigDecimal)editing.get("litres")).multiply((java.math.BigDecimal)editing.get("litre_price"))))!=0);
+        m.addAttribute("quickPurchase",editing==null||editing.get("litres")!=null&&editing.get("litre_price")!=null&&(!"CAR".equals(editing.get("target"))||editing.get("odometer")!=null));
         m.addAttribute("parameterToken",UUID.randomUUID());return "fuel/index";
     }
     @GetMapping("/fuel") String index(@RequestParam(required=false) LocalDate date,@RequestParam(required=false) Long purchase,Model m){return page(date==null?BusinessDates.today():date,purchase,m);}
@@ -35,7 +38,7 @@ public class FuelController {
     }
     @PostMapping("/fuel/purchases") String purchase(@RequestParam Map<String,String> p,Principal principal,Model m,HttpServletResponse response){
         LocalDateTime time=LocalDateTime.parse(p.get("purchased_at"));Long id=blank(p.get("id"))?null:Long.valueOf(p.get("id"));
-        try{fuel.savePurchase(new FuelJournalService.Purchase(id,Long.parseLong(p.get("version")),UUID.fromString(p.get("request_token")),time,p.get("target"),p.get("fuel_type"),p.get("amount"),p.get("litres"),p.get("litre_price"),p.containsKey("full_tank"),p.get("odometer"),p.containsKey("records_complete"),p.getOrDefault("note",""),blank(p.get("receipt_id"))?null:UUID.fromString(p.get("receipt_id"))),principal.getName());return "redirect:/fuel?date="+time.toLocalDate()+"&saved=1#purchases";}
+        try{var command=new FuelJournalService.Purchase(id,Long.parseLong(p.get("version")),UUID.fromString(p.get("request_token")),time,p.get("target"),p.get("fuel_type"),p.get("amount"),p.get("litres"),p.get("litre_price"),p.containsKey("full_tank"),p.get("odometer"),p.containsKey("records_complete"),p.getOrDefault("note",""),blank(p.get("receipt_id"))?null:UUID.fromString(p.get("receipt_id")));if("quick".equals(p.get("entry_mode")))fuel.saveQuickPurchase(command,p.containsKey("amount_override"),principal.getName());else fuel.savePurchase(command,principal.getName());return "redirect:/fuel?date="+time.toLocalDate()+"&saved=1#purchases";}
         catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedPurchase",p);return page(time.toLocalDate(),id,m);}
     }
     private static boolean blank(String s){return s==null||s.isBlank();}

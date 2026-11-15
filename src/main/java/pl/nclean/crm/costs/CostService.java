@@ -25,6 +25,11 @@ public class CostService {
     public Map<String,Object> asset(long id){return db.queryForList("SELECT * FROM equipment_item WHERE id=?",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznany sprzęt."));}
     public List<Map<String,Object>> assets(){return db.queryForList("SELECT a.*,COALESCE((SELECT SUM(amount) FROM cost_entry e WHERE e.asset_id=a.id AND NOT e.cancelled AND e.effect='INVESTMENT'),0) purchase_total,COALESCE((SELECT SUM(amount) FROM cost_entry e WHERE e.asset_id=a.id AND NOT e.cancelled AND e.category<>'EQUIPMENT_PURCHASE'),0) maintenance_total FROM equipment_item a ORDER BY active DESC,name,id");}
     public List<Map<String,Object>> assetHistory(long id){return db.queryForList("SELECT * FROM cost_entry WHERE asset_id=? ORDER BY spent_on DESC,id DESC",id);}
+    public Map<LocalDate,BigDecimal> operatingByDay(LocalDate start,LocalDate end){
+        var result=new LinkedHashMap<LocalDate,BigDecimal>();
+        for(var row:db.queryForList("SELECT spent_on,SUM(amount) amount FROM cost_entry WHERE spent_on BETWEEN ? AND ? AND effect='OPERATING' AND NOT cancelled GROUP BY spent_on",start,end))result.put(((java.sql.Date)row.get("spent_on")).toLocalDate(),(BigDecimal)row.get("amount"));
+        return result;
+    }
     public BigDecimal operating(LocalDate start,LocalDate end){return db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM cost_entry WHERE spent_on BETWEEN ? AND ? AND effect='OPERATING' AND NOT cancelled",BigDecimal.class,start,end);}
     public BigDecimal operatingMarketing(LocalDate start,LocalDate end){return db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM cost_entry WHERE spent_on BETWEEN ? AND ? AND effect='OPERATING' AND category='MARKETING' AND NOT cancelled",BigDecimal.class,start,end);}
     public BigDecimal investments(LocalDate start,LocalDate end){return db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM cost_entry WHERE spent_on BETWEEN ? AND ? AND effect='INVESTMENT' AND NOT cancelled",BigDecimal.class,start,end);}

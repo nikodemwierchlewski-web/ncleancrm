@@ -18,6 +18,7 @@ import uuid
 from playwright.sync_api import expect, sync_playwright
 from browser_photo_checks import verify_photo_controls
 from browser_goal_checks import verify_main_goal
+from browser_today_checks import verify_today_workspace
 
 
 def main():
@@ -121,7 +122,7 @@ def main():
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width, route)
                         if route == '/dashboard':page.locator('#personal-panel>summary').click()
                         if route == '/settings':page.get_by_text('Wygląd i aplikacja',exact=True).click()
-                        if route != '/settings':
+                        if route == '/dashboard':
                             world = page.locator('svg.tycoon-world')
                             expect(world).to_have_count(1)
                             world.scroll_into_view_if_needed()
@@ -130,15 +131,17 @@ def main():
                     page.locator('[data-motion-toggle]').click()
                     expect(page.locator('[data-motion-toggle]')).to_have_attribute('aria-pressed', 'true')
                     page.goto(base + '/calendar')
-                    expect(page.locator('svg.tycoon-world')).to_have_count(1)
-                    assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                    expect(page.locator('html')).to_have_class('tycoon-motion-off')
                     page.goto(base + '/settings')
                     page.get_by_text('Wygląd i aplikacja',exact=True).click()
                     page.locator('[data-motion-toggle]').click()
                 page.set_viewport_size({'width': 390, 'height': 844})
                 page.goto(base + '/calendar')
+                page.set_viewport_size({'width':1440,'height':844})
                 for index in range(12):
-                    page.locator('#week-strip button').nth(index % 7).click()
+                    page.locator('.day-select').nth(index % 7).click()
+                page.set_viewport_size({'width':390,'height':844})
+                assert len(page.locator('.calendar-grid').evaluate('e=>getComputedStyle(e).gridTemplateColumns.split(" ")'))==7
                 page.wait_for_timeout(800)
                 assert page.evaluate('NcleanMotion.activeCount()') == 0
                 page.locator('.add-booking').click()
@@ -162,12 +165,11 @@ def main():
                 expect(page.locator('.add-booking')).to_be_focused()
                 page.emulate_media(reduced_motion='reduce')
                 page.goto(base + '/calendar')
-                expect(page.locator('svg.tycoon-world')).to_have_count(1)
-                assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                expect(page.locator('html')).to_have_class('tycoon-motion-off')
                 page.emulate_media(reduced_motion='no-preference')
                 page.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.qaHidden});window.qaHidden=true;document.dispatchEvent(new Event('visibilitychange'));")
                 assert page.locator('html').evaluate("e=>e.classList.contains('tycoon-hidden')")
-                assert page.locator('.pixel-worker').evaluate('e => getComputedStyle(e).animationName') == 'none'
+                assert page.evaluate('NcleanMotion.activeCount()') == 0
                 page.evaluate("window.qaHidden=false;document.dispatchEvent(new Event('visibilitychange'));")
                 assert not page.locator('html').evaluate("e=>e.classList.contains('tycoon-hidden')")
                 print('PASS Pixel Tycoon: SVG, progress, four widths, motion preference/reload and OS reduced motion.', flush=True)
@@ -229,6 +231,7 @@ def main():
             assert len(requests) == 2
             verify_photo_controls(page, base)
             verify_main_goal(page, base, run_dir)
+            verify_today_workspace(page, base, run_dir)
             assert not errors, errors
             browser.close()
             print('PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors.', flush=True)

@@ -68,43 +68,15 @@
 #booking-editor h3{font-size:15px;margin:0 0 10px}
 .week-bands{display:flex;height:4px;gap:1px;align-self:end;width:100%}
 .week-bands i{flex:1;border-radius:2px}
+/* The month is the primary view on every device. Day details are requested explicitly. */
+.calendar-count{display:none}.agenda-add{width:100%;margin-top:10px}.agenda-sheet{width:min(620px,calc(100% - 12px))}
 @media(max-width:900px){
- .daily{padding:0 12px 24px}
- .daily>.daily-heading{position:sticky;top:0;z-index:5;background:#f5f7fa;margin:0;padding:10px 0}
- .desktop-title{display:none}
- .date-heading{display:flex;align-items:center;gap:6px;padding:4px 0;background:none;border:0;font-size:17px!important;font-weight:700!important;text-align:left;line-height:1.3}
- .daily-heading>.add-booking{position:static;flex-shrink:0;padding:8px 12px}
- .calendar-workspace{display:flex;flex-direction:column;gap:10px}
- .daily .planner{width:100%;border:0;border-radius:0;box-shadow:none;background:transparent;display:flex;flex-direction:column}
- .daily .planner-toolbar{display:none}
- .daily.month-open .planner-toolbar{display:flex;order:2;border:1px solid #dbe5ed;border-radius:10px 10px 0 0}
- .daily .month-navigation{justify-content:space-between;flex:1}
- .daily .month-navigation h2{min-width:0;font-size:16px}
- .daily .period-controls{justify-content:flex-end}
- .week-nav{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:4px;align-items:center}
- #week-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;grid-column:1/-1;grid-row:2}
- #previous-week{grid-column:1;grid-row:1}
- #next-week{grid-column:3;grid-row:1}
- /* Arrows share the strip header; full-width day buttons keep a 44px touch target. */
- .week-nav{grid-template-rows:44px auto}
- .week-nav>.icon-button{height:44px;min-height:44px;background:transparent;border:0}
- #week-strip button{border:0;background:transparent;min-width:44px;min-height:52px;padding:5px 0;display:grid;gap:5px;border-radius:7px;font-size:12px}
- #week-strip button small{font-size:10px}
- #week-strip button.selected{background:#208be3;color:white}
- #month-overview{display:none}
- .daily.month-open #month-overview{display:block;order:3;border:1px solid #dbe5ed;border-top:0;background:#fff}
- .daily .calendar-day,.daily .calendar-spacer{min-height:62px;padding:4px 0}
- .daily .calendar-day .day-areas,.daily .calendar-day .day-bookings,.daily .more-bookings{display:none}
- .daily .day-select{min-height:44px;justify-content:center;padding:0;min-width:44px}
- .daily .day-select small{display:none}
- .daily .calendar-day.has-orders::after{content:attr(data-count);position:relative;display:block;text-align:center;font-size:9px;color:#1477c5}
- #day-agenda{position:static;max-height:none;overflow:visible;border:0;background:none;padding:0;width:100%;scrollbar-gutter:auto}
- #day-agenda .daily-heading{display:flex;justify-content:flex-end;margin:0;float:right}#agenda-title{display:none}#agenda-orders{clear:both}
- #agenda-areas{margin:2px 0 8px;min-height:44px;align-items:center}
- #agenda-orders .booking-chip{min-height:86px;padding:11px;margin:7px 0}
- .daily-dialog,#booking-editor{width:calc(100% - 12px);max-height:calc(var(--available-height,100dvh) - 12px);border-radius:12px}
- .daily-dialog .dialog-heading{padding:8px 12px}
- .daily-dialog .dialog-content{padding:12px;max-height:none}
- #booking-editor .dialog-content{padding-bottom:0}
+ .daily{padding:12px 10px 100px}.daily>.daily-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 12px}.daily>.daily-heading h1{font-size:26px!important;margin:0}.daily-heading>.add-booking{padding:8px 10px;font-size:12px}
+ .calendar-workspace{display:block}.daily .planner{display:block;width:100%;min-width:0;overflow:hidden}.daily .planner-toolbar{display:flex!important;flex-direction:column;gap:10px;padding:10px;border:1px solid #a5beb7;background:#eaf1e5;border-radius:3px}.daily .month-navigation{display:flex;justify-content:space-between;width:100%;gap:4px}.daily .month-navigation h2{min-width:0;font-size:15px}.daily .period-controls{display:flex;width:100%;justify-content:space-between;gap:8px}#jump-month{max-width:160px}
+ #month-overview{display:block!important}.daily .calendar-weekdays{padding:10px 0 6px}.daily .calendar-weekdays span{font-size:10px;text-align:center}.daily .calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding:2px 0 6px;background:none}.daily .calendar-day,.daily .calendar-spacer{min-width:0;min-height:86px;padding:2px 0;border-radius:2px}.daily .day-select{width:100%;min-width:44px;min-height:44px;justify-content:center;padding:0;display:flex}.daily .day-number{font-size:15px}.daily .day-select small{display:none}
+ .daily .calendar-day>.day-areas{display:block;max-height:14px;overflow:hidden;margin:0;padding:0 2px}.daily .calendar-day>.day-areas .area-chip{display:block;font-size:8px;line-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px;border:0;background:transparent}.daily .calendar-day>.day-areas .area-chip:nth-child(n+2){display:none}.daily .calendar-day>.day-areas .area-dot,.daily .calendar-day>.day-areas small{display:none}.daily .calendar-day .day-bookings,.daily .calendar-day .more-bookings{display:none}.daily .calendar-day.has-orders::after{content:none}.calendar-count{position:relative;display:block;font-size:8px;text-align:center;min-height:12px;color:#245d74}.calendar-spacer{border:0!important;box-shadow:none!important}
+ #agenda-slot{display:none}.agenda-sheet{inset:auto 0 0;margin:0 auto;width:100%;max-width:620px;max-height:calc(var(--available-height,100dvh) - 12px);border-radius:12px 12px 0 0;padding-bottom:env(safe-area-inset-bottom)}.agenda-sheet #day-agenda{position:static;max-height:none;overflow:visible;background:#fffef7;border:0;box-shadow:none;padding:0}.agenda-sheet #day-agenda .daily-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}.agenda-sheet #agenda-title{display:block;font-size:16px}.agenda-sheet #agenda-orders{clear:both}.agenda-sheet #agenda-areas{display:flex;min-height:0;margin:8px 0}.daily-dialog,#booking-editor{width:calc(100% - 12px);max-height:calc(var(--available-height,100dvh) - 12px)}.daily-dialog .dialog-heading{padding:10px 12px}.daily-dialog .dialog-content{padding:12px}.agenda-sheet #day-agenda .booking-chip{min-height:74px;margin:7px 0;padding:10px}
 }
 @media(min-width:901px){.calendar-workspace .planner{position:relative}.daily .calendar-day .day-areas{flex-wrap:nowrap}.calendar-day .area-chip{flex-shrink:0}#day-agenda .booking-chip:hover{border-color:#208be3}}
+
+@media(min-width:901px){#agenda-slot{position:sticky;top:12px;min-width:0}}

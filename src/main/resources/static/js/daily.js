@@ -10,37 +10,14 @@
   const openers = new WeakMap();
   const cellFor = day => cells.find(cell => cell.dataset.calendarDay === day);
 
+  const compact=matchMedia('(max-width:900px)'),agenda=$('#day-agenda'),sheet=$('#agenda-sheet');let returnToAgenda=false;
+  function showAgenda(preserve=false){if(!compact.matches)return;const previous=openers.get(sheet);$('#agenda-sheet-content').append(agenda);open(sheet);if(document.activeElement===document.body||openers.get(sheet)===document.body)openers.set(sheet,cellFor(selected)?.querySelector('.day-select'));if(preserve&&previous)openers.set(sheet,previous);}
+  function restoreAgenda(){if(!sheet.open)$('#agenda-slot').append(agenda);}
+  compact.addEventListener('change',()=>{if(!compact.matches){returnToAgenda=false;if(sheet.open)sheet.close();}restoreAgenda();});
   function open(dialog) {
+    if(dialog!==sheet&&sheet.open){sheet.close();returnToAgenda=true;}
     openers.set(dialog, document.activeElement);
     if (!dialog.open) dialog.showModal();
-  }
-  function renderWeek() {
-    const start = parse(selected);
-    start.setDate(start.getDate() - (start.getDay() + 6) % 7);
-    $('#week-strip').replaceChildren();
-    for (let index = 0; index < 7; index++) {
-      const date = new Date(start);
-      date.setDate(date.getDate() + index);
-      const day = iso(date), button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.weekDay = day;
-      button.setAttribute('aria-pressed', String(day === selected));
-      button.classList.toggle('selected', day === selected);
-      const weekday = document.createElement('small');
-      weekday.textContent = date.toLocaleDateString('pl-PL', {weekday: 'short'});
-      button.append(weekday, document.createTextNode(String(date.getDate())));
-      const cell = cellFor(day);
-      let description = date.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'});
-      if (cell) {
-        const bands = document.createElement('span');
-        bands.className = 'week-bands';
-        for (const band of cell.querySelectorAll('.area-bands i')) bands.append(band.cloneNode(true));
-        button.append(bands);
-        description += `; ${cell.querySelector('.day-areas').textContent.trim() || 'bez obszaru'}; ${cell.querySelectorAll('.booking-chip').length} zleceń`;
-      }
-      button.setAttribute('aria-label', description);
-      $('#week-strip').append(button);
-    }
   }
   function select(day, updateUrl = true) {
     const previous=selected;selected = day;
@@ -67,7 +44,7 @@
     $('#area-source').textContent=cell.dataset.scheduleSource;
     $('#area-editor-date').textContent = label;
     $('#area-editor-date').dateTime = day;
-    renderWeek();
+
     if (updateUrl) {
       const url = new URL(location.href);
       url.searchParams.set('day', day);
@@ -82,8 +59,7 @@
       return;
     }
     select(day);
-    main.classList.remove('month-open');
-    $('#toggle-month').setAttribute('aria-expanded', 'false');
+    showAgenda();
   }
   function showAreas() {
     const assigned = new Set([...cellFor(selected).querySelectorAll('[data-assigned-area-id]')].map(node => node.dataset.assignedAreaId));
@@ -100,7 +76,7 @@
     const color = cell.querySelector('.area-bands i');
     if (color) cell.style.setProperty('--area-color', color.style.background);
     const count = cell.querySelectorAll('.booking-chip').length;
-    cell.dataset.count = `${count} zlec.`;
+    cell.dataset.count = `${count} zlec.`;const countLabel=document.createElement('small');countLabel.className='calendar-count';countLabel.textContent=count?count+' zlec.':'';cell.append(countLabel);const dayButton=cell.querySelector('.day-select');dayButton.setAttribute('aria-label',cell.dataset.dateLabel+'; '+count+' zleceń; '+(cell.querySelector('.day-areas').textContent.trim()||'bez obszaru')+' — pokaż szczegóły');
     cell.classList.toggle('has-orders', count > 0);
   }
   document.addEventListener('click', event => {
@@ -114,7 +90,7 @@
     }
     const cell = event.target.closest('[data-calendar-day]');
     if (cell) { choose(cell.dataset.calendarDay); return; }
-    if (event.target.closest('.add-booking')) {
+    if (event.target.closest('.add-booking,[data-add-booking]')) {
       $('#booking-form [name=day]').value = selected;
       open($('#booking-editor'));
       return;
@@ -122,7 +98,7 @@
     if (event.target.closest('[data-close]')) event.target.closest('dialog').close();
   });
   for (const dialog of document.querySelectorAll('dialog')) {
-    dialog.addEventListener('close', () => openers.get(dialog)?.focus({preventScroll: true}));
+    dialog.addEventListener('close', () => {if(dialog===sheet)restoreAgenda();else if(returnToAgenda&&compact.matches){returnToAgenda=false;showAgenda(true);return;}openers.get(dialog)?.focus({preventScroll:true});});
     dialog.addEventListener('click', event => {
       if (event.target !== dialog) return;
       const box = dialog.getBoundingClientRect();
@@ -130,21 +106,9 @@
     });
   }
   $('#edit-day-areas').addEventListener('click', showAreas);
-  $('#toggle-month').addEventListener('click', () => {
-    const shown = main.classList.toggle('month-open');
-    $('#toggle-month').setAttribute('aria-expanded', String(shown));
-  });
   $('#jump-month').addEventListener('change', event => {
     if (event.target.validity.valid && event.target.value) location.href = Nclean.url(`/calendar?month=${event.target.value}`);
   });
-  for (const [id, delta] of [['previous-week', -7], ['next-week', 7]]) {
-    $(`#${id}`).addEventListener('click', () => {
-      const date = parse(selected);
-      date.setDate(date.getDate() + delta);
-      const day = iso(date);
-      if (day >= '2000-01-01' && day <= '2100-12-31') choose(day);
-    });
-  }
   $('#clear-areas').addEventListener('click', () => document.querySelectorAll('[data-area-option] input').forEach(input => input.checked = false));
   document.addEventListener('submit', event => {
     const form = event.target;
@@ -159,6 +123,8 @@
   window.visualViewport?.addEventListener('resize', updateHeight);
   updateHeight();
   select(selected, false);
+  if(main.dataset.areaErrors==='true')showAreas();
+  if(new URLSearchParams(location.search).get('saved')&&!new URLSearchParams(location.search).has('add'))showAgenda();
   if(new URLSearchParams(location.search).get('add')==='true'){ $('#booking-form [name=day]').value=selected;open($('#booking-editor')); }
   if ($('#calendar-status').textContent) setTimeout(() => { $('#calendar-status').textContent = ''; }, 4000);
 })();

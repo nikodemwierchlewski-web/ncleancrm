@@ -22,7 +22,7 @@
  function constrained(p,b=bounds()){const {w,h}=size();return {x:clamp(p.x,b.left,Math.max(b.left,b.right-w)),y:Math.max(b.top,b.bottom-h)};}
  function paint(p){position=constrained(p);dock.style.left=position.x+'px';dock.style.top=position.y+'px';dock.style.right='auto';dock.style.bottom='auto';const b=bounds(),chipWidth=Math.min(230,b.right-b.left);dock.style.setProperty('--ncleanek-chip-left',(clamp(position.x+44-chipWidth,b.left,b.right-chipWidth)-position.x)+'px');}
  function portal(){
-  const parent=document.querySelector('dialog[open]')||document.body;
+  const parent=[...document.querySelectorAll('dialog[open]')].at(-1)||document.body;
   if(dock.parentElement!==parent)parent.append(dock);
   if(dock.showPopover&&!dock.matches(':popover-open')){try{dock.showPopover();}catch{}}
  }

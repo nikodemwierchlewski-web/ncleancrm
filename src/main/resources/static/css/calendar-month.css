@@ -1,0 +1,5 @@
+/* Loaded after the shared pixel theme: one month layout at every viewport. */
+.daily .calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+@media(max-width:900px){
+ .main.daily{padding:10px 10px 100px}.daily .calendar-grid{gap:2px;padding:2px 0 6px}.daily .calendar-day,.daily .calendar-spacer{min-height:70px;padding:2px 0;box-shadow:0 2px 0 #b8d0bd}.daily .planner-toolbar{padding:8px;border:1px solid #a5beb7;background:#eaf1e5}.daily .day-select{min-width:44px;min-height:44px}.daily .calendar-count{font-size:9px;line-height:12px}.daily .calendar-weekdays{padding:10px 0 6px}.daily>.daily-heading{position:static;margin:6px 0 12px}.daily #day-agenda>.daily-heading{background:transparent}.daily .calendar-day>.day-areas{max-height:12px}.daily .calendar-day>.day-areas .area-chip{font-size:8px;padding:0 1px}
+}

@@ -40,21 +40,33 @@ public class DashboardService {
         return amount.multiply(BigDecimal.valueOf(day.getDayOfMonth())).divide(length,2,RoundingMode.HALF_UP)
             .subtract(amount.multiply(BigDecimal.valueOf(day.getDayOfMonth()-1)).divide(length,2,RoundingMode.HALF_UP));
     }
-    public Summary summary(LocalDate date,String range,String mode){
+    public record Point(LocalDate day,BigDecimal revenue,BigDecimal profit){}
+    public record Trend(Summary summary,List<Point> points){}
+    public Trend trend(LocalDate date,String range){
+        if(!Set.of("week","month").contains(range))throw new IllegalArgumentException("Wybierz tydzień lub miesiąc.");
+        return calculate(date,range,"actual",true);
+    }
+    public Summary summary(LocalDate date,String range,String mode){return calculate(date,range,mode,false).summary();}
+    private Trend calculate(LocalDate date,String range,String mode,boolean chart){
         var p=period(date,range);if(!Set.of("plan","actual").contains(mode))throw new IllegalArgumentException("Nieznany tryb podsumowania.");
         var orders=db.queryForList("SELECT b.*,COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND day BETWEEN ? AND ? ORDER BY day,starts,id",p.start(),p.end());
+        var revenueDays=new HashMap<LocalDate,BigDecimal>();var costDays=new HashMap<LocalDate,BigDecimal>();var bookingDays=new HashMap<Long,LocalDate>();
         int planned=0,done=0,cancelled=0,missingChem=0;BigDecimal revenue=BigDecimal.ZERO,chem=BigDecimal.ZERO;
         var included=new HashSet<Long>();
         for(var order:orders){String status=(String)order.get("status");if(status.equals("PLANNED"))planned++;else if(status.equals("DONE"))done++;else cancelled++;
             if(status.equals("CANCELLED")||(mode.equals("actual")&&!status.equals("DONE")))continue;
-            revenue=revenue.add((BigDecimal)(mode.equals("actual")&&order.get("final_total")!=null?order.get("final_total"):order.get("total")));included.add(((Number)order.get("id")).longValue());
+            var amount=(BigDecimal)(mode.equals("actual")&&order.get("final_total")!=null?order.get("final_total"):order.get("total"));
+            revenue=revenue.add(amount);long id=((Number)order.get("id")).longValue();included.add(id);
+            var day=((java.sql.Date)order.get("day")).toLocalDate();bookingDays.put(id,day);if(chart)revenueDays.merge(day,amount,BigDecimal::add);
         }
         // Aggregate before joining to avoid multiplying booking/item prices by chemical rows.
         var lines=db.queryForList("SELECT i.booking_id,i.forecast_defined,i.chemical_cost,i.actual_defined,COALESCE((SELECT SUM(a.amount) FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position),0) actual_cost, EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position AND a.amount IS NULL) unknown_price, EXISTS(SELECT 1 FROM booking_chemical c WHERE c.booking_id=i.booking_id AND c.item_position=i.position AND c.quantity>0 AND NOT EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=c.booking_id AND a.item_position=c.item_position AND a.chemical_id=c.chemical_id AND a.unit=c.unit)) missing_material FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND b.day BETWEEN ? AND ?",p.start(),p.end());
         var missingBookings=new HashSet<Long>();
         for(var line:lines){long id=((Number)line.get("booking_id")).longValue();if(!included.contains(id))continue;
+            var chemistryBefore=chem;
             if(mode.equals("plan")){if(!(Boolean)line.get("forecast_defined")||line.get("chemical_cost")==null)missingBookings.add(id);else chem=chem.add((BigDecimal)line.get("chemical_cost"));}
             else {chem=chem.add((BigDecimal)line.get("actual_cost"));if(!(Boolean)line.get("actual_defined")||(Boolean)line.get("unknown_price")||(Boolean)line.get("missing_material"))missingBookings.add(id);}
+            if(chart)costDays.merge(bookingDays.get(id),chem.subtract(chemistryBefore),BigDecimal::add);
         }
         missingChem=missingBookings.size();
         BigDecimal fuel=BigDecimal.ZERO,marketing=BigDecimal.ZERO,fixed=BigDecimal.ZERO;int missingFuel=0;
@@ -65,6 +77,7 @@ public class DashboardService {
         var journalUsage=journal.usage(p.start(),p.end());
         var journalEnabledFrom=db.queryForObject("SELECT min(effective_day) FROM fuel_parameters",java.sql.Date.class);
         for(LocalDate day=p.start();!day.isAfter(p.end());day=day.plusDays(1)){
+            var fuelBefore=fuel;var marketingBefore=marketing;var fixedBefore=fixed;
             var f=fuels.get(day);String kmKey=mode.equals("plan")?"planned_km":"actual_km";
             var measured=journalUsage.get(day);
             if(mode.equals("actual")&&f!=null&&f.get("actual_cost")!=null)fuel=fuel.add((BigDecimal)f.get("actual_cost"));
@@ -79,11 +92,16 @@ public class DashboardService {
             }
             if(!Boolean.TRUE.equals(months.get(day.withDayOfMonth(1))))missingMonths.add(YearMonth.from(day));
             else for(var row:monthly)if(((java.sql.Date)row.get("month")).toLocalDate().equals(day.withDayOfMonth(1))){var share=allocated((BigDecimal)row.get("amount"),day);if(row.get("category").equals("MARKETING"))marketing=marketing.add(share);else fixed=fixed.add(share);}
+            if(chart)costDays.merge(day,fuel.subtract(fuelBefore).add(marketing.subtract(marketingBefore)).add(fixed.subtract(fixedBefore)),BigDecimal::add);
         }
         chem=money(chem);fuel=money(fuel);marketing=money(marketing);fixed=money(fixed);var additionalMarketing=money(entries.operatingMarketing(p.start(),p.end()));marketing=marketing.add(additionalMarketing);var operating=money(entries.operating(p.start(),p.end()).subtract(additionalMarketing));var investments=money(entries.investments(p.start(),p.end()));var total=chem.add(fuel).add(marketing).add(fixed).add(operating);var slices=new ArrayList<Slice>();
         String[] names={"Chemia","Paliwo","Marketing","Koszty stałe","Utrzymanie i inne"},colors={"#218DCA","#F1AA42","#9D77CA","#42AC93","#637bb9"};BigDecimal[] amounts={chem,fuel,marketing,fixed,operating};
         for(int i=0;i<amounts.length;i++)slices.add(new Slice(names[i],colors[i],amounts[i],total.signum()==0?BigDecimal.ZERO:amounts[i].multiply(new BigDecimal("100")).divide(total,2,RoundingMode.HALF_UP)));
-        return new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices,operating,investments);
+        var summary=new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices,operating,investments);
+        var points=new ArrayList<Point>();
+        if(chart){entries.operatingByDay(p.start(),p.end()).forEach((day,cost)->costDays.merge(day,cost,BigDecimal::add));
+            for(var day=p.start();!day.isAfter(p.end());day=day.plusDays(1)){var earned=money(revenueDays.getOrDefault(day,BigDecimal.ZERO));points.add(new Point(day,earned,money(earned.subtract(costDays.getOrDefault(day,BigDecimal.ZERO)))));}}
+        return new Trend(summary,List.copyOf(points));
     }
     public List<Map<String,Object>> monthCosts(YearMonth month){return db.queryForList("SELECT * FROM dashboard_month_cost WHERE month=? ORDER BY id",month.atDay(1));}
     public long monthVersion(YearMonth month){var rows=db.queryForList("SELECT version FROM dashboard_month WHERE month=?",month.atDay(1));return rows.isEmpty()?-1:((Number)rows.get(0).get("version")).longValue();}
