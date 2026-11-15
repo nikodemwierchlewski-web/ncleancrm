@@ -1,0 +1,38 @@
+{
+  "viewports": [
+    {
+      "width": 360,
+      "today_month_week": true,
+      "monthly_calendar": true,
+      "quick_fuel_create_edit_cancel_restore": true,
+      "note_pin_recurrence_done": true,
+      "goal_and_reduced_motion": true
+    },
+    {
+      "width": 390,
+      "today_month_week": true,
+      "monthly_calendar": true,
+      "quick_fuel_create_edit_cancel_restore": true,
+      "note_pin_recurrence_done": true,
+      "goal_and_reduced_motion": true
+    },
+    {
+      "width": 768,
+      "today_month_week": true,
+      "monthly_calendar": true,
+      "quick_fuel_create_edit_cancel_restore": true,
+      "note_pin_recurrence_done": true,
+      "goal_and_reduced_motion": true
+    },
+    {
+      "width": 1440,
+      "today_month_week": true,
+      "monthly_calendar": true,
+      "quick_fuel_create_edit_cancel_restore": true,
+      "note_pin_recurrence_done": true,
+      "goal_and_reduced_motion": true
+    }
+  ],
+  "nested_opaque_sandbox": true,
+  "javascript_errors": []
+}

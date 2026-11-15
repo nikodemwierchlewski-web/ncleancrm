@@ -1,0 +1,25 @@
+{
+  "code_revision": "bc7c9bf",
+  "branch": "feat/today-planning-fuel-reminders",
+  "mode": "synthetic HTML exercise; no PostgreSQL connection",
+  "real_views": 69,
+  "tests": {
+    "unit_mvc_architecture": 57,
+    "postgresql_integration": 113,
+    "failures": 0,
+    "skipped": 0
+  },
+  "viewports": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "axe_scans": 69,
+  "axe_violations": 0,
+  "verified_restart": true,
+  "verified_https_crm": true,
+  "demo_export_import": true,
+  "jar_sha256": "f92036a43ff10181806d7222de8a45313c938fcdb82aec1fb398d51b7fe21510",
+  "html_sha256": "1da27576340221c9edb6d092fb0c6ffc69b3ca5409826145b353515e0b6d7adc"
+}

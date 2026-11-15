@@ -1,4 +1,17 @@
-# Aktualny podgląd: pixelowy interfejs i główny cel
+# Aktualny podgląd: Dzisiaj, kalendarz, tankowania i przypomnienia
+
+[Otwórz HTML](nclean-today-workspace.html) · [Pobierz ZIP](nclean-today-workspace.zip) · [Raport i obsługa](../docs/today-workspace/REPORT.md).
+
+W prawdziwej aplikacji dane są w PostgreSQL (migracje V1–V18). HTML jest
+syntetyczną demonstracją w pamięci karty: odświeżenie resetuje stan. Menu `⋯`
+pozwala wyeksportować/wczytać próbę, również tankowania i stan przypomnień,
+bez zdjęć oraz szkiców. Nie wpisuj danych klientów. Wykresy są przykładowym
+scenariuszem, nie pełnym silnikiem rozliczeń DEMO.
+
+Bieżący kod: `feat/today-planning-fuel-reminders`. Poniższe pliki to archiwum
+wcześniejszych etapów; stara paczka administratora nie zawiera migracji V18.
+
+# Archiwum: pixelowy interfejs i główny cel
 
 [Otwórz HTML](nclean-pixel-main-goal.html) · [Pobierz ZIP](nclean-pixel-main-goal.zip) · [Raport i obsługa](../docs/pixel-main-goal/REPORT.md).
 
