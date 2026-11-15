@@ -1,0 +1,8 @@
+# Zastosowany prompt: przypomnienia przy rekordzie i podsumowanie do dnia
+
+Pracuj na ostatniej implementacji ncLEAN CRM, na osobnej gałęzi. Zachowaj PostgreSQL, OWNER, CSRF, ceny historyczne, istniejące przypomnienia i migracje V1–V18.
+
+1. Przypomnienia ustawiaj w szczegółach zlecenia oraz formularzu notatki/celu. Pozwól dodać kilka przypomnień: dowolna liczba minut, godzin lub dni przed terminem oraz konkretna data i godzina. Przypomnienie względne wymaga terminu i godziny; zmiana terminu przesuwa je, anulowanie/ukończenie wyłącza dostarczanie. Zachowaj cykle dawnych notatek jako ustawienia zaawansowane. Usuń osobną listę przypomnień z ekranu Dzisiaj.
+2. Zbuduj trwały, niezależny od Androida model definicji i wystąpień oraz wersjonowane API do odczytu i potwierdzania. Ponowienie nie tworzy duplikatów. Potwierdzenie powiadomienia nie kończy zlecenia. Nie implementuj jeszcze SMS, push ani nowego logowania urządzeń; opisz kontrakt i pozostałą integrację.
+3. Na Dzisiaj zastąp słupki pikselowym kołem. Pokazuj przychód i wynik operacyjny osobno. Koło przedstawia udziały dni w przychodzie, bez dodawania zysku do przychodu. Domyślny zakres: początek miesiąca–wybrany dzień. Dodaj dzień, tydzień do dnia, cały tydzień, cały miesiąc i własne daty. Zachowaj obecną rachunkowość oraz informację o brakujących kosztach.
+4. Formularze muszą zachowywać dane przy błędzie, działać na telefonie i pod /crm. Nie dodawaj osobnego CRM. Sprawdź migrację, trwałość, zmiany terminu, wyprzedzenia, CSRF, równoległe potwierdzenia, filtry i widoki 360/390/768/1440 px. Podaj rzeczywiste wyniki. DEMO opisuj jako demonstrację, nie powiadomienia systemowe ani backup PostgreSQL.

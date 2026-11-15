@@ -21,9 +21,13 @@ public class NoteService {
     private final JdbcTemplate db;
     private final pl.nclean.crm.tycoon.AchievementService achievements;
     private final ReminderService reminders;
-    public NoteService(JdbcTemplate db,pl.nclean.crm.tycoon.AchievementService achievements,ReminderService reminders){this.db=db;this.achievements=achievements;this.reminders=reminders;}
+    private final pl.nclean.crm.notifications.EntityReminderService entityReminders;
+    public NoteService(JdbcTemplate db,pl.nclean.crm.tycoon.AchievementService achievements,ReminderService reminders,pl.nclean.crm.notifications.EntityReminderService entityReminders){this.db=db;this.achievements=achievements;this.reminders=reminders;this.entityReminders=entityReminders;}
     public ReminderSchedule.Config reminderConfiguration(Long id){return reminders.configuration(id);}
-    public record Options(Boolean todayPinned,ReminderSchedule.Config reminder){}
+    public record Options(Boolean todayPinned,ReminderSchedule.Config reminder,LocalTime dueTime,boolean timePresent,pl.nclean.crm.notifications.ReminderPlan.Edit entityReminders){
+        public Options(Boolean todayPinned,ReminderSchedule.Config reminder){this(todayPinned,reminder,null,false,null);}
+    }
+    public LocalTime dueTime(Long id){if(id==null)return null;var value=db.queryForObject("SELECT due_time FROM memo_entry WHERE id=?",java.sql.Time.class,id);return value==null?null:value.toLocalTime();}
 
     public Entry draft(){return new Entry(null,0,UUID.randomUUID(),"NOTE","","",null,false,false,false,false,false,List.of());}
     private void lock(){db.queryForObject("SELECT id FROM memo_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
@@ -79,7 +83,10 @@ public class NoteService {
         if(main)clearMainExcept(id==null?-1:id);
         if(id==null)id=db.queryForObject("INSERT INTO memo_entry(request_token,kind,title,content,due,pinned,pinned_at,main_goal,today_pinned) VALUES (?,?,?,?,?,?,CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END,?,?) RETURNING id",Long.class,token,kind,title,content,due,pinned,pinned,main,todayPinned);
         else changed(db.update("UPDATE memo_entry SET kind=?,title=?,content=?,due=?,pinned_at=CASE WHEN ? AND NOT pinned THEN CURRENT_TIMESTAMP ELSE pinned_at END,pinned=?,completed=CASE WHEN ?='NOTE' THEN FALSE ELSE completed END,main_goal=?,today_pinned=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND version=?",kind,title,content,due,pinned,pinned,kind,main,todayPinned,id,version));
-        db.update("DELETE FROM memo_step WHERE entry_id=?",id);for(int i=0;i<steps.size();i++){var step=steps.get(i);db.update("INSERT INTO memo_step(entry_id,id,position,text,done) VALUES (?,?,?,?,?)",id,step.id,i,step.text.strip(),step.done);}reminders.configure(id,options==null?null:options.reminder);return id;
+        db.update("DELETE FROM memo_step WHERE entry_id=?",id);for(int i=0;i<steps.size();i++){var step=steps.get(i);db.update("INSERT INTO memo_step(entry_id,id,position,text,done) VALUES (?,?,?,?,?)",id,step.id,i,step.text.strip(),step.done);}reminders.configure(id,options==null?null:options.reminder);
+        if(options!=null&&options.timePresent){if(due==null&&options.dueTime!=null)throw new IllegalArgumentException("Podaj datę dla godziny terminu.");db.update("UPDATE memo_entry SET due_time=? WHERE id=?",options.dueTime,id);}
+        if(options!=null&&options.entityReminders!=null)entityReminders.save("MEMO",id,options.entityReminders);
+        entityReminders.validateAnchor("MEMO",id);return id;
     }
     @Transactional public boolean action(long id,long version,String action,UUID step,boolean checked){
         if(!Set.of("pin","unpin","done","reopen","archive","restore","step","main","unmain","today-pin","today-unpin").contains(Objects.toString(action,"")))throw new IllegalArgumentException("Nieznana czynność.");

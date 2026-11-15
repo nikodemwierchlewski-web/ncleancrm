@@ -1,4 +1,4 @@
 <!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
-<section th:fragment="dashboard" class="main-goal-card" data-main-goal aria-label="Główny cel"><div data-goal-content><h2>Główny cel</h2><p>Wybierz swój cel w <a th:href="@{/notes}">Notatkach i celach</a>.</p></div><div data-goal-reminder><article th:if="${mainGoalReminder != null}" th:insert="~{notes/reminders :: card(${mainGoalReminder})}"></article></div><p class="main-goal-error" role="alert"></p></section>
+<section th:fragment="dashboard" class="main-goal-card" data-main-goal aria-label="Główny cel"><div data-goal-content><h2>Główny cel</h2><p>Wybierz swój cel w <a th:href="@{/notes}">Notatkach i celach</a>.</p></div><p class="main-goal-error" role="alert"></p></section>
 <details th:fragment="calendar" class="main-goal-compact" data-main-goal data-compact="true"><summary><span data-goal-caption>Główny cel</span><span aria-hidden="true">⌄</span></summary><div data-goal-content><a th:href="@{/notes}">Wybierz główny cel →</a></div><p class="main-goal-error" role="alert"></p></details>
 </body></html>

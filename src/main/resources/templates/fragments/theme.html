@@ -1,5 +1,5 @@
 <!doctype html><html xmlns:th="http://www.thymeleaf.org"><head>
-<th:block th:fragment="assets"><meta name="crm-base" th:content="@{/}"><script th:src="@{/js/routes.js}"></script><script src="/js/session.js" th:src="@{/js/session.js}" defer></script><th:block th:if="${pixelTycoon}">
+<th:block th:fragment="assets"><link rel="stylesheet" th:href="@{/css/entity-reminders.css}"><script th:src="@{/js/entity-reminders.js}" defer></script><meta name="crm-base" th:content="@{/}"><script th:src="@{/js/routes.js}"></script><script src="/js/session.js" th:src="@{/js/session.js}" defer></script><th:block th:if="${pixelTycoon}">
   <link rel="stylesheet" href="/css/tycoon.css" th:href="@{/css/tycoon.css}">
   <meta name="crm-confirmed" th:if="${tycoonSignal != null}" th:attr="data-kind=${tycoonSignal.kind},data-order=${tycoonSignal.id}">
   <script src="/js/tycoon-motion.js" th:src="@{/js/tycoon-motion.js}" defer></script>

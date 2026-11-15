@@ -47,8 +47,10 @@ public class DashboardService {
         return calculate(date,range,"actual",true);
     }
     public Summary summary(LocalDate date,String range,String mode){return calculate(date,range,mode,false).summary();}
-    private Trend calculate(LocalDate date,String range,String mode,boolean chart){
-        var p=period(date,range);if(!Set.of("plan","actual").contains(mode))throw new IllegalArgumentException("Nieznany tryb podsumowania.");
+    public Trend trend(LocalDate focus,String filter,LocalDate from,LocalDate to){return calculate(FinanceWindow.select(focus,filter,from,to),"actual",true);}
+    private Trend calculate(LocalDate date,String range,String mode,boolean chart){return calculate(period(date,range),mode,chart);}
+    private Trend calculate(Period p,String mode,boolean chart){
+        if(!Set.of("plan","actual").contains(mode))throw new IllegalArgumentException("Nieznany tryb podsumowania.");
         var orders=db.queryForList("SELECT b.*,COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND day BETWEEN ? AND ? ORDER BY day,starts,id",p.start(),p.end());
         var revenueDays=new HashMap<LocalDate,BigDecimal>();var costDays=new HashMap<LocalDate,BigDecimal>();var bookingDays=new HashMap<Long,LocalDate>();
         int planned=0,done=0,cancelled=0,missingChem=0;BigDecimal revenue=BigDecimal.ZERO,chem=BigDecimal.ZERO;

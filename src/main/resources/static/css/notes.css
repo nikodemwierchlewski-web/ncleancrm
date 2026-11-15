@@ -3,3 +3,5 @@
 
 .memo-today-pin{font-size:10px;background:#dfeee1;border:1px solid #8cb5a3;color:#295c50;padding:3px 6px;border-radius:2px}
 .reminder-editor{margin:12px 0;border-block:1px solid #c1d5ce;padding:4px 0}.reminder-editor summary{display:flex;align-items:center;min-height:44px;font-size:13px;font-weight:600;cursor:pointer}.reminder-editor label{font-size:12px}.reminder-editor #reminder-weekdays{display:flex;flex-wrap:wrap;gap:6px;padding:8px;margin:10px 0;border:1px solid #b4cec2}.reminder-editor #reminder-weekdays label{display:flex;align-items:center;gap:6px;min-width:68px;min-height:44px}.reminder-editor #reminder-weekdays input{width:22px;height:22px;min-height:22px}.notes-search .check{grid-column:1/-1}.memo-next-step button{min-height:44px;text-align:left;white-space:normal;overflow-wrap:anywhere}.note-step-editor input[data-step-text]{min-width:0;width:100%}
+/* Full labels remain touchable; the checkbox itself also meets WCAG target size. */
+.notes-dialog .check{display:flex;align-items:center;gap:8px;min-height:44px}.notes-dialog .check input{width:24px;height:24px;min-height:24px}
