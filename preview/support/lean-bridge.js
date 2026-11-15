@@ -1,0 +1,2 @@
+/* srcdoc has no native route hash. Reuse the real disclosure behavior for DEMO links. */
+addEventListener('DOMContentLoaded',()=>{let hash;try{hash=decodeURIComponent(new URL(window.previewRoute,'https://preview.invalid').hash.slice(1));}catch{return;}const target=document.getElementById(hash);if(target){for(let p=target;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;target.scrollIntoView({block:'start'});}});

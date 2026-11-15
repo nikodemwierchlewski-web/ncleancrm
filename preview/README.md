@@ -1,4 +1,12 @@
-# Aktualny podgląd: Dzisiaj, kalendarz, tankowania i przypomnienia
+# Aktualny podgląd: LEAN — opcje na żądanie
+
+[Otwórz HTML](nclean-lean.html) · [Pobierz ZIP](nclean-lean.zip) · [Obsługa i testy](../docs/lean-disclosure/REPORT.md).
+
+Plan dnia przed analizami, zwijane filtry firmy i kosztów, kompaktowy edytor notatki, przypomnienia z liczbą w nagłówku oraz opcjonalne analizy paliwa. Bieżący kod: `feat/lean-progressive-disclosure`.
+
+Pełna aplikacja zapisuje w PostgreSQL, migracje V1–V19 pozostają niezmienione. DEMO HTML zapisuje tylko w pamięci karty; odświeżenie resetuje próbę. Eksport JSON nie jest backupem bazy ani zdjęć. Wyłącznie syntetyczne dane. Natychmiastowe powiadomienia systemowe Android i SMS nie są częścią demonstracji.
+
+# Archiwum: Dzisiaj, kalendarz, tankowania i przypomnienia
 
 [Otwórz HTML](nclean-today-workspace.html) · [Pobierz ZIP](nclean-today-workspace.zip) · [Raport i obsługa](../docs/today-workspace/REPORT.md).
 
