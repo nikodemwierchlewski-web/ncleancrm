@@ -15,7 +15,7 @@ public class TycoonController {
     @GetMapping("/tycoon/progress") public Map<String,Object> progress(@RequestParam(required=false) LocalDate date){
         var day=date==null?BusinessDates.today():date;BusinessDates.period(day,"day");var review=days.review(day);
         var result=new LinkedHashMap<String,Object>();result.put("date",day.toString());result.put("complete",review.complete());result.put("total",review.orders().size());result.put("closed",review.closed());result.put("performed",awards.performedCount());result.put("badges",awards.badges());
-        var goal=notes.pinnedGoal();if(goal!=null)result.put("goal",Map.of("id",goal.id(),"title",goal.title(),"done",goal.doneSteps(),"total",goal.steps().size()));return result;
+        var goal=notes.mainGoal();if(goal!=null)result.put("goal",Map.of("id",goal.id(),"title",goal.title(),"done",goal.doneSteps(),"total",goal.steps().size()));return result;
     }
     @PostMapping("/tycoon/achievements/{code}/ack") public Map<String,Boolean> acknowledge(@PathVariable String code){return Map.of("claimed",awards.acknowledge(code));}
     @ExceptionHandler({IllegalArgumentException.class,DateTimeException.class}) @ResponseStatus(HttpStatus.BAD_REQUEST) public Map<String,String> invalid(){return Map.of("message","Sprawdź datę lub odznakę.");}

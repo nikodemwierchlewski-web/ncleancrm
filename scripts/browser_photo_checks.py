@@ -36,10 +36,12 @@ def verify_photo_controls(page, base):
         form = page.locator('#photo-time-form')
         form.locator('[name=start]').fill(day + 'T09:00')
         form.locator('[name=end]').fill(day + 'T09:45')
+        before_version = int(form.locator('[name=version]').input_value())
         button = form.get_by_role('button', name='Zapisz godziny', exact=True)
         button.evaluate("e=>e.removeAttribute('type')")
         button.click()
         expect(page.locator('#photos .photo-status').first).to_contain_text('Zapisano')
+        expect(page.locator('#service-photo-form [name=version]')).to_have_value(str(before_version + 1))
         expect(page.locator('#complete-form [name=minutes]')).to_have_value('45')
         button = page.locator('#photos .photo-grid button').first
         button.evaluate("e=>e.removeAttribute('type')")

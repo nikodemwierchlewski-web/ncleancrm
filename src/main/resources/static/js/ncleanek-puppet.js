@@ -40,7 +40,7 @@
   // Compute the parked rectangle even while hidden: no hide/show oscillation.
   dock.classList.toggle('is-reminder-blocked',controls.some(n=>n.getClientRects().length&&overlaps(chipRect,n.getBoundingClientRect())));
   const r=dock.getBoundingClientRect();
-  const protectedNodes=[...document.querySelectorAll('.booking-submit button,.review-save button,.completion-submit button,.dialog-footer button,.ncleanek-panel:not([hidden])')];
+  const protectedNodes=[...controls,...document.querySelectorAll('.ncleanek-panel:not([hidden])')];
   if(editing)protectedNodes.push(focused,focused.closest('label')||focused);
   const yielding=protectedNodes.some(n=>n.getClientRects().length&&overlaps(r,n.getBoundingClientRect()));
   dock.classList.toggle('is-yielding',yielding);
@@ -104,7 +104,7 @@
  });
  document.addEventListener('click',event=>{if(event.target.closest('[data-ncleanek-position-reset]'))reset();if(event.target.closest('[data-ncleanek-position-side]'))side();});
  document.addEventListener('ncleanek:position-reset',reset);document.addEventListener('ncleanek:position-side',side);
- document.addEventListener('nclean:committed',()=>{clearTimeout(waveTimer);dock.classList.remove('is-waving');requestAnimationFrame(()=>dock.classList.add('is-waving'));waveTimer=setTimeout(()=>dock.classList.remove('is-waving'),550);});
+ document.addEventListener('nclean:committed',event=>{if(gesture?.moved)return;dock.dataset.reaction=event.detail?.kind||'updated';clearTimeout(waveTimer);dock.classList.remove('is-waving');requestAnimationFrame(()=>dock.classList.add('is-waving'));waveTimer=setTimeout(()=>dock.classList.remove('is-waving'),550);});
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&gesture)finish({pointerId:gesture.id},true);if(!document.hidden)schedule();});
  addEventListener('blur',()=>{if(gesture)finish({pointerId:gesture.id},true);});
  addEventListener('resize',()=>schedule());window.visualViewport?.addEventListener('resize',schedule);window.visualViewport?.addEventListener('scroll',schedule);

@@ -17,6 +17,7 @@ import uuid
 
 from playwright.sync_api import expect, sync_playwright
 from browser_photo_checks import verify_photo_controls
+from browser_goal_checks import verify_main_goal
 
 
 def main():
@@ -227,6 +228,7 @@ def main():
             expect(page.locator('main>article')).to_have_count(3)
             assert len(requests) == 2
             verify_photo_controls(page, base)
+            verify_main_goal(page, base, run_dir)
             assert not errors, errors
             browser.close()
             print('PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors.', flush=True)

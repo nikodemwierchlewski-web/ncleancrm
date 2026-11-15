@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NoteSecurityTest {
  @Autowired MockMvc mvc;@MockitoBean NoteService notes;
  @Test void newContextAndImagesRequireOwnerAndCsrf() throws Exception {
-  for(String p:new String[]{"/notes","/notes/editor"}){mvc.perform(get(p)).andExpect(status().is3xxRedirection());mvc.perform(get(p).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
+  for(String p:new String[]{"/notes","/notes/editor","/notes/main-goal"}){mvc.perform(get(p)).andExpect(status().is3xxRedirection());mvc.perform(get(p).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
   for(String p:new String[]{"/notes","/notes/1/action"}){mvc.perform(post(p).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());mvc.perform(post(p).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());}
  }
 }

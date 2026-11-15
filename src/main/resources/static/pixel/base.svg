@@ -71,6 +71,7 @@
 <path fill="#183b4b" d="M10 2h12v3h3v7H8V5h2z"/><path fill="#4bbcb1" d="M9 5h15v4H9z"/><path fill="#e8b38b" d="M10 11h13v10H10zM4 23h4v8H4zm22 0h4v8h-4z"/><path fill="#183b4b" d="M12 13h2v2h-2zm7 0h2v2h-2z"/><path fill="#1687b1" d="M9 21h15v12H9z"/><path fill="#d8f3ea" d="M14 23h5v4h-5z"/><g class="ncleanek-leg-left"><path fill="#284959" d="M9 32h6v5H9z"/><path fill="#132f3c" d="M7 37h8v3H7z"/></g><g class="ncleanek-leg-right"><path fill="#284959" d="M19 32h5v5h-5z"/><path fill="#132f3c" d="M19 37h7v3h-7z"/></g></g></g></g>
   <!-- Original pixel worker, cleaning a sofa. -->
   <g class="pixel-worker"><path d="M180 169h10v7h-10z" fill="#234954"/><path d="M182 175h8v8h-8z" fill="#E4B48B"/><path d="M178 183h14v13h-14z" fill="#148AC0"/><path d="M176 185h4v10h-4zm16 0h4v8h-4z" fill="#E4B48B"/><path d="M179 196h5v8h-5zm8 0h5v8h-5z" fill="#285574"/><path d="M177 204h7v3h-7zm10 0h7v3h-7z" fill="#23414B"/><path d="M179 169h12v3h-12z" fill="#F0F4DE"/></g>
+  <path class="pixel-machine-light" d="M221 179h5v4h-5z" fill="#b9f4b1"/>
   <g class="pixel-bubbles" fill="#FFFDF0"><path d="M102 118h4v4h-4zm9-7h3v3h-3zm-15-7h3v3h-3z"/><path d="M113 109v8m-4-4h8" stroke="#FAFCED" stroke-width="2"/></g>
   <g class="pixel-booked" opacity="0"><path d="M290 55h30v29h-30z" fill="#F5F7DC" stroke="#285574" stroke-width="2"/><path d="M290 60h30M297 52v7m15-7v7" stroke="#1689B8" stroke-width="3"/><path d="m297 71 5 5 10-10" stroke="#3C986E" stroke-width="3"/></g>
   <!-- Plants, path and clean sparkle. -->

@@ -1,4 +1,4 @@
-/* Optional ncLEAN Pixel Tycoon experiment. Included only when explicitly enabled. */
+/* ncLEAN pixel presentation. Business controls retain native HTML semantics. */
 @font-face {
   font-family: Pixelify;
   src: url('../font/PixelifySans.ttf') format('truetype');

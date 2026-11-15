@@ -87,7 +87,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -112,7 +112,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -232,7 +232,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(16, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(17, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -967,9 +967,9 @@ class CalendarPostgresIT {
         old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
         var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));assertEquals(beforeNote,old.queryForMap("SELECT * FROM memo_entry"));
+        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(beforeNote,afterNote);
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(16,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(17,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -1049,6 +1049,65 @@ class CalendarPostgresIT {
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
     }
 
+    @Test void mainGoalIsExplicitIndependentOfPinningAndPersistsAcrossRestart() throws Exception {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var step=UUID.randomUUID();
+        long id=notes.save(null,0,UUID.randomUUID(),"GOAL","Główny cel","",null,true,List.of(new pl.nclean.crm.notes.NoteService.Step(step,"Zdjęcia oferty",false)));
+        assertNull(notes.mainGoal());notes.action(id,0,"main",null,false);assertEquals(id,notes.mainGoal().id());
+        notes.action(id,1,"unpin",null,false);assertEquals(id,notes.mainGoal().id());assertFalse(notes.get(id).pinned());
+        var browser=app.browser();browser.login();var response=browser.get("/notes/main-goal");assertEquals(200,response.statusCode());assertTrue(response.body().contains("\"percent\":0"));
+        var beforeRestart=notes;assertThrows(IllegalArgumentException.class,()->beforeRestart.action(id,2,"done",null,false));
+        notes.action(id,2,"step",step,true);assertEquals(100,notes.mainGoalView().percent());assertFalse(notes.mainGoal().completed());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);
+        assertEquals(id,notes.mainGoal().id());assertEquals(100,notes.mainGoalView().percent());assertTrue(notes.action(id,3,"done",null,false));
+        assertTrue(notes.mainGoal().completed());var finalNotes=notes;
+        assertThrows(IllegalArgumentException.class,()->finalNotes.action(id,4,"step",step,false));
+        assertThrows(IllegalArgumentException.class,()->finalNotes.action(id,4,"done",null,false));
+        assertFalse(notes.action(id,4,"reopen",null,false));assertFalse(notes.action(id,5,"step",step,false));assertEquals(0,notes.mainGoalView().percent());
+    }
+
+    @Test void selectingMainGoalIsAtomicAndOldFormsCannotClearSelectionOrReplayIt() {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var token=UUID.randomUUID();
+        long a=notes.save(null,0,token,"GOAL","Cel A","",null,false,List.of(),true);
+        long b=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel B","",null,true,List.of());
+        notes.action(b,0,"main",null,false);assertFalse(notes.get(a).mainGoal());assertEquals(1,notes.get(a).version());
+        assertThrows(IllegalArgumentException.class,()->notes.save(a,0,token,"GOAL","Stara karta","",null,false,List.of(),true));assertEquals(b,notes.mainGoal().id());
+        assertEquals(a,notes.save(null,0,token,"GOAL","Powtórzenie","",null,false,List.of(),true));assertEquals(b,notes.mainGoal().id());
+        notes.save(b,1,notes.get(b).token(),"GOAL","Cel po edycji","",null,true,List.of());assertTrue(notes.get(b).mainGoal());assertNull(notes.mainGoalView().percent());
+        notes.save(b,2,notes.get(b).token(),"GOAL","Cel po edycji","",null,true,List.of(),false);assertNull(notes.mainGoal());
+        long task=notes.save(null,0,UUID.randomUUID(),"TASK","Zadanie","",null,false,List.of());
+        assertThrows(IllegalArgumentException.class,()->notes.action(task,0,"main",null,false));assertNull(notes.mainGoal());
+    }
+
+    @Test void archivingOrChangingKindClearsMainGoalWithoutDeletingStepsAndRestoringDoesNotSelect() {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var steps=List.of(new pl.nclean.crm.notes.NoteService.Step(UUID.randomUUID(),"Historia",true));
+        long id=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel","",null,true,steps,true);
+        notes.action(id,0,"archive",null,false);assertNull(notes.mainGoal());assertEquals(steps,notes.get(id).steps());
+        notes.action(id,1,"restore",null,false);assertNull(notes.mainGoal());notes.action(id,2,"main",null,false);
+        notes.save(id,3,notes.get(id).token(),"NOTE","Myśl zamiast celu","",null,false,List.of());assertNull(notes.mainGoal());assertEquals("NOTE",notes.get(id).kind());
+    }
+
+    @Test void concurrentSelectionsLeaveExactlyOneMainGoalAndCompletionSignalIsNotReplayed() throws Exception {
+        var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);
+        long a=notes.save(null,0,UUID.randomUUID(),"GOAL","A","",null,false,List.of());long b=notes.save(null,0,UUID.randomUUID(),"GOAL","B","",null,false,List.of());
+        var pool=java.util.concurrent.Executors.newFixedThreadPool(2);var gate=new java.util.concurrent.CountDownLatch(1);
+        try{var one=pool.submit(()->{gate.await();try{notes.action(a,0,"main",null,false);}catch(IllegalArgumentException ignored){}return true;});var two=pool.submit(()->{gate.await();try{notes.action(b,0,"main",null,false);}catch(IllegalArgumentException ignored){}return true;});gate.countDown();one.get(10,java.util.concurrent.TimeUnit.SECONDS);two.get(10,java.util.concurrent.TimeUnit.SECONDS);}finally{pool.shutdownNow();}
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM memo_entry WHERE main_goal",Integer.class));
+        var chosen=notes.mainGoal();var browser=app.browser();browser.login();var fields=Map.of("version",chosen.version(),"action","done");
+        var first=browser.settings("/notes/"+chosen.id()+"/action",fields,true);assertEquals(200,first.statusCode());assertTrue(first.body().contains("\"motion\":\"goal\""));
+        var replay=browser.settings("/notes/"+chosen.id()+"/action",fields,true);assertEquals(400,replay.statusCode());assertFalse(replay.body().contains("\"motion\""));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_GOAL'",Integer.class));
+    }
+
+    @Test void v17PreservesEveryExistingMemoAndStepAndDoesNotAutomaticallyChooseMainGoal() {
+        String schema="upgrade_v17_main_goal";var source=new DriverManagerDataSource(POSTGRES.getJdbcUrl()+(POSTGRES.getJdbcUrl().contains("?")?"&":"?")+"currentSchema="+schema,POSTGRES.getUsername(),POSTGRES.getPassword());
+        var old=new JdbcTemplate(source);Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).target("16").load().migrate();
+        long id=old.queryForObject("INSERT INTO memo_entry(request_token,kind,title,pinned) VALUES (?,'GOAL','Stary przypięty cel',true) RETURNING id",Long.class,UUID.randomUUID());
+        old.update("INSERT INTO memo_step(entry_id,id,position,text,done) VALUES (?,?,0,'Gotowy krok',true)",id,UUID.randomUUID());
+        var before=old.queryForMap("SELECT * FROM memo_entry");var steps=old.queryForList("SELECT * FROM memo_step");
+        Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();var after=old.queryForMap("SELECT * FROM memo_entry");
+        assertEquals(false,after.remove("main_goal"));assertEquals(before,after);assertEquals(steps,old.queryForList("SELECT * FROM memo_step"));
+    }
+
     @Test void tycoonGoalUsesExistingStepsAndExplicitCompletion() {
         var notes=app.context().getBean(pl.nclean.crm.notes.NoteService.class);var step=UUID.randomUUID();
         long id=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel z krokami","",null,true,List.of(new pl.nclean.crm.notes.NoteService.Step(step,"Krok",false)));
@@ -1072,7 +1131,7 @@ class CalendarPostgresIT {
         old.update("INSERT INTO memo_entry(request_token,kind,title,completed) VALUES (?,'GOAL','Historyczny cel',true)",UUID.randomUUID());
         var before=old.queryForList("SELECT * FROM booking ORDER BY id");var goal=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->{assertNull(row.remove("removed_at"));assertEquals(false,row.remove("historical"));});assertEquals(before,after);assertEquals(goal,old.queryForMap("SELECT * FROM memo_entry"));
+        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->{assertNull(row.remove("removed_at"));assertEquals(false,row.remove("historical"));});assertEquals(before,after);var afterGoal=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterGoal.remove("main_goal"));assertEquals(goal,afterGoal);
         assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE origin='HISTORY' AND notified_at IS NOT NULL",Integer.class));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));

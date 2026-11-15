@@ -3,7 +3,7 @@
   'use strict';
   const root=document.documentElement,media=matchMedia('(prefers-reduced-motion: reduce)');
   const running=new Set(),channels=new WeakMap(),progressValues=new Map();
-  const allowed=new Set(['booked','updated','completed','day','step']);
+  const allowed=new Set(['booked','updated','completed','day','step','goal']);
   let feedback=null,feedbackTimer=null,pendingScene=null,stars=null,starsTimer=null;
   const off=()=>media.matches||document.hidden||root.classList.contains('tycoon-motion-off')||root.dataset.uiTheme==='classic';
   const get=key=>{try{return JSON.parse(sessionStorage.getItem(key));}catch{return null;}};
@@ -70,6 +70,7 @@
     if(signal.kind==='step'){const id=Number(signal.entry),card=Number.isSafeInteger(id)?document.querySelector('[data-note-id=\"'+id+'\"]'):null;const input=card&&[...card.querySelectorAll('input[name=step]')].find(i=>i.value===signal.id);pulse(input?.closest('label,li,form')||card||source);return;}
     const id=Number(signal.id);
     if(Number.isSafeInteger(id)&&id>0){for(const card of document.querySelectorAll('[data-order="'+id+'"]'))pulse(card);}
+    if(signal.kind==='goal'){pulse(document.querySelector('.main-goal-card'));cleanStars(document.querySelector('.goal-art')||source);return;}
     if(signal.kind==='updated'){pulse(source||document.querySelector('#agenda-orders,main h1'));return;}
     if(signal.kind==='completed'){cleanStars(source||document.querySelector('[data-order="'+id+'"]'));return;}
     scene(signal.kind,true);
@@ -85,7 +86,7 @@
     const track=document.createElement('span'),fill=document.createElement('i');track.className='tycoon-progress-track';track.setAttribute('aria-hidden','true');fill.style.transform='scaleX('+value+')';track.append(fill);node.classList.add('tycoon-native-progress');node.after(track);
     if(old!==value)animate(fill,[{transform:'scaleX('+old+')'},{transform:'scaleX('+value+')'}],200,'progress');
   }
-  window.NcleanMotion={confirmed,progress,suspend,pause:svg=>{for(const effect of running)if(svg.contains(effect.effect?.target))effect.cancel();},world:svg=>{if(pendingScene){const kind=pendingScene;pendingScene=null;playScene(svg,kind);}},activeCount:()=>running.size,feedbackBusy:()=>Boolean(stars||feedback)};
+  window.NcleanMotion={confirmed,progress,animate,suspend,pause:svg=>{for(const effect of running)if(svg.contains(effect.effect?.target))effect.cancel();},world:svg=>{if(pendingScene){const kind=pendingScene;pendingScene=null;playScene(svg,kind);}},activeCount:()=>running.size,feedbackBusy:()=>Boolean(stars||feedback)};
 
   document.addEventListener('crm:day',event=>{
     const {day,previous}=event.detail;if(day===previous)return;
