@@ -102,5 +102,7 @@
     "Element style measurements do not prove each possible interaction/state. See elements.csv.",
     "Native Android camera/keyboard and actual production host not tested.",
     "No claim of 100% combinatorial coverage or production deployment."
-  ]
+  ],
+  "fixed_visual_defect": "Help buttons stretched to column width; measured 44x44 after fix at four widths",
+  "negative_photo_case": "Controlled removal of type attribute; not a failure claimed for ordinary rendered template"
 }

@@ -2,7 +2,7 @@
 
 Podstawa: pełny CRM `4fde467`, nowa gałąź `audit/full-user-journey`. Main pozostaje
 starszy. [Prompt](PROMPT.txt), [scenariusze i wyniki](scenarios.json),
-[inwentaryzacja elementów](elements.csv), [style/geometria](controls.json).
+[inwentaryzacja elementów](elements.csv), [style/geometria sprzed korekty owalu](controls.json).
 
 Próby wykonano w prawdziwym Spring Boot i izolowanych schematach/bazach PostgreSQL.
 Nie kontaktowano się z produkcją. HTML demonstracyjny nie zastępował prób backendu.
@@ -30,6 +30,14 @@ obrazy zdjęć/rachunków. Zweryfikowano odrzucenie złej sumy, istniejącego ce
 uszkodzonego backupu i zachowanie danych przy błędzie backupu/readiness.
 Sterowanie usługą było adapterem uruchamiającym prawdziwą Javę; nie instalowano
 systemd na serwerze właściciela.
+
+## Odtworzony błąd obramowania pomocy
+
+Na telefonie przycisk „?” w sekcji zdjęć rozciągał się do szerokości kolumny,
+zamieniając koło w szeroki owal. Naprawiono wspólną regułę `.ncleanek-help`:
+stałe44×44px, stała baza flex i wyrównanie w grid. Nowy test mierzy rzeczywiste
+przyciski pomocy w czterech szerokościach. [Przed](screenshots/phone-before.png),
+[po](screenshots/phone.png). Powtórzony axe:58 skanów, zero zgłoszonych naruszeń.
 
 ## Zmiana i regresja zdjęć
 

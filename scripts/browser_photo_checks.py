@@ -21,6 +21,9 @@ def verify_photo_controls(page, base):
         page.set_viewport_size({'width': width, 'height': 844})
         page.goto(base + '/work/' + booking)
         page.locator('#photos>summary').click()
+        for help_button in page.locator('#photos .ncleanek-help:visible').all():
+            rect = help_button.bounding_box()
+            assert 44 <= rect['width'] <= 45 and 44 <= rect['height'] <= 45, rect
         page.locator('[data-service-files]').first.set_input_files({
             'name': 'zdjecie.png', 'mimeType': 'image/png',
             'buffer': base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAFUlEQVR4nGPccfcXA27AhEduBEsDACFJAqNlg1pJAAAAAElFTkSuQmCC')})
