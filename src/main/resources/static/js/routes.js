@@ -11,5 +11,11 @@
     const pathname = new URL(value, location.origin === 'null' ? 'https://preview.invalid' : location.origin).pathname;
     return base && (pathname === base || pathname.startsWith(base + '/')) ? pathname.slice(base.length) || '/' : pathname;
   }
-  window.Nclean = Object.freeze({base, url, path});
+  function formTarget(form) {
+    const origin=location.origin==='null'?'https://preview.invalid':location.origin;
+    const current=/^https?:/.test(location.href||'')?location.href:origin+(location.pathname.startsWith('/')?location.pathname:'/');
+    return {url:new URL(url(form.getAttribute('action')||current),current).href,
+      method:(form.getAttribute('method')||'GET').toUpperCase(),id:form.getAttribute('id')||''};
+  }
+  window.Nclean = Object.freeze({base, url, path, formTarget});
 })();

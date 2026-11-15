@@ -1,0 +1,12 @@
+{
+  "baseline": "8462cb1",
+  "synthetic_data_only": true,
+  "observations": [
+    "REPRO versions after photo time: 0 1",
+    "REPRO timer after photo: Zlecenie zmieniło się w innym oknie. Zachowano dane; odśwież przed ponowną edycją. DB active=false",
+    "REPRO form properties: {'methodType': 'HTMLSelectElement', 'methodAttribute': 'post'}",
+    "REPRO payment: form remains=1; errors=[]",
+    "REPRO note after close/reopen: ''",
+    "REPRO saved but refresh failed: dialog open=True; DB notes=1"
+  ]
+}

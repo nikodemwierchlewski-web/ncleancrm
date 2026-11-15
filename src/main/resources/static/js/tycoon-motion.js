@@ -130,7 +130,7 @@
     if(from!==left||state.top!==top)animate(state.marker,[{transform:'translate('+from+'px,'+(state.width?state.top:top)+'px)'},{transform:'translate('+left+'px,'+top+'px)'}],180,'marker');
     state.left=left;state.top=top;state.width=rect.width;
   }
-  document.addEventListener('submit',event=>{const form=event.target;if(!event.defaultPrevented&&form.method?.toLowerCase()==='post'){form.dataset.motionNativePending='true';form.setAttribute('aria-busy','true');}});
+  document.addEventListener('submit',event=>{const form=event.target;if(!event.defaultPrevented&&Nclean.formTarget(form).method==='POST'){form.dataset.motionNativePending='true';form.setAttribute('aria-busy','true');}});
   const observer=new MutationObserver(records=>{
     for(const record of records){const node=record.target;if((record.attributeName==='open'&&node.open)||(node.matches('.ncleanek-panel')&&!node.hidden)){removeFeedback();clearStars();}}
   });

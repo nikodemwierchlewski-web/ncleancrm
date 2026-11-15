@@ -1,23 +1,25 @@
 /* Refresh CSRF before a deliberate write; never replay a mutation automatically. */
 (() => {
  const original=window.fetch.bind(window);
- const dirty=new WeakSet();let submitting=false;
- document.addEventListener('input',e=>{if(e.target.form&&!['/login','/logout'].includes(Nclean.path(e.target.form.action)))dirty.add(e.target.form);});
- document.addEventListener('change',e=>{if(e.target.form&&!['/login','/logout'].includes(Nclean.path(e.target.form.action)))dirty.add(e.target.form);});
- addEventListener('beforeunload',e=>{if(!submitting&&[...document.forms].some(f=>dirty.has(f))){e.preventDefault();e.returnValue='';}});
- window.NcleanDrafts={saved:form=>dirty.delete(form)};
- // Native forms share the same recovery as the existing async forms. Failed requests keep the DOM and files.
+ addEventListener('beforeunload',e=>{if(window.NcleanDrafts?.hasDirty()){e.preventDefault();e.returnValue='';}});
+ // One native-form transport; feature-owned async forms preventDefault before this handler.
  addEventListener('submit',async event=>{
-  const form=event.target;if(event.defaultPrevented||form.method.toUpperCase()!=='POST'||['/login','/logout'].includes(Nclean.path(form.action)))return;
+  const form=event.target;if(event.defaultPrevented)return;const target=Nclean.formTarget(form);
+  if(target.method!=='POST'||['/login','/logout'].includes(Nclean.path(target.url)))return;
   event.preventDefault();if(form.dataset.saving)return;
   const body=new FormData(form);if(event.submitter?.name)body.append(event.submitter.name,event.submitter.value);
-  let notice=form.querySelector('.session-form-error');if(!notice){notice=document.createElement('p');notice.className='session-form-error';notice.setAttribute('role','alert');form.append(notice);}
-  const button=event.submitter;form.dataset.saving='true';if(button)button.disabled=true;
+  let notice=form.querySelector('.session-form-error,.form-error');if(!notice){notice=document.createElement('p');notice.className='session-form-error form-error';notice.setAttribute('role','alert');form.prepend(notice);}notice.classList.add('session-form-error');notice.setAttribute('role','alert');
+  const button=event.submitter||form.querySelector('button[type=submit],button:not([type])');form.dataset.saving='true';form.setAttribute('aria-busy','true');if(button)button.disabled=true;
   try{
-   const response=await fetch(form.action,{method:'POST',body});
-   if(!response.ok){const json=response.headers.get('content-type')?.includes('application/json');const result=json?await response.json():null;throw Error(result?.message||result?.error||'Sprawdź dane lub sesję. Wpisane pola pozostają w tej karcie.');}
-   dirty.delete(form);submitting=true;location.assign(response.url||location.href);
-  }catch(e){notice.textContent=e.message;}finally{delete form.dataset.saving;if(button)button.disabled=false;}
+   const response=await fetch(target.url,{method:'POST',body});
+   if(!response.ok){const json=response.headers.get('content-type')?.includes('application/json');let message;
+    if(json){const result=await response.json();message=result?.message||result?.error;}else{const parsed=new DOMParser().parseFromString(await response.text(),'text/html');message=parsed.querySelector('[role=alert]')?.textContent;}
+    throw Error(message||'Zapis nie powiódł się. Sprawdź dane lub sesję. Wpisane pola pozostają w tej karcie.');}
+   window.NcleanDrafts?.saved(form);
+   const destination=new URL(response.redirected?response.url:location.href);const action=Nclean.path(target.url);
+   if(target.id==='payment-form'||action.includes('/payments/'))destination.hash='payments';if(target.id==='fuel-purchase-form')destination.hash='purchases';
+   if(destination.href===location.href)location.reload();else location.assign(destination.href);
+  }catch(e){notice.textContent=e.message;for(let p=notice.parentElement;p&&p!==form;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;notice.scrollIntoView({block:'nearest'});}finally{delete form.dataset.saving;delete form.dataset.motionNativePending;form.removeAttribute('aria-busy');if(button)button.disabled=false;}
  });
  window.fetch=async(input,options={})=>{
   input=Nclean.url(input);
@@ -35,9 +37,6 @@
   if(response.status===403||response.redirected&&Nclean.path(response.url)==='/login'){
    // A logout racing the preflight still requires a deliberate retry.
    return new Response(JSON.stringify({message:'Sesja lub CSRF zmieniły się. Zaloguj się w nowej karcie i ponów zapis. Pola zachowano.',error:'Sprawdź sesję i ponów zapis.'}),{status:403,headers:{'content-type':'application/json'}});
-  }
-  if(response.ok&&!response.redirected){
-   const form=[...document.forms].find(f=>f.action===url.href);if(form)dirty.delete(form);
   }
   return response;
  };

@@ -27,7 +27,7 @@
   try{
    const response=await fetch('/manage/remove',{method:'POST',body,headers:{Accept:'application/json'}});
    let result;try{result=await response.json();}catch{throw Error('Sprawdź połączenie i zalogowanie. Niczego nie potwierdzono; możesz ponowić.');}
-   if(!response.ok||response.redirected||!result.saved)throw Error(result.message||'Operacja nie powiodła się. Sprawdź aktualne dane.');
+   if(!response.ok||response.redirected||!result.saved)throw Error(result.message||'Operacja nie powiodła się. Sprawdź aktualne dane.');window.NcleanDrafts?.saved(form);
    try{if(result.removed)sessionStorage.setItem(key,JSON.stringify({kind:result.kind,id:result.id,version:result.version,at:Date.now()}));else sessionStorage.removeItem(key);}catch{}
    dialog.dataset.completed='true';document.dispatchEvent(new CustomEvent('nclean:removed',{detail:result}));
    const route=result.kind==='booking'?'/calendar?day='+encodeURIComponent(result.day):['category','service','chemical'].includes(result.kind)?'/settings/services':location.pathname+location.search;

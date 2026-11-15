@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-15",
+  "baseline": "8462cb1",
+  "jvm": {
+    "unit_mvc_architecture": 66,
+    "postgresql": 119,
+    "failures": 0,
+    "skipped": 0
+  },
+  "viewports": [
+    360,
+    390,
+    768,
+    1440
+  ],
+  "axe_scans": 81,
+  "axe_violations": 0,
+  "checks": {
+    "browser": [
+      "PASS Lean IA: More/settings separation, three metrics and primary action above fold at four widths.",
+      "PASS Pixel Tycoon: SVG, progress, four widths, motion preference/reload and OS reduced motion.",
+      "PASS customer search and reload retain filter/results.",
+      "PASS monthly cost rows can be removed/reused, including the 50-row limit.",
+      "PASS photo controls: upload500/retry, manual time and delete; four widths; buttons without explicit type.",
+      "PASS main goal: explicit selection, four widths, touch controls, steps,503 retry, explicit completion, no reload celebration, archive, no fake percent, reduced motion.",
+      "PASS Today workspace: 8 visits/navigation, main goal, contextual reminders without Today table, actual revenue/to-date/week pixel ring, four month grids/mobile sheet/focus, quick fuel commas/rounding503 retry/two fills/four widths.",
+      "PASS contextual reminders: booking minutes/hours/days,503 retry, atomic goal validation/date/time/absolute reminder, deep link, removal, custom finance/to-date pixel ring and four widths.",
+      "PASS LEAN: hidden filters and active scope, keyboard/click, draft retention, ring details, folded note values persisted, hidden invalid field reveal/focus,503 retry, cost filters/navigation/reset, fuel anchors, four widths.",
+      "PASS reliability: photo-time/timer synchronization, offline payment fields, lost committed response/idempotent retry, draft resume/discard, save acknowledged despite failed refresh, cost draft/four widths.",
+      "PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors."
+    ],
+    "prefix_and_session": [
+      "PASS reliability: photo-time/timer synchronization, offline payment fields, lost committed response/idempotent retry, draft resume/discard, save acknowledged despite failed refresh, cost draft/four widths.",
+      "PASS real /crm session expiry, preserved draft, login in a second tab and deliberate retry."
+    ],
+    "operations": [
+      "PASS operations: real V19→V19 update, backup/isolated restore including binary photos and receipts; existing target/corruption/checksum/failing backup protections."
+    ]
+  }
+}

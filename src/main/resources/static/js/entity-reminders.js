@@ -19,14 +19,14 @@
   const amount=field('input','amount',{type:'number',min:0,max:5256000,step:1,value:minutes/factor,required:'required',inputmode:'numeric'}),units=field('select','unit');for(const[value,text]of [['minutes','minut'],['hours','godzin'],['days','dni']])units.append(node('option',{value},text));units.value=unit;
   const local=spec.absoluteAt?new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Warsaw',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(spec.absoluteAt)).replace(' ','T'):'';
   const at=field('input','at',{type:'datetime-local',min:'2000-01-01T00:00',max:'2100-12-31T23:59',value:local});
-  const remove=node('button',{type:'button',class:'icon-button','aria-label':'Usuń przypomnienie'},'×');remove.addEventListener('click',()=>{e.remove();reindex(section);});
+  const remove=node('button',{type:'button',class:'icon-button','aria-label':'Usuń przypomnienie'},'×');remove.addEventListener('click',()=>{e.remove();reindex(section);window.NcleanDrafts?.changed(section.closest('form'));});
   e.append(label('Kiedy',mode),label('Ile wcześniej',amount),label('Jednostka',units),label('Data i godzina',at),remove);mode.addEventListener('change',()=>modeState(e));modeState(e);section.querySelector('[data-entity-reminder-rows]').append(e);reindex(section);
  }
  async function mount(root=document){for(const section of root.querySelectorAll('[data-reminder-source]:not([data-reminders-mounted])')){
   section.dataset.remindersMounted='true';const add=section.querySelector('[data-reminder-add]'),save=section.querySelector('[data-reminder-save]'),form=section.closest('#note-form');
   let loading=true;const submit=form?.querySelector('[type="submit"]');if(submit)submit.disabled=true;
   try{const id=section.dataset.reminderId;const plan=id?await json('/api/v1/reminders?sourceType='+section.dataset.reminderSource+'&sourceId='+id):{version:0,reminders:[]};section.append(input('entity_reminders_present','true'),input('entity_version',plan.version));plan.reminders.forEach(s=>row(section,s));error(section,'');reindex(section);if(save)save.disabled=false;
-   add.addEventListener('click',()=>{row(section);section.querySelector('.entity-reminder-row:last-child select').focus();});
+   add.addEventListener('click',()=>{row(section);window.NcleanDrafts?.changed(section.closest('form'));section.querySelector('.entity-reminder-row:last-child select').focus();});
    if(save)save.addEventListener('click',async()=>{if(loading)return;const invalid=[...section.querySelectorAll('input,select')].find(i=>!i.disabled&&!i.checkValidity());if(invalid){invalid.reportValidity();return;}loading=true;const fields=[...section.querySelectorAll('input,select,button')].map(n=>({n,disabled:n.disabled}));const body=new URLSearchParams();for(const n of section.querySelectorAll('input,select'))if(n.name&&!n.disabled)body.set(n.name,n.value);body.set('sourceType',section.dataset.reminderSource);body.set('sourceId',id);body.set('_csrf',csrf()||'');fields.forEach(({n})=>n.disabled=true);
     try{const p=await json('/api/v1/reminders',{method:'POST',body});section.querySelector('[name="entity_version"]').value=p.version;error(section,'Zapisano przypomnienia.');}catch(e){error(section,e.message);}finally{fields.forEach(({n,disabled})=>n.disabled=disabled);loading=false;reindex(section);}
    });

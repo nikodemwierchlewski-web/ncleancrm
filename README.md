@@ -1,5 +1,7 @@
 # ncLEAN CRM — wersja 0.1
 
+Aktualny audyt: [codzienna praca, szkice, zapis, awarie i odtwarzanie danych](docs/daily-reliability/REPORT.md).
+
 Aktualne uproszczenia: [opcje na żądanie, plan dnia i wyniki weryfikacji](docs/lean-disclosure/REPORT.md).
 
 Uporządkowany układ codziennej pracy: [Lean workspace — obsługa i weryfikacja](docs/LEAN-WORKSPACE.md). Nawigacja: Dzisiaj, Kalendarz, Klienci, Więcej. Kalendarz pozostaje ekranem startowym.

@@ -1,0 +1,15 @@
+{
+  "real_postgresql": true,
+  "real_spring_boot_restarts": true,
+  "service_control": "Test adapter controls real Java process; systemd not installed",
+  "update_V19_to_V19": true,
+  "booking_prices_notes_preserved": true,
+  "photos_receipts_binary_hashes_preserved": true,
+  "restore_new_database": true,
+  "existing_target_refused": true,
+  "corrupt_backup_refused": true,
+  "jar_checksum_refused": true,
+  "backup_failure_preserves_current_release": true,
+  "private_backup_permissions": true,
+  "failed_readiness_stops_without_unsafe_rollback": true
+}

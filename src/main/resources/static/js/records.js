@@ -15,7 +15,7 @@
       form.setAttribute('aria-busy', 'true');
       error.textContent = 'Zapisywanie…';
       try {
-        const response = await fetch(form.action, {method: 'POST', body, headers: {Accept: 'application/json'}});
+        const response = await fetch(Nclean.formTarget(form).url, {method: 'POST', body, headers: {Accept: 'application/json'}});
         const json = response.headers.get('content-type')?.includes('application/json');
         const result = json ? await response.json() : {};
         if (!response.ok || !json || result.saved !== true) throw Error(result.message || 'Nie udało się zapisać. Sprawdź połączenie i zalogowanie, a potem spróbuj ponownie.');
