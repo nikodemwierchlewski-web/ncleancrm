@@ -1,0 +1,196 @@
+Pracuj w repozytorium nikodemwierchlewski-web/ncleancrm.
+
+CEL
+Przeprowadź pełny audyt funkcjonalny i wizualny ncLEAN CRM jak normalny użytkownik, tester QA oraz doświadczony projektant UX/UI. Następnie napraw wykryte błędy i ponownie sprawdź poprawione przepływy.
+
+Nie kończ na analizie kodu, uruchomieniu testów ani obejrzeniu strony startowej. Faktycznie klikaj interfejs w przeglądarce.
+
+1. PRZYGOTOWANIE
+
+- Sprawdź aktualne gałęzie i wykorzystaj najnowszą pełną implementację, również jeśli nie jest scalona do main.
+- Utwórz osobną gałąź, zachowując istniejące zmiany.
+- Uruchom prawdziwy Spring Boot z izolowaną bazą PostgreSQL i syntetycznymi danymi.
+- Nie używaj produkcyjnego CMS, bazy nclean.pl ani prawdziwych danych klientów.
+- Nie zastępuj testów aplikacji testowaniem demonstracyjnego HTML.
+- Zachowaj istniejący wygląd ncLEAN, pixelową grafikę i ncLEANKA.
+- Nie dodawaj nowych modułów, SMS, GPS ani Reacta.
+- Jeśli środowisko jest niedostępne, jasno wskaż, których prób nie wykonano.
+
+2. NAJPIERW ZRÓB INWENTARYZACJĘ
+
+Przejrzyj kod, kontrolery, szablony, JavaScript, menu i formularze.
+
+Utwórz listę:
+- wszystkich ekranów i adresów;
+- przycisków, linków, zakładek i menu;
+- formularzy, modali, paneli i rozwijanych sekcji;
+- operacji zapisu, edycji, usuwania i przywracania;
+- uploadów, eksportów, filtrów i wyszukiwarek;
+- istotnych stanów: pusty, wypełniony, zapis, sukces, błąd, brak uprawnień.
+
+Dla każdej pozycji prowadź tabelę:
+ekran → czynność → oczekiwany wynik → rzeczywisty wynik → dowód → status.
+
+Każdy istotny element interaktywny musi zostać sprawdzony albo jawnie oznaczony jako niesprawdzony z podaniem przyczyny.
+
+3. PRZEKLIKAJ PEŁNE SCENARIUSZE PRACY
+
+LOGOWANIE I NAWIGACJA
+- Poprawne i błędne logowanie, wylogowanie, wejście bez sesji.
+- Powrót po zalogowaniu, odświeżenie, Wstecz/Dalej i bezpośrednie adresy.
+- Wszystkie pozycje menu na telefonie i komputerze.
+- Wygaśnięcie sesji podczas wypełniania formularza: dane nie mogą zniknąć.
+- Brak surowego JSON zamiast widoku po zalogowaniu lub zapisie.
+
+KALENDARZ I OBSZARY
+- Poprzedni/następny miesiąc, Dzisiaj, wybór daty i pasek tygodnia.
+- Zmiana wybranego dnia, panel dnia i otwieranie zlecenia.
+- Dzień bez zleceń oraz z 1, 8 i większą liczbą wpisów.
+- Kolejność godzin i „+N kolejnych”.
+- Jeden oraz kilka obszarów, ich usunięcie i ponowne przypisanie.
+- Dodanie obszaru, zmiana nazwy i HEX, dezaktywacja oraz historia.
+- Plan dni tygodnia, data obowiązywania i wyjątek konkretnego dnia.
+- Zachowanie wybranej daty po zamknięciu formularza i zapisie.
+
+DODAWANIE I EDYCJA ZLECENIA
+- Nowy i istniejący klient.
+- Wyszukiwanie po nazwie i telefonie, brak wyników i zmiana wyboru.
+- Podpowiedź adresu oraz ręczna korekta adresu tej wizyty.
+- Usługi z kilku kategorii bez utraty wcześniejszych zaznaczeń.
+- Ilości, usuwanie pozycji, cena sugerowana, cena uzgodniona i suma.
+- Prognoza chemii, świadome zero i brak danych.
+- Zapis, edycja terminu/statusu, anulowanie, usunięcie i przywrócenie.
+- Podwójne kliknięcie Zapisz i ponowienie po błędzie bez duplikatu.
+- Zmiana katalogu nie zmienia cen dawnych rezerwacji.
+
+HISTORYCZNE ZLECENIA
+- Wpis bez imienia, telefonu i adresu, jeśli tryb historyczny na to pozwala.
+- Wpis z istniejącym klientem i częściowymi informacjami.
+- Dodanie zdjęć oraz późniejsze uzupełnienie znanych danych.
+- Brak fikcyjnych klientów i wymyślonych wartości.
+- Nieznane zużycie i kwota końcowa nie stają się automatycznie zerem.
+- Historia nie wywołuje fałszywych zaległych przypomnień, także po dopisaniu wizyty do wcześniej zamkniętego dnia.
+
+KLIENCI I CENNIK
+- Dodanie i edycja klienta, źródło pozyskania, polecenie, historia wizyt.
+- Brak automatycznego scalania osób tylko po telefonie.
+- Dodanie/edycja kategorii, usług, cen, czasu i standardów chemii.
+- Dezaktywacja, usuwanie i przywracanie zgodnie z istniejącymi regułami.
+- Jednostki, ceny opakowań, prognozy i propozycje zużycia z realnych pomiarów.
+- Historia zachowana po zmianach katalogu i chemii.
+
+REALIZACJA I ZAMKNIĘCIE DNIA
+- Rozpoczęcie/zatrzymanie czasu, korekta ręczna i czas ze zdjęć.
+- Wykonane, anulowane i przełożone zlecenie.
+- Finalna kwota, pomiary chemii, notatka i „Bez uwag”.
+- Zdjęcia przed/po oraz uzasadniony brak zdjęć.
+- Zapis kolejnych zleceń i próba zamknięcia niekompletnego dnia.
+- Zamknięcie kompletnego dnia i jego stan po restarcie.
+- Korekta po zamknięciu prawidłowo sygnalizuje zmianę.
+- Podział kwot i czasu na usługi, jeśli istnieje.
+- Płatności, częściowa wpłata i korekta bez usuwania historii.
+
+POZOSTAŁE ISTNIEJĄCE MODUŁY
+- Dashboard: dzień/tydzień/miesiąc, plan/wykonanie, kwoty i linki do szczegółów.
+- Braki danych nie mogą wyglądać jak kompletny wynik finansowy.
+- Paliwo: licznik, agregat, parametry, tankowanie, rachunek i korekta.
+- Zakup paliwa nie nalicza drugi raz kosztu jego zużycia.
+- Koszty miesięczne, marketing, samochód, naprawy, sprzęt i inwestycje.
+- Filtry, historia, edycja, usuwanie/przywracanie i powiązania.
+- Notatki, zadania, cele, kroki, przypinanie, ukończenie i archiwum.
+- Wyszukiwanie globalne, ponowny kontakt i eksporty.
+
+4. SPRAWDŹ KAŻDY FORMULARZ TAKŻE PRZY BŁĘDZIE
+
+Sprawdź:
+- puste wymagane pola i same spacje;
+- zbyt długi tekst;
+- polskie znaki, apostrofy, &, < oraz >;
+- przecinek i kropkę w kwotach;
+- zero, wartości ujemne oraz granice wynikające z kodu;
+- nieprawidłową datę, godzinę, telefon i kolor;
+- dwie karty edytujące ten sam rekord;
+- powolny zapis, HTTP 400/403/409/500/503 i zerwane połączenie.
+
+Komunikaty mają być zrozumiałe i wskazywać problem. Nie pokazuj stack trace.
+Błąd nie może kasować pól, zdjęć oczekujących na wysłanie ani wybranych usług.
+Po przywróceniu połączenia użytkownik może świadomie ponowić zapis.
+
+5. ZDJĘCIA I PLIKI
+
+Sprawdź upload z galerii i odpowiednik aparatu, JPEG/PNG, obrót, nazwy plików, podgląd, usuwanie i ponowienie.
+
+Sprawdź plik uszkodzony, nieobsługiwany format, przekroczony limit i przerwaną serię uploadów. Limity ustal z implementacji.
+
+Zdjęcia mają należeć do właściwego zlecenia, być chronione logowaniem i pozostać po restarcie, aktualizacji oraz odtworzeniu kopii.
+
+6. AUDYT WYGLĄDU — WSZYSTKIE EKRANY I STANY
+
+Sprawdź szerokości 360, 390, 768 i 1440 px oraz krótki ekran telefonu. Uwzględnij powiększenie tekstu i symulację zmniejszenia miejsca przez klawiaturę.
+
+Kontroluj:
+- bordery, obramowania, cienie, zaokrąglenia i wyrównanie;
+- odstępy, szerokości pól i spójność przycisków;
+- kontrast tekstu, nazw, cen, statusów i placeholderów;
+- hover, focus, active, selected, disabled, loading i error;
+- czytelność dat, godzin i zleceń na kolorowych tłach;
+- długie nazwy, adresy, notatki i duże kwoty;
+- brak poziomego przewijania strony i uciętych etykiet;
+- brak nakładania stopki, menu, modali, tooltipów i klawiatury;
+- duże cele dotykowe, docelowo minimum 44×44 px;
+- widoczność sumy i zapisu bez zasłaniania pól;
+- sensowne puste stany i brak zbędnych powtórzeń.
+
+Zapisuj screenshoty całych ekranów i zbliżenia wykrytych problemów.
+Naprawiaj wspólny komponent lub regułę CSS, zamiast dokładać kolejne sprzeczne nadpisania.
+
+7. NCLEANEK I ANIMACJE
+
+- Domyślny prawy dolny róg, przeciąganie tylko lewo/prawo.
+- Stały rozmiar, brak przeskakiwania i samoczynnego cofania.
+- Pomoc pasująca do aktualnego ekranu i formularza.
+- Prawdziwe przypomnienia, wyciszenie i odłożenie.
+- Brak zasłaniania istotnych kontrolek.
+- Gwiazdki i komunikaty sukcesu tylko po potwierdzonym zapisie.
+- Brak nakładania efektów i narastania ich po wielokrotnych kliknięciach.
+- Obsługa prefers-reduced-motion, klawiatury i zamykania pomocy.
+
+8. PRAWDZIWA TRWAŁOŚĆ I ŚCIEŻKA /CRM
+
+Sprawdź aplikację zarówno pod /, jak i /crm/.
+W próbie HTTPS zachowaj publiczny stub strony na /.
+
+Sprawdź linki, formularze, AJAX, obrazy, eksporty, login/logout, cookie, manifest i service worker. Żądania CRM nie mogą wychodzić poza /crm/, a cache publicznej strony musi pozostać.
+
+Zrestartuj aplikację i bazę bez usuwania wolumenu. Porównaj zapisane rekordy i obrazy.
+Przetestuj aktualizację istniejącej bazy, backup i restore do nowej bazy.
+Nie edytuj wykonanych migracji. Nie używaj DROP, Flyway clean ani down -v na danych użytkownika.
+
+9. NAPRAWY I PONOWNE TESTY
+
+Dla każdego defektu:
+1. Odtwórz go i zapisz dowód.
+2. Ustal przyczynę.
+3. Wprowadź poprawkę w prawdziwej aplikacji.
+4. Powtórz ten sam scenariusz.
+5. Sprawdź sąsiednie funkcje pod kątem regresji.
+6. Dodaj odpowiedni test, jeśli chroni istotną regułę lub zapis.
+
+Uruchom Maven verify z rzeczywistym PostgreSQL, testy architektury, testy granic web/PWA i właściwe testy przeglądarkowe. Przeprowadź axe oraz ręczne przejście Tab/Enter/Escape.
+
+Nie uznawaj funkcji za sprawdzoną wyłącznie dlatego, że przycisk istnieje albo endpoint zwraca HTTP 200.
+
+10. REZULTAT
+
+Dostarcz:
+- raport pokrycia ekranów i czynności;
+- listę błędów z priorytetami, poprawkami i wynikiem ponownej próby;
+- rzeczywiste wyniki testów, bez wymyślonych zaliczeń;
+- screenshoty telefonu i komputera;
+- pozostałe ograniczenia i niesprawdzone przypadki;
+- zmiany zapisane na osobnej gałęzi GitHuba, bez scalenia i bez PR-a;
+- aktualny klikalny podgląd poprawionej aplikacji, jeśli platforma go obsługuje.
+
+Jeśli panel podglądu nie działa, dostarcz sprawdzony HTML/ZIP z syntetycznymi danymi i jasno odróżnij go od trwałego zapisu w PostgreSQL.
+
+Najważniejsze: aplikacja ma przejść pełny dzień pracy zwykłego użytkownika — od znalezienia terminu do zamknięcia dnia — bez zgadywania, utraty danych, martwych przycisków i walki z interfejsem.

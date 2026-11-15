@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-15",
+  "timezone": "Europe/Warsaw",
+  "base_commit": "4fde467",
+  "production_contact": false,
+  "unit_mvc_architecture": {
+    "tests": 50,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "postgresql": {
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "axe": {
+    "scans": 58,
+    "violations": 0,
+    "physical_device": false
+  },
+  "https": {
+    "prefix": "/crm",
+    "https_fixture": true,
+    "production_contact": false,
+    "viewports": [
+      360,
+      390,
+      768,
+      1440
+    ],
+    "routes_per_width": 15,
+    "public_site_preserved": true,
+    "historical_booking_without_fake_customer": true,
+    "photo_upload_and_private_fetch": true,
+    "export": true,
+    "csrf_403": true,
+    "logout": true,
+    "foreign_cache_preserved": true,
+    "service_worker_scope": "https://127.0.0.1:18443/crm/",
+    "manifest_relative": true,
+    "escaped_requests": [],
+    "javascript_errors": [],
+    "cookie": [
+      {
+        "name": "NCLEAN_CRM_SESSION",
+        "path": "/crm",
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "Strict"
+      }
+    ]
+  },
+  "operations": {
+    "real_postgresql": true,
+    "real_spring_boot_restarts": true,
+    "service_control": "Test adapter controls real Java process; systemd not installed",
+    "upgrade_V15_to_V16": true,
+    "booking_prices_notes_preserved": true,
+    "photos_receipts_binary_hashes_preserved": true,
+    "restore_new_database": true,
+    "existing_target_refused": true,
+    "corrupt_backup_refused": true,
+    "jar_checksum_refused": true,
+    "backup_failure_preserves_current_release": true,
+    "private_backup_permissions": true,
+    "failed_readiness_stops_without_unsafe_rollback": true
+  },
+  "workflow_assertions": [
+    "interactions: saved-id highlight and booked scene only after server success,503 preserves fields, rapid day selection settles, mixed-category count, dialog focus and month transition.",
+    "notes real UI: memo/task/goals, steps and explicit completion, pin5/max3, archive/restore, search,503 retry, two-tab conflict, four widths and compact viewport.",
+    "Tycoon: SVG animation, 4 widths, motion preference/reload/OS, goal steps, dates, modal deferral, notification acknowledgement.",
+    "lean: navigation/config separation, authoritative missing data, shared completion from visit, returning client, two categories/custom price/address, catalogue change keeps history, default dashboard/Today actions above fold, four widths.",
+    "closeout: real chemistry, photos/time, separate notes,503 retry, cancel/move, explicit exceptions, partial day, two tabs, four widths, closure persistence and reopening."
+  ],
+  "portable_browser": [
+    "PASS Lean IA: More/settings separation, three metrics and primary action above fold at four widths.",
+    "PASS customer search and reload retain filter/results.",
+    "PASS monthly cost rows can be removed/reused, including the 50-row limit.",
+    "PASS photo controls: upload500/retry, manual time and delete; four widths; buttons without explicit type.",
+    "PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors."
+  ],
+  "visual_inventory": {
+    "screens": 63,
+    "rendered_elements": 2682,
+    "static_elements": 614,
+    "static_elements_matched": 329
+  },
+  "normal_photo_flows": {
+    "baseline": false,
+    "widths": [
+      360,
+      390,
+      768,
+      1440
+    ],
+    "javascript_errors": [],
+    "manual_time_and_delete": true
+  },
+  "limits": [
+    "Element style measurements do not prove each possible interaction/state. See elements.csv.",
+    "Native Android camera/keyboard and actual production host not tested.",
+    "No claim of 100% combinatorial coverage or production deployment."
+  ]
+}

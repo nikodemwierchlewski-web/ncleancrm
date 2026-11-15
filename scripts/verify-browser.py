@@ -16,6 +16,7 @@ import urllib.request
 import uuid
 
 from playwright.sync_api import expect, sync_playwright
+from browser_photo_checks import verify_photo_controls
 
 
 def main():
@@ -225,6 +226,7 @@ def main():
                 form.get_by_role('button', name='Dodaj klienta', exact=True).click()
             expect(page.locator('main>article')).to_have_count(3)
             assert len(requests) == 2
+            verify_photo_controls(page, base)
             assert not errors, errors
             browser.close()
             print('PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors.', flush=True)

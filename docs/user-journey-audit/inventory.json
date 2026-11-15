@@ -1,0 +1,391 @@
+{
+  "template_elements": 614,
+  "templates": 43,
+  "endpoints": [
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+      "method": "POST",
+      "mapping": "\"/weekly\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+      "method": "POST",
+      "mapping": "\"/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/AreaSettingsController.java",
+      "method": "POST",
+      "mapping": "\"/{id}/active\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "GET",
+      "mapping": "\"/\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "GET",
+      "mapping": "\"/calendar\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "POST",
+      "mapping": "\"/calendar/areas\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "POST",
+      "mapping": "value=\"/calendar/areas\", params=\"calendar\", produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "POST",
+      "mapping": "value=\"/calendar/areas/restore\",produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/calendar/CalendarController.java",
+      "method": "POST",
+      "mapping": "\"/calendar/district\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "GET",
+      "mapping": "\"/search\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "GET",
+      "mapping": "\"/callbacks\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "POST",
+      "mapping": "\"/callbacks/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/photos\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/photos/{photo}/delete\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/photo-time\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/context/ContextController.java",
+      "method": "GET",
+      "mapping": "\"/photos/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "GET",
+      "mapping": "\"/costs\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "GET",
+      "mapping": "\"/costs/editor\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "POST",
+      "mapping": "\"/costs\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "POST",
+      "mapping": "\"/costs/{id}/cancel\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "POST",
+      "mapping": "\"/costs/fuel/{id}/cancel\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "GET",
+      "mapping": "\"/costs/equipment/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "POST",
+      "mapping": "\"/costs/equipment/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/costs/CostController.java",
+      "method": "POST",
+      "mapping": "\"/costs/receipts\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+      "method": "GET",
+      "mapping": "\"/dashboard\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+      "method": "GET",
+      "mapping": "\"/settings/costs\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+      "method": "POST",
+      "mapping": "\"/settings/costs/month\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/dashboard/DashboardController.java",
+      "method": "POST",
+      "mapping": "\"/settings/costs/fuel\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "GET",
+      "mapping": "\"/fuel\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "POST",
+      "mapping": "\"/fuel/day\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "POST",
+      "mapping": "\"/fuel/parameters\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "POST",
+      "mapping": "\"/fuel/purchases\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "POST",
+      "mapping": "\"/fuel/receipts\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "GET",
+      "mapping": "\"/fuel/receipts/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/fuel/FuelController.java",
+      "method": "POST",
+      "mapping": "\"/fuel/receipts/{id}/discard\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/help/GuideController.java",
+      "method": "GET",
+      "mapping": "\"/help/context\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+      "method": "GET",
+      "mapping": "\"/notes\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+      "method": "GET",
+      "mapping": "\"/notes/editor\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+      "method": "POST",
+      "mapping": "\"/notes\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/notes/NoteController.java",
+      "method": "POST",
+      "mapping": "\"/notes/{id}/action\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "GET",
+      "mapping": "\"/customers\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/customers/search\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/customers/lookup\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/customers\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "GET",
+      "mapping": "\"/more\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "GET",
+      "mapping": "\"/settings\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "GET",
+      "mapping": "\"/settings/services\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/settings/services/chemicals\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/settings/services/{id}/chemistry\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/settings/services/{id}/suggestion\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "value=\"/orders/{id}/items/{position}/actual\",produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/settings/services/category\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/settings/services\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "GET",
+      "mapping": "\"/orders\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/orders\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "value=\"/orders\",params=\"calendar\",produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "value=\"/orders/{id}\",params=\"calendar\",produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/records/RecordsController.java",
+      "method": "POST",
+      "mapping": "\"/orders/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/removal/RemovalController.java",
+      "method": "POST",
+      "mapping": "value=\"/manage/remove\",produces=\"application/json\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/tycoon/TycoonController.java",
+      "method": "GET",
+      "mapping": "\"/tycoon/progress\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/tycoon/TycoonController.java",
+      "method": "POST",
+      "mapping": "\"/tycoon/achievements/{code}/ack\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/ui/AccessController.java",
+      "method": "GET",
+      "mapping": "\"/offline.html\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/ui/AccessController.java",
+      "method": "GET",
+      "mapping": "\"/login\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/ui/AccessController.java",
+      "method": "GET",
+      "mapping": "\"/logout\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/ui/AccessController.java",
+      "method": "GET",
+      "mapping": "\"/session\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+      "method": "GET",
+      "mapping": "\"/day-closeout\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+      "method": "POST",
+      "mapping": "\"/day-closeout/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/DayReviewController.java",
+      "method": "POST",
+      "mapping": "\"/day-closeout/close\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/ExportController.java",
+      "method": "GET",
+      "mapping": "\"/export/customers.csv\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/ExportController.java",
+      "method": "GET",
+      "mapping": "\"/export/orders.csv\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "GET",
+      "mapping": "\"/today\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "GET",
+      "mapping": "\"/work/{id}\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/timer\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/complete\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/payments\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "POST",
+      "mapping": "\"/work/{id}/payments/{payment}/reverse\""
+    },
+    {
+      "controller": "src/main/java/pl/nclean/crm/work/WorkController.java",
+      "method": "GET",
+      "mapping": "\"/customers/{id}\""
+    }
+  ]
+}
