@@ -1,0 +1,7 @@
+FROM postgres:17@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
+# Copy with explicit permissions: the postgres OS user must be able to read
+# initialization scripts even when the host checkout uses mode 0600.
+COPY --chmod=0755 docker/postgres/entrypoint.sh /usr/local/bin/nclean-postgres-entrypoint.sh
+COPY --chmod=0644 docker/postgres/init-crm.sh /docker-entrypoint-initdb.d/10-crm.sh
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/nclean-postgres-entrypoint.sh"]
+CMD ["postgres"]

@@ -1,0 +1,120 @@
+name: ncleancrm-pc
+
+x-app: &app
+  image: ncleancrm-pc:${CRM_PC_VERSION:-local}
+  build:
+    context: .
+  user: "${CRM_PC_UID:-1000}:${CRM_PC_GID:-1000}"
+  security_opt:
+    - no-new-privileges:true
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=256m
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  app:
+    <<: *app
+    command:
+      - --spring.profiles.active=docker
+      - --spring.config.additional-location=file:/run/secrets/application-local.properties
+      - --spring.datasource.url=jdbc:postgresql://postgres:5432/nclean_crm
+      - --spring.datasource.username=crm_dev
+      - --spring.flyway.url=jdbc:postgresql://postgres:5432/nclean_crm
+      - --spring.flyway.user=crm_dev
+      - --server.address=0.0.0.0
+      - --server.port=8081
+      - --server.shutdown=graceful
+    environment:
+      TZ: Europe/Warsaw
+    secrets:
+      - source: app_config
+        target: application-local.properties
+    ports:
+      - "127.0.0.1:${CRM_HTTP_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 40s
+
+  postgres:
+    image: ncleancrm-pc-postgres:17
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    environment:
+      POSTGRES_DB: nclean_crm
+      POSTGRES_USER: crm_bootstrap
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
+      TZ: Europe/Warsaw
+    secrets: [postgres_admin_password, crm_db_password]
+    volumes:
+      - pc-data:/var/lib/postgresql/data
+    tmpfs:
+      - /run/crm-init
+    healthcheck:
+      test: [CMD-SHELL, "PGPASSWORD=\"$$(cat /run/secrets/crm_db_password)\" psql -h 127.0.0.1 -U crm_dev -d nclean_crm -c 'SELECT 1' >/dev/null"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    restart: unless-stopped
+    stop_grace_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  init:
+    <<: *app
+    profiles: [tools]
+    working_dir: /workspace
+    entrypoint: [java, -cp, "/opt/nclean-tools:/opt/nclean-tools/lib/*", InitializeLocal]
+    healthcheck:
+      disable: true
+    volumes:
+      - ./.local:/workspace/.local
+      - ./pom.xml:/workspace/pom.xml:ro
+    network_mode: none
+
+  ops:
+    image: postgres:17@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
+    profiles: [tools]
+    user: "${CRM_PC_UID:-1000}:${CRM_PC_GID:-1000}"
+    entrypoint: [/bin/sh, /ops/database.sh]
+    command: [backup]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TZ: Europe/Warsaw
+    secrets: [postgres_admin_password]
+    volumes:
+      - ./docker/pc/database.sh:/ops/database.sh:ro
+      - ./.local/pc-backups:/backups
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  pc-data:
+    # Deliberately outside the Compose project lifecycle and directory name.
+    external: true
+    name: ncleancrm-pc-data
+
+secrets:
+  postgres_admin_password:
+    file: ./.local/postgres-admin-password
+  crm_db_password:
+    file: ./.local/postgres-password
+  app_config:
+    file: ./.local/application-local.properties

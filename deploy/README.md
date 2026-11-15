@@ -31,7 +31,7 @@ uzasadnieniem wykonanych poprawek, nie aktualnym wynikiem próby.
 | `ops/crm_ops.py` | Backup, restore do nowej bazy, aktualizacja JAR-a z obowiązkowym backupem |
 | `ops/ops.json.example`, `ops/pg_service.conf.example` | Jawna tożsamość instalacji i połączeń, do uzupełnienia poza Git |
 
-Lokalny Compose pozostaje developmentem. Administrator może użyć trwałego
+Plik `compose.yaml` pozostaje developmentem samej bazy. Wariant całego CRM na komputerze przez Docker Desktop opisano w [DOCKER-PC.md](../docs/DOCKER-PC.md); nie zastępuje konfiguracji publicznego HTTPS. Administrator może użyć trwałego
 PostgreSQL w Dockerze lub osobnej usługi bazy. Wariant aplikacji z tej instrukcji
 to systemd; nie wymaga Dockera na telefonie ani zmiany CMS na kontenery.
 Starsze przykłady subdomenowe pozostają archiwalne i nie są konfiguracją docelową.
@@ -40,7 +40,7 @@ Starsze przykłady subdomenowe pozostają archiwalne i nie są konfiguracją doc
 
 1. Osobna baza/role i trwały katalog lub zewnętrzny wolumen o stałej nazwie.
 2. Potwierdzone proxy, certyfikat i prywatne porty; żadnego podmieniania CMS.
-3. Zweryfikowane migracje V1–V16, granty i prywatne sekrety.
+3. Zweryfikowane migracje V1–V19, granty i prywatne sekrety.
 4. Backup ze zdjęciami, restore do nowej bazy i kontrola danych przez aplikację.
 5. Próba restartu, aktualizacji i awarii; procedura powrotu bez kasowania bazy.
 6. Fizyczny Android, bieżący skan zależności i odbiór administratora.

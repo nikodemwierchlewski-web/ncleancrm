@@ -1,3 +1,7 @@
 /mvnw text eol=lf
 /mvnw.cmd text eol=crlf
 /docker/postgres/*.sh text eol=lf
+/docker/pc/*.sh text eol=lf
+/Dockerfile text eol=lf
+/Dockerfile.postgres text eol=lf
+/compose.pc.yaml text eol=lf

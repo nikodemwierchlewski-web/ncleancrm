@@ -1,0 +1,5 @@
+# Explicit Flyway URL/user in Compose create a separate migration datasource.
+# Its password must be supplied from the same private local properties file.
+spring:
+  flyway:
+    password: ${CRM_DB_PASSWORD}
