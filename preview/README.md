@@ -1,4 +1,12 @@
-# Aktualny podgląd: LEAN — opcje na żądanie
+# Aktualny podgląd: audyt pracy i zapisu
+
+[Otwórz HTML](nclean-daily-audit.html) · [Pobierz ZIP](nclean-daily-audit.zip) · [Raport audytu](../docs/daily-reliability/REPORT.md).
+
+Szkice edytora notatek i kosztów można przywrócić i jawnie odrzucić; dotychczasowy układ LEAN pozostaje. Bieżąca gałąź: `feat/nclean-daily-reliability-audit`.
+
+HTML jest syntetycznym DEMO bez połączenia z bazą. Stan próby i szkice są pamięcią strony; JSON nie jest backupem bazy ani zdjęć. Pełną aplikację, rzeczywiste zapisy, sesję, ponowienia i odtwarzanie PostgreSQL sprawdzono osobno — wyniki w raporcie. Nie wpisuj danych prawdziwych klientów do DEMO.
+
+# Archiwum: LEAN — opcje na żądanie
 
 [Otwórz HTML](nclean-lean.html) · [Pobierz ZIP](nclean-lean.zip) · [Obsługa i testy](../docs/lean-disclosure/REPORT.md).
 

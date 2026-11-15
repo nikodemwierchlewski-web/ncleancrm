@@ -53,3 +53,7 @@ Nie zmieniano reguł finansowych: wycena ≠ potwierdzona cena, przychód ≠ wp
 Szkic jest pamięcią bieżącej strony, nie zapisem serwerowym i nie gwarancją odzyskania po zamknięciu karty lub ubiciu przeglądarki przez Androida. Przed przeładowaniem istnieje ostrzeżenie o niezapisanych danych; trwały zapis następuje po „Zapisz”. Nie uruchomiono offline queue ani przechowywania danych klientów w localStorage.
 
 Nie testowano fizycznego telefonu Android, aparatu producenta, zachowania systemu przy usypianiu ani infrastruktury docelowego serwera. Nie kontaktowano się z produkcją i nie wykonywano wdrożenia. Następny etap: kontrolowany pilotaż z kilkoma historycznymi zleceniami w prawdziwej aplikacji, próba aparatu/klawiatury na telefonie i kopia bazy po próbie. Android, push i SMS pozostają osobnym etapem.
+
+## Podgląd
+
+[HTML](../../preview/nclean-daily-audit.html), [ZIP](../../preview/nclean-daily-audit.zip). Na podstawie 81 przechwyconych widoków prawdziwego serwera i tych samych modułów UI, z oddzielnym transportem DEMO. Test `scripts/verify-daily-preview.py` przeszedł dla czterech szerokości oraz dwóch zagnieżdżonych sandboxów: szkic/przywrócenie/odrzucenie, czysty nowy wpis po zapisie, filtry/koło, przypomnienia, koszty i kalendarz. Bez błędów JS. ZIP jest zgodny z aktualnym HTML i przeszedł `ZipFile.testzip()`. Dostępny jest podgląd pliku; brak działającego narzędzia otwarcia serwera w panelu Codexa w tej sesji.
