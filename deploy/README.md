@@ -40,7 +40,7 @@ Starsze przykłady subdomenowe pozostają archiwalne i nie są konfiguracją doc
 
 1. Osobna baza/role i trwały katalog lub zewnętrzny wolumen o stałej nazwie.
 2. Potwierdzone proxy, certyfikat i prywatne porty; żadnego podmieniania CMS.
-3. Zweryfikowane migracje V1–V19, granty i prywatne sekrety.
+3. Zweryfikowane migracje V1–V20, granty i prywatne sekrety.
 4. Backup ze zdjęciami, restore do nowej bazy i kontrola danych przez aplikację.
 5. Próba restartu, aktualizacji i awarii; procedura powrotu bez kasowania bazy.
 6. Fizyczny Android, bieżący skan zależności i odbiór administratora.

@@ -18,8 +18,9 @@ class FuelSecurityTest {
  @Autowired MockMvc mvc;
  @MockitoBean FuelJournalService fuel;
  @MockitoBean ReceiptService receipts;
+ @MockitoBean FullTankService full;
  @Test void journalAndImagesArePrivateAndWritesRequireCsrf() throws Exception {
-  for(String path:new String[]{"/fuel","/fuel/receipts/00000000-0000-0000-0000-000000000001"}){mvc.perform(get(path)).andExpect(status().is3xxRedirection());mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
-  for(String path:new String[]{"/fuel/day","/fuel/parameters","/fuel/purchases","/fuel/receipts","/fuel/receipts/00000000-0000-0000-0000-000000000001/discard"}){mvc.perform(post(path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());mvc.perform(post(path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());}
+  for(String path:new String[]{"/fuel","/fuel/legacy","/fuel/receipts/00000000-0000-0000-0000-000000000001"}){mvc.perform(get(path)).andExpect(status().is3xxRedirection());mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
+  for(String path:new String[]{"/fuel/baseline","/fuel/day","/fuel/parameters","/fuel/purchases","/fuel/receipts","/fuel/receipts/00000000-0000-0000-0000-000000000001/discard"}){mvc.perform(post(path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());mvc.perform(post(path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());}
  }
 }

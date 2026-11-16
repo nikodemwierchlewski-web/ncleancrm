@@ -77,12 +77,13 @@ public class DashboardService {
         var monthly=db.queryForList("SELECT month,category,SUM(amount) amount FROM dashboard_month_cost WHERE month BETWEEN ? AND ? GROUP BY month,category",p.start().withDayOfMonth(1),p.end().withDayOfMonth(1));
         var missingMonths=new HashSet<YearMonth>();
         var journalUsage=journal.usage(p.start(),p.end());
+        var fuelSpending=journal.spendingByDay(p.start(),p.end());
         var journalEnabledFrom=db.queryForObject("SELECT min(effective_day) FROM fuel_parameters",java.sql.Date.class);
         for(LocalDate day=p.start();!day.isAfter(p.end());day=day.plusDays(1)){
             var fuelBefore=fuel;var marketingBefore=marketing;var fixedBefore=fixed;
             var f=fuels.get(day);String kmKey=mode.equals("plan")?"planned_km":"actual_km";
             var measured=journalUsage.get(day);
-            if(mode.equals("actual")&&f!=null&&f.get("actual_cost")!=null)fuel=fuel.add((BigDecimal)f.get("actual_cost"));
+            if(mode.equals("actual"))fuel=fuel.add(fuelSpending.getOrDefault(day,BigDecimal.ZERO));
             else {
                 boolean known=true;
                 if(f!=null&&f.get(kmKey)!=null)fuel=fuel.add(money(((BigDecimal)f.get(kmKey)).multiply((BigDecimal)f.get("consumption")).multiply((BigDecimal)f.get("litre_price")).divide(new BigDecimal("100"))));

@@ -1,4 +1,15 @@
-# Aktualny podgląd: audyt pracy i zapisu
+# Nowy podgląd: proste tankowania i wynik firmy
+
+[Klikalny HTML](nclean-full-tank.html) · [Obsługa, migracja V20 i testy](../docs/TANKOWANIA-PELNY-PELNY.md).
+
+To podgląd samego ekranu tankowań: kwota i litry, samochód/diesel, agregat/benzyna,
+stany początkowe oraz wpływ zakupu na wynik wybranego miesiąca. Formularz pochodzi
+z prawdziwej aplikacji, a zapis jest symulowany w pamięci strony. Odświeżenie resetuje
+dane. Nie jest to zapis do PostgreSQL. Nie wpisuj danych klientów.
+
+Poniższe pełne podglądy są starsze i nie zawierają nowych tankowań.
+
+# Archiwum: audyt pracy i zapisu
 
 [Otwórz HTML](nclean-daily-audit.html) · [Pobierz ZIP](nclean-daily-audit.zip) · [Raport audytu](../docs/daily-reliability/REPORT.md).
 

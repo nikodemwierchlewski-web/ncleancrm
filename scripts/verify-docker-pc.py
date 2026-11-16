@@ -22,7 +22,7 @@ from playwright.sync_api import expect, sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 DOCKER = ['docker', '--host=unix:///var/run/docker.sock']
 TABLES = ['flyway_schema_history', 'district', 'day_district', 'crm_customer',
-          'booking', 'booking_item', 'booking_photo', 'fuel_receipt']
+          'booking', 'booking_item', 'booking_photo', 'fuel_receipt', 'fuel_purchase', 'fuel_baseline']
 
 
 def main():
@@ -130,7 +130,7 @@ secrets:
             assert original_secrets == {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in secrets.iterdir()}
             print('PASS interactive initializer and refusal to overwrite secrets', flush=True)
             run(compose + ['up', '-d', '--no-build', '--wait', '--wait-timeout', '180'])
-            assert sql('SELECT count(*) FROM flyway_schema_history WHERE success') == '19'
+            assert sql('SELECT count(*) FROM flyway_schema_history WHERE success') == '20'
             assert not json.loads(run(DOCKER + ['inspect', project + '-postgres-1']))[0]['HostConfig']['PortBindings']
             assert json.loads(run(DOCKER + ['inspect', project + '-app-1']))[0]['HostConfig']['ReadonlyRootfs']
 
@@ -169,6 +169,8 @@ secrets:
                 assert sql('SELECT count(*) FROM booking_photo') == '1'
                 # A synthetic binary receipt, independent of the service-photo upload.
                 sql("INSERT INTO fuel_receipt(id,image) VALUES ('" + str(uuid.uuid4()) + "',decode('" + png.hex() + "','hex'))")
+                sql("INSERT INTO fuel_baseline(target,started_at,reading,request_token,updated_by) VALUES ('GENERATOR',TIMESTAMP '2026-10-01 08:00',100,'" + str(uuid.uuid4()) + "','docker-qa')")
+                sql("INSERT INTO fuel_purchase(request_token,purchased_at,target,fuel_type,amount,litres,litre_price,full_tank,generator_meter,records_complete,metered_full) VALUES ('" + str(uuid.uuid4()) + "',TIMESTAMP '2026-10-12 12:00','GENERATOR','PETROL',50,10,5,TRUE,110,TRUE,TRUE)")
                 saved = fingerprint()
                 saved_image = bytes.fromhex(sql("SELECT encode(image,'hex') FROM booking_photo LIMIT 1"))
                 run(compose + ['stop'])

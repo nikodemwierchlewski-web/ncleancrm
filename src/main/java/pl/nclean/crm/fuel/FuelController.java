@@ -14,32 +14,61 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @Controller
 public class FuelController {
-    private final FuelJournalService fuel;private final ReceiptService receipts;
-    public FuelController(FuelJournalService fuel,ReceiptService receipts){this.fuel=fuel;this.receipts=receipts;}
+    private final FuelJournalService fuel;private final ReceiptService receipts;private final FullTankService full;
+    public FuelController(FuelJournalService fuel,ReceiptService receipts,FullTankService full){this.fuel=fuel;this.receipts=receipts;this.full=full;}
     public void populate(LocalDate date,BusinessDates.Period period,Model m){
         m.addAttribute("legacyFuel",fuel.legacyFuel(date));m.addAttribute("journal",fuel.daily(date));m.addAttribute("previousReading",fuel.previous(date));m.addAttribute("nextReading",fuel.next(date));m.addAttribute("fuelUsage",fuel.usage(date,date).get(date));m.addAttribute("fuelTotals",fuel.totals(period.start(),period.end()));m.addAttribute("fuelParameters",fuel.parameters(date));
     }
-    private String page(LocalDate date,Long purchase,Model m){
+    private String legacyPage(LocalDate date,Long purchase,Model m){
         BusinessDates.period(date,"day");m.addAttribute("date",date);populate(date,BusinessDates.period(date,"month"),m);m.addAttribute("journalHistory",fuel.history(date));m.addAttribute("journalAudit",fuel.audit(date));m.addAttribute("purchases",fuel.purchases(date.withDayOfMonth(1),YearMonth.from(date).atEndOfMonth()));m.addAttribute("comparisons",fuel.comparisons(date));m.addAttribute("parameterHistory",fuel.parameters());m.addAttribute("today",BusinessDates.today());
         m.addAttribute("purchase",purchase==null?Map.of("version",-1,"request_token",UUID.randomUUID(),"purchased_at",date.atTime(LocalTime.now(ZoneId.of("Europe/Warsaw")).withSecond(0).withNano(0)),"target","CAR","fuel_type",fuel.defaultCarFuel(date),"full_tank",false,"records_complete",false):fuel.purchaseForEdit(purchase));
         var editing=purchase==null?null:fuel.purchaseForEdit(purchase);
         m.addAttribute("purchaseAmountOverride",editing!=null&&editing.get("litres")!=null&&editing.get("litre_price")!=null&&((java.math.BigDecimal)editing.get("amount")).compareTo(FuelJournalService.rounded(((java.math.BigDecimal)editing.get("litres")).multiply((java.math.BigDecimal)editing.get("litre_price"))))!=0);
         m.addAttribute("quickPurchase",editing==null||editing.get("litres")!=null&&editing.get("litre_price")!=null&&(!"CAR".equals(editing.get("target"))||editing.get("odometer")!=null));
-        m.addAttribute("parameterToken",UUID.randomUUID());return "fuel/index";
+        m.addAttribute("parameterToken",UUID.randomUUID());return "fuel/legacy";
     }
-    @GetMapping("/fuel") String index(@RequestParam(required=false) LocalDate date,@RequestParam(required=false) Long purchase,Model m){return page(date==null?BusinessDates.today():date,purchase,m);}
+    @GetMapping("/fuel") String index(@RequestParam(required=false) LocalDate date,@RequestParam(required=false) YearMonth month,@RequestParam(required=false) Long purchase,Model m){
+        var selected=date!=null?date:month!=null?month.atDay(1):BusinessDates.today();
+        return purchase!=null&&!Boolean.TRUE.equals(fuel.purchase(purchase).get("metered_full"))?legacyPage(selected,purchase,m):simplePage(selected,purchase,m);
+    }
+    @GetMapping("/fuel/legacy") String legacy(@RequestParam(required=false) LocalDate date,Model m){return legacyPage(date==null?BusinessDates.today():date,null,m);}
+    private String simplePage(LocalDate date,Long id,Model m){
+        BusinessDates.period(date,"day");var start=date.withDayOfMonth(1);var end=YearMonth.from(date).atEndOfMonth();
+        m.addAttribute("date",date);m.addAttribute("month",YearMonth.from(date));
+        var rows=fuel.purchases(start,end);m.addAttribute("purchases",rows);
+        for(String key:List.of("CAR","GENERATOR","SHARED"))m.addAttribute("spent"+key,rows.stream().filter(row->!Boolean.TRUE.equals(row.get("cancelled"))&&key.equals(row.get("target"))).map(row->(java.math.BigDecimal)row.get("amount")).reduce(java.math.BigDecimal.ZERO,java.math.BigDecimal::add));
+        m.addAttribute("spentTotal",rows.stream().filter(row->!Boolean.TRUE.equals(row.get("cancelled"))).map(row->(java.math.BigDecimal)row.get("amount")).reduce(java.math.BigDecimal.ZERO,java.math.BigDecimal::add));
+        m.addAttribute("intervals",full.intervals(start,end));m.addAttribute("lastCar",full.latestReading("CAR",end));m.addAttribute("lastGenerator",full.latestReading("GENERATOR",end));
+        var baselines=full.baselines();m.addAttribute("baselines",baselines);
+        String baselineTarget=baselines.get("CAR").get("started_at")==null?"CAR":baselines.get("GENERATOR").get("started_at")==null?"GENERATOR":"CAR";
+        var baseline=new LinkedHashMap<String,Object>();baseline.put("target",baselineTarget);baseline.put("version",baselines.get(baselineTarget).get("version"));baseline.put("request_token",UUID.randomUUID());baseline.put("started_at",baselines.get(baselineTarget).getOrDefault("started_at",date.atStartOfDay()));baseline.put("meter",baselines.get(baselineTarget).get("reading"));
+        if(m.getAttribute("postedBaseline") instanceof Map<?,?> posted)posted.forEach((key,value)->baseline.put(key.toString(),value));
+        m.addAttribute("baselineForm",baseline);
+        var purchase=new LinkedHashMap<String,Object>();purchase.put("version",-1);purchase.put("request_token",UUID.randomUUID());purchase.put("purchased_at",date.atTime(LocalTime.now(ZoneId.of("Europe/Warsaw")).withSecond(0).withNano(0)));purchase.put("target","CAR");
+        if(id!=null){purchase.putAll(fuel.purchaseForEdit(id));purchase.put("meter",purchase.get("CAR".equals(purchase.get("target"))?"odometer":"generator_meter"));}
+        if(m.getAttribute("postedPurchase") instanceof Map<?,?> posted)posted.forEach((key,value)->purchase.put(key.toString(),value));
+        m.addAttribute("purchase",purchase);return "fuel/index";
+    }
+    @PostMapping(value="/fuel/purchases",params="entry_mode=full") String fullPurchase(@RequestParam Map<String,String> fields,Principal actor,Model m,HttpServletResponse response){
+        LocalDate selected=BusinessDates.today();try{selected=LocalDateTime.parse(fields.get("purchased_at")).toLocalDate();full.save(fields,actor.getName());return "redirect:/fuel?date="+selected+"&saved=1#purchases";}
+        catch(IllegalArgumentException|DateTimeException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedPurchase",fields);return simplePage(selected,null,m);}
+    }
+    @PostMapping("/fuel/baseline") String baseline(@RequestParam Map<String,String> fields,Principal actor,Model m,HttpServletResponse response){
+        LocalDate selected=BusinessDates.today();try{var time=LocalDateTime.parse(fields.get("started_at"));selected=time.toLocalDate();full.saveBaseline(fields.get("target"),Long.parseLong(fields.get("version")),UUID.fromString(fields.get("request_token")),time,fields.get("meter"),actor.getName());return "redirect:/fuel?date="+selected+"&saved=1#parameters";}
+        catch(IllegalArgumentException|DateTimeException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedBaseline",fields);return simplePage(selected,null,m);}
+    }
     @PostMapping("/fuel/day") String saveDay(@RequestParam Map<String,String> p,Principal principal,Model m,HttpServletResponse response){
         LocalDate date=LocalDate.parse(p.get("day"));try{fuel.saveDay(date,Long.parseLong(p.get("version")),p.get("odometer"),Integer.parseInt(p.get("hours")),Integer.parseInt(p.get("minutes")),p.containsKey("confirmed"),principal.getName());return "redirect:/dashboard?date="+date+"&fuelSaved=1";}
-        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedDay",p);return page(date,null,m);}
+        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedDay",p);return legacyPage(date,null,m);}
     }
     @PostMapping("/fuel/parameters") String parameters(@RequestParam Map<String,String> p,Model m,HttpServletResponse response){
         LocalDate date=LocalDate.parse(p.get("effective_day"));try{fuel.saveParameters(UUID.fromString(p.get("token")),date,p.get("car_rate"),p.get("generator_rate"),p.get("car_fuel"),p.get("generator_fuel"),p.get("car_price"),p.get("generator_price"));return "redirect:/fuel?date="+date+"&saved=1";}
-        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedParameters",p);return page(date,null,m);}
+        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedParameters",p);return legacyPage(date,null,m);}
     }
     @PostMapping("/fuel/purchases") String purchase(@RequestParam Map<String,String> p,Principal principal,Model m,HttpServletResponse response){
         LocalDateTime time=LocalDateTime.parse(p.get("purchased_at"));Long id=blank(p.get("id"))?null:Long.valueOf(p.get("id"));
         try{var command=new FuelJournalService.Purchase(id,Long.parseLong(p.get("version")),UUID.fromString(p.get("request_token")),time,p.get("target"),p.get("fuel_type"),p.get("amount"),p.get("litres"),p.get("litre_price"),p.containsKey("full_tank"),p.get("odometer"),p.containsKey("records_complete"),p.getOrDefault("note",""),blank(p.get("receipt_id"))?null:UUID.fromString(p.get("receipt_id")));if("quick".equals(p.get("entry_mode")))fuel.saveQuickPurchase(command,p.containsKey("amount_override"),principal.getName());else fuel.savePurchase(command,principal.getName());return "redirect:/fuel?date="+time.toLocalDate()+"&saved=1#purchases";}
-        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedPurchase",p);return page(time.toLocalDate(),id,m);}
+        catch(IllegalArgumentException ex){response.setStatus(400);m.addAttribute("fuelError",ex.getMessage());m.addAttribute("postedPurchase",p);return legacyPage(time.toLocalDate(),id,m);}
     }
     private static boolean blank(String s){return s==null||s.isBlank();}
     @PostMapping("/fuel/receipts") @ResponseBody ResponseEntity<Map<String,Object>> upload(@RequestParam("image") MultipartFile image,jakarta.servlet.http.HttpServletRequest request){try{var id=receipts.upload(image);return ResponseEntity.ok(Map.of("id",id,"url",request.getContextPath()+"/fuel/receipts/"+id));}catch(IllegalArgumentException ex){return ResponseEntity.badRequest().body(Map.of("error",ex.getMessage()));}}

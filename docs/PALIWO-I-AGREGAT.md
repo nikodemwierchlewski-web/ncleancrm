@@ -1,3 +1,5 @@
+Aktualny uproszczony sposób zapisu i liczenia kosztu: [Tankowania pełny–pełny](TANKOWANIA-PELNY-PELNY.md). Poniżej dokumentacja poprzedniego modelu, zachowanego w archiwum.
+
 # Samochód, agregat i rachunki
 
 ## Codzienna obsługa

@@ -15,6 +15,7 @@
   async function discard(id){try{await fetch('/fuel/receipts/'+id+'/discard',{method:'POST',body:new URLSearchParams({_csrf:csrf})});}catch{/* Unlinked uploads expire after 24 hours on the next upload. */}}
   document.querySelectorAll('[data-receipt-file]').forEach(input=>input.addEventListener('change',()=>{pending=input.files[0];if(pending)upload();}));retry.addEventListener('click',upload);
   document.querySelector('#remove-receipt').addEventListener('click',()=>{if(uploading){status.textContent='Poczekaj na zakończenie przesyłania.';return;}const old=receipt.value;receipt.value='';pending=null;image.removeAttribute('src');image.hidden=true;retry.hidden=true;document.querySelectorAll('[data-receipt-file]').forEach(input=>input.value='');status.textContent='Usunięto z formularza. Zapisz tankowanie, aby potwierdzić zmianę.';if(old)discard(old);});
+  if(form.dataset.entryMode==='full')return; // Full-to-full form has its own amount/litres calculator.
   const quick=form.dataset.entryMode==='quick',amount=form.elements.amount,litres=form.elements.litres,price=form.elements.litre_price,total=document.querySelector('#fuel-total'),override=form.elements.amount_override;
   const scaled=(value,digits)=>{const text=value.trim().replace(',','.');if(!/^\d+(?:\.\d+)?$/.test(text))return null;const [whole,fraction='']=text.split('.');if(fraction.length>digits)return null;return BigInt(whole)*10n**BigInt(digits)+BigInt(fraction.padEnd(digits,'0'));};
   const money=cents=>new Intl.NumberFormat('pl-PL',{style:'currency',currency:'PLN'}).format(Number(cents)/100);
