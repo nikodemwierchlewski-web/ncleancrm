@@ -32,6 +32,12 @@
     }
   }
   update();document.addEventListener('change',event=>{if(event.target.matches('[name=outcome],[data-chem-mode]'))update();});
+  document.addEventListener('click',event=>{
+    const link=event.target.closest('[data-completion-photos]');if(!link)return;
+    const photos=document.querySelector('#photos');if(!photos)return;
+    event.preventDefault();photos.open=true;photos.scrollIntoView({block:'start'});
+    photos.querySelector('[data-service-files]')?.focus({preventScroll:true});
+  });
   document.addEventListener('submit',async event=>{
     const form=event.target;if(!form.matches('.day-review-form'))return;event.preventDefault();if(form.dataset.saving)return;
     const button=form.querySelector('[type=submit]'),error=form.querySelector('.review-error');

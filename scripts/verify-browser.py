@@ -22,6 +22,7 @@ from browser_today_checks import verify_today_workspace
 from browser_entity_reminder_checks import verify_entity_reminders
 from browser_lean_checks import verify_lean_disclosures
 from browser_reliability_checks import verify_daily_reliability
+from browser_closeout_checks import verify_historical_closeout
 
 
 def main():
@@ -30,6 +31,7 @@ def main():
     parser.add_argument('--port', type=int, default=18096)
     parser.add_argument('--chromium', default=shutil.which('chromium'))
     parser.add_argument('--pixel-tycoon', action='store_true', help='Also verify Tycoon artwork, progress and motion settings.')
+    parser.add_argument('--historical-closeout-only', action='store_true', help='Run only the historical order and missing-photo closeout regression.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     jar = root / 'target/nclean-crm-0.0.1-SNAPSHOT.jar'
@@ -103,6 +105,11 @@ def main():
             page.locator('[name=password]').fill(owner['password'])
             with page.expect_navigation():
                 page.locator('button[type=submit]').click()
+            if args.historical_closeout_only:
+                verify_historical_closeout(page, base, run_dir)
+                assert not errors, errors
+                browser.close()
+                return
             page.goto(base + '/more')
             page.get_by_role('link', name='Ustawienia', exact=False).click()
             expect(page.locator('h1')).to_have_text('Ustawienia')
@@ -238,6 +245,7 @@ def main():
             verify_entity_reminders(page, base, run_dir)
             verify_lean_disclosures(page, base, run_dir)
             verify_daily_reliability(page, base, run_dir)
+            verify_historical_closeout(page, base, run_dir)
             assert not errors, errors
             browser.close()
             print('PASS concurrent submission guard, preserved draft after503, successful retry; no JS errors.', flush=True)

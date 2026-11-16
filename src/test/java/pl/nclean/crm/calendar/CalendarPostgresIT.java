@@ -1383,6 +1383,37 @@ class CalendarPostgresIT {
         assertTrue(browser.get("/work/"+id).body().contains("Wpis historyczny"));
     }
 
+    @Test void historicalCompletionExplainsPhotoRequirementsAndClosesAfterExplicitReasons() throws Exception {
+        var day=LocalDate.of(2026,10,10);
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        long service=estimateService("Archiwalna kanapa");
+        long id=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true);
+        var browser=app.browser();browser.login();
+        String panel=browser.get("/work/"+id).body();
+        assertTrue(Pattern.compile("<details[^>]*class=\"photo-exceptions\"[^>]*\\bopen(?:=|[ >])").matcher(panel).find());
+        assertTrue(panel.contains("Dawna realizacja: możesz wyjaśnić brak archiwalnych zdjęć."));
+        var fields=reviewFields(id);fields.put("date",day.toString());fields.put("final_total","240");fields.remove("before_exception");fields.remove("after_exception");
+        assertEquals(200,browser.settings("/day-closeout/"+id,fields,true).statusCode());
+        var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
+        var close=browser.settings("/day-closeout/close",Map.of("date",day.toString(),"fingerprint",review.review(day).fingerprint()),true);
+        assertEquals(400,close.statusCode());assertTrue(close.body().contains("zdjęcie przed"));
+        var page=browser.get("/day-closeout?date="+day).body();
+        assertTrue(page.contains("Do zamknięcia dnia brakuje: zdjęcie przed, zdjęcie po"));
+        assertTrue(page.contains("#complete-form"));
+        fields=reviewFields(id);fields.put("date",day.toString());fields.put("final_total","240");fields.put("before_exception","Nie zachowało się zdjęcie przed usługą");fields.put("after_exception","Nie zachowało się zdjęcie po usłudze");
+        assertEquals(200,browser.settings("/day-closeout/"+id,fields,true).statusCode());
+        assertEquals(200,browser.settings("/day-closeout/close",Map.of("date",day.toString(),"fingerprint",review.review(day).fingerprint()),true).statusCode());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
+        assertTrue(app.context().getBean(pl.nclean.crm.work.DayReviewService.class).review(day).closed());
+        assertEquals("DONE",jdbc.queryForObject("SELECT status FROM booking WHERE id=?",String.class,id));
+        assertEquals(new BigDecimal("240.00"),jdbc.queryForObject("SELECT final_total FROM booking WHERE id=?",BigDecimal.class,id));
+        assertEquals("Nie zachowało się zdjęcie przed usługą",jdbc.queryForObject("SELECT photo_before_exception FROM booking WHERE id=?",String.class,id));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking_photo WHERE booking_id=?",Integer.class,id));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));
+        var after=app.browser();after.login();
+        assertFalse(Pattern.compile("<details[^>]*class=\"photo-exceptions\"[^>]*\\bopen(?:=|[ >])").matcher(after.get("/work/"+id).body()).find());
+    }
+
     @Test void addingHistoryToClosedOrdinaryDayDoesNotCreateAnOldReminder() {
         var day=DashboardService.today().minusDays(1);long ordinary=workBooking("Zamknięty dzień",day);
         var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
