@@ -1,5 +1,8 @@
 # ncLEAN CRM — wersja 0.1
 
+**Wydania do Dockera:** [TEST i FINAL — konkretne commity, zachowanie danych i instrukcja dla Gordona](docs/WYDANIA-TEST-FINAL.md).
+Zasady dalszej pracy: [jeden commit końcowy, opcjonalny TEST, scalanie przez squash](CONTRIBUTING.md).
+
 Aktualne tankowania: [kwota i litry, diesel/benzyna, liczniki pełny–pełny oraz paliwo w wyniku firmy](docs/TANKOWANIA-PELNY-PELNY.md).
 
 **Uruchomienie całego CRM na PC przez Docker Desktop, z trwałą bazą i aktualizacjami:**

@@ -13,3 +13,16 @@ Aktualne ustalenia i ryzyka: [audyt](docs/architecture/AUDIT.md).
   `ArchitectureTest` działa również w zwykłym `./mvnw test` i w CI.
 - Nie używamy danych klientów ani produkcyjnego CMS/bazy w testach i podglądach.
 - Zmiany zachowania, formatowanie i migracje rozdzielamy na łatwe do oceny etapy.
+
+## Commity i wydania
+
+- Jedna gałąź na zadanie. Drobne poprawki i kolejne próby testów nie wymagają osobnych commitów.
+- Zwykle jeden opisany commit końcowy po odpowiedniej weryfikacji.
+- Przy dłuższym zadaniu dopuszczalny jeden commit TEST jako punkt kontrolny, a następnie jeden FINAL. Nie tworzymy pustych commitów tylko dla nazw.
+- Przy scalaniu zadania do `main` preferujemy **Squash and merge**. Nie przepisujemy opublikowanej historii i nie wykonujemy force push.
+- TEST i FINAL to etapy wydania, nie profile Spring ani rodzaje bazy. TEST również ma zwykłe uwierzytelnienie i trwały PostgreSQL.
+- Wydania oznaczamy nieprzesuwanymi tagami, np. `nclean-v0.1-test.1` i `nclean-v0.1-final.1`. Kolejna poprawka dostaje nowy tag, zamiast podmiany istniejącego.
+- Wydanie aplikacji nie zawiera bazy użytkownika, sekretów, zdjęć ani backupów. Pozostają poza Gitem.
+- Aktualizacja wymaga backupu, zachowania dotychczasowego wolumenu i sekretów oraz zbudowania obrazu z wybranego commita. Sam restart kontenera nie aktualizuje kodu.
+
+Aktualna para wydań i instrukcja dla Gordona: [TEST → FINAL](docs/WYDANIA-TEST-FINAL.md).

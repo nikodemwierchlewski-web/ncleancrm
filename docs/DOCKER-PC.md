@@ -7,6 +7,8 @@ administratora opisanej w [deploy](../deploy/README.md).
 
 ## Co pobrać
 
+Do uruchomienia określonego wydania TEST lub FINAL korzystaj z [instrukcji wyboru niezmiennego taga/commita](WYDANIA-TEST-FINAL.md). Poniższa gałąź służy do pobierania aktualnego kodu rozwojowego. Nie zmieniaj katalogu ani podłączenia bazy podczas aktualizacji istniejącej instalacji.
+
 W GitHubie właściciel repozytorium dodaje znajomego jako współpracownika
 (`Settings → Collaborators`, jeżeli ta opcja jest dostępna dla jego uprawnień).
 Znajomy przyjmuje zaproszenie i używa własnego konta GitHub. Nie przesyłaj mu
