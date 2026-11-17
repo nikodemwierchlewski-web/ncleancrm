@@ -28,7 +28,7 @@ public class ExportQueries {
                 SELECT b.id,b.day,b.starts,b.customer_name,b.phone,b.address,b.status,
                   b.total quoted_total,b.final_total,b.work_minutes,b.work_note,b.completion_note,
                   b.completion_no_notes,b.photo_before_exception,b.photo_after_exception,b.review_reason,
-                  COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid
+                  CASE WHEN b.status='DONE' THEN COALESCE(b.final_total,b.total) ELSE 0 END paid
                 FROM booking b WHERE b.removed_at IS NULL ORDER BY day,id
                 """);
     }

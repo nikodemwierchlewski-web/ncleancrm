@@ -4,7 +4,7 @@ Aktualne tankowania: [kwota i litry, diesel/benzyna, liczniki pełny–pełny or
 
 **Uruchomienie całego CRM na PC przez Docker Desktop, z trwałą bazą i aktualizacjami:**
 [instrukcja dla właściciela i administratora](docs/DOCKER-PC.md).
-Właściwa gałąź tego wariantu: `feat/docker-pc-deployment`; plik: `compose.pc.yaml`.
+Właściwa gałąź tego wariantu: `feat/completed-means-paid`; plik: `compose.pc.yaml`.
 Dotychczasowy `compose.yaml` poniżej pozostaje wariantem deweloperskim samej bazy.
 
 Aktualny audyt: [codzienna praca, szkice, zapis, awarie i odtwarzanie danych](docs/daily-reliability/REPORT.md).
@@ -135,3 +135,5 @@ Diagnoza wersji, naprawy formularzy i pełna weryfikacja: [docs/DIAGNOZA-I-NAPRA
 Pomoc kontekstową i krótkie samouczki obsługuje **ncLEANEK**. Grafika pozostaje wspólna dla całej aplikacji. [Obsługa pomocnika i wyniki testów](docs/NCLEANEK.md). Starsze audyty opisują historyczne nazewnictwo.
 
 Prompt zastosowanego audytu motywu: [PIXEL-TYCOON-AUDIT-PROMPT.md](docs/PIXEL-TYCOON-AUDIT-PROMPT.md).
+
+Zasady rozliczeń i tankowań: [wykonane = zapłacone](docs/ROZLICZENIA-PROSTE.md).

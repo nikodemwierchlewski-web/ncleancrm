@@ -32,7 +32,7 @@ public class CrmRecords {
  }
  public List<Map<String,Object>> bookingPage(LocalDate day,Long customer,int page){
   if(page<0||page>100000)throw new IllegalArgumentException("Sprawdź numer strony.");
-  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC LIMIT 26 OFFSET ?",day,day,customer,customer,page*25);
+  return db.queryForList("SELECT b.*,CASE WHEN b.status='DONE' THEN COALESCE(b.final_total,b.total) ELSE 0 END paid FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC LIMIT 26 OFFSET ?",day,day,customer,customer,page*25);
  }
  public List<Map<String,Object>> bookingRows(String kind,List<Long> ids){
   if(ids.isEmpty())return List.of();String table=switch(kind){case "items"->"booking_item";case "chemicals"->"booking_chemical";case "actuals"->"booking_actual_chemical";default->throw new IllegalArgumentException();};
@@ -43,7 +43,7 @@ public class CrmRecords {
  public List<Map<String,Object>> removedBookings(){return db.queryForList("SELECT * FROM booking WHERE removed_at IS NOT NULL ORDER BY removed_at DESC,id DESC LIMIT 200");}
  public List<Map<String,Object>> services(){return db.queryForList("SELECT s.*,c.name category FROM service_definition s JOIN service_category c ON c.id=s.category_id WHERE s.removed_at IS NULL AND c.removed_at IS NULL ORDER BY c.name,s.name,s.id");}
  public List<Map<String,Object>> bookings(LocalDate day,Long customer){
-  return db.queryForList("SELECT b.*,COALESCE((SELECT SUM(amount) FROM booking_payment WHERE booking_id=b.id),0) paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
+  return db.queryForList("SELECT b.*,CASE WHEN b.status='DONE' THEN COALESCE(b.final_total,b.total) ELSE 0 END paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND (?::date IS NULL OR day=?) AND (?::bigint IS NULL OR customer_id=?) ORDER BY day DESC,starts,id DESC",day,day,customer,customer);
  }
  public List<Map<String,Object>> monthBookings(YearMonth month){
   return db.queryForList("SELECT b.*, COALESCE((SELECT string_agg(i.name, ', ' ORDER BY i.position) FROM booking_item i WHERE i.booking_id=b.id),'') service_label FROM booking b WHERE b.removed_at IS NULL AND day>=? AND day<? ORDER BY day,starts,id",month.atDay(1),month.plusMonths(1).atDay(1));
@@ -147,7 +147,6 @@ public class CrmRecords {
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source,b.historical FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
   if(Boolean.TRUE.equals(before.get(0).get("historical"))&&!day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny musi pozostać w przeszłości.");
-  if(status.equals("CANCELLED")&&db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",BigDecimal.class,id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia. Anulowanie nie usuwa należności ani historii wpłat.");
   changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
   boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
   boolean stopped=before.get(0).get("timer_started")!=null&&!status.equals("PLANNED");

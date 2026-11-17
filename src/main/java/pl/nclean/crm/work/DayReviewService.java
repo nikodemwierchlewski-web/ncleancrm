@@ -114,7 +114,6 @@ public class DayReviewService {
                 if(target.equals(day))throw new IllegalArgumentException("Nowy termin musi być w innym dniu. Godzinę tego dnia zmienisz w szczegółach.");
                 db.update("INSERT INTO booking_move(booking_id,from_day,to_day,reason) VALUES (?,?,?,?)",id,day,target,limited(p.get("reason"),300));
             }
-            if(outcome.equals("CANCELLED")&&work.paid(id).signum()>0)throw new IllegalArgumentException("Najpierw rozlicz wpłatę w szczegółach zlecenia.");
             records.reschedule(id,version,target,starts,outcome.equals("CANCELLED")?"CANCELLED":"PLANNED");
             db.update("UPDATE booking SET review_reason=? WHERE id=?",limited(p.get("reason"),300),id);
             if(!note.isBlank()||noNotes)db.update("UPDATE booking SET completion_note=?,completion_no_notes=? WHERE id=?",note,noNotes,id);

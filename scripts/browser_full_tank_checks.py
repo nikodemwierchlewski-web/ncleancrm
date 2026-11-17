@@ -7,9 +7,9 @@ from playwright.sync_api import expect
 
 
 def verify_full_tank(page, base, output):
+    def value(selector):return Decimal(page.locator(selector).inner_text().replace('zł','').replace('\xa0','').replace(' ','').replace(',','.').strip())
     def finance():
         page.goto(base+'/today?date=2026-10-12&finance=month')
-        def value(selector):return Decimal(page.locator(selector).inner_text().replace('zł','').replace('\xa0','').replace(' ','').replace(',','.').strip())
         return value('[data-today-revenue]'),value('[data-today-profit]')
     page.goto(base+'/calendar?day=2026-10-10&add=true');f=page.locator('#booking-form');f.locator('[data-category-choice="1"]').click();f.locator('[name=qty_2]').fill('1');f.locator('[name=historical]').check();f.locator('[name=name]').fill('Tankowania październik QA');f.get_by_role('button',name='Zapisz zlecenie',exact=True).click();expect(page.locator('#booking-editor')).not_to_be_visible();job=page.locator('#agenda-orders [data-order]').filter(has_text='Tankowania październik QA').get_attribute('data-order')
     page.goto(base+'/work/'+job);f=page.locator('#complete-form');f.locator('[name=final_total]').fill('1000');f.locator('[name=chem_0]').select_option('ZERO');f.locator('[name=no_notes]').check();f.get_by_role('button',name='Zapisz wykonanie',exact=True).click();expect(page).to_have_url(base+'/work/'+job+'?saved=1')
@@ -30,7 +30,7 @@ def verify_full_tank(page, base, output):
     row=page.locator('#purchases .fuel-history-row').filter(has_text='Samochód').first;row.locator('.removal-form button').click();page.locator('#removal-confirm').get_by_role('button',name='Usuń',exact=True).click();expect(page.locator('#purchases .fuel-history-row').filter(has_text='Samochód').first).to_contain_text('Anulowane')
     assert finance()[1]==before-Decimal('50')
     page.goto(base+'/fuel?date=2026-10-12');row=page.locator('#purchases .fuel-history-row').filter(has_text='Samochód').first;row.locator('.removal-form button').click();page.locator('#removal-confirm').get_by_role('button',name='Przywróć',exact=True).click();expect(page.locator('.fuel-expense-total')).to_contain_text('260.00');assert finance()[1]==before-Decimal('260')
-    page.goto(base+'/fuel?month=2026-10');page.locator('.full-tank-heading a').click();expect(page.locator('[data-finance-filter]')).to_have_value('month');expect(page.locator('[data-today-profit]')).to_contain_text(format(before-Decimal('260'),'.2f').replace('.',','));page.goto(base+'/fuel?month=2026-10')
+    page.goto(base+'/fuel?month=2026-10');page.locator('.full-tank-heading a').click();expect(page.locator('[data-finance-filter]')).to_have_value('month');assert value('[data-today-profit]')==before-Decimal('260');page.goto(base+'/fuel?month=2026-10')
     for width in (360,390,768,1440):
         page.set_viewport_size({'width':width,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');expect(page.locator('#fuel-purchase-form [name=amount]')).to_be_visible();expect(page.locator('#fuel-purchase-form [name=litre_price]')).to_have_count(0);expect(page.locator('#fuel-purchase-form [name=fuel_type]')).to_have_count(0);page.screenshot(path=str(output/('full-tank-'+str(width)+'.png')),full_page=True)
     # Export only this synthetic schema's fuel view for the standalone HTML.

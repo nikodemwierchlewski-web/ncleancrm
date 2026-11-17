@@ -1,6 +1,5 @@
 package pl.nclean.crm.work;
 
-import java.math.BigDecimal;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -19,11 +18,7 @@ public class BookingRemovalHandler extends JdbcRemovalHandler {
         if (row.get("timer_started") != null) {
             throw new IllegalArgumentException("Najpierw zatrzymaj pomiar czasu tego zlecenia.");
         }
-        var paid = db.queryForObject("SELECT COALESCE(SUM(amount),0) FROM booking_payment WHERE booking_id=?",
-                BigDecimal.class, command.id());
-        if (paid.signum() != 0) {
-            throw new IllegalArgumentException("Zlecenie ma wpłatę. Najpierw skoryguj ją w płatnościach, aby nie zgubić rozliczenia.");
-        }
+
     }
 
     @Override

@@ -22,7 +22,6 @@ public class TodayController {
         model.addAttribute("date",day);model.addAttribute("today",BusinessDates.today());model.addAttribute("orders",orders);model.addAttribute("review",review);
         model.addAttribute("missingOrder",review.orders().stream().filter(o->!Boolean.TRUE.equals(o.get("complete"))).findFirst().orElse(null));
         model.addAttribute("active",work.active());
-        model.addAttribute("dueOrders",orders.stream().filter(o->"DONE".equals(o.get("status"))&&((java.math.BigDecimal)(o.get("final_total")==null?o.get("total"):o.get("final_total"))).compareTo((java.math.BigDecimal)o.get("paid"))>0).toList());
         var focus=periodDate==null?day:periodDate;var filter=finance==null?(range==null?"month-to-date":range):finance;
         model.addAttribute("periodFocus",focus);model.addAttribute("financeFilter",filter);model.addAttribute("trend",dashboard.trend(focus,filter,from,to));
         model.addAttribute("todayNotes",notes.todayPinned());model.addAttribute("todayNoteCount",notes.todayPinnedCount());

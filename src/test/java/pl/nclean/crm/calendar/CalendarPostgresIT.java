@@ -767,15 +767,18 @@ class CalendarPostgresIT {
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService(name);
         return records.book(UUID.randomUUID(),day,java.time.LocalTime.of(9,0),null,"Klient dnia","500000098","Adres wizyty",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of());
     }
-    @Test void completionKeepsQuoteAndPaymentsSeparateAndCorrectionsAuditable() {
+    @Test void completionAutomaticallySettlesAndPriceCorrectionsSurviveRestart() throws Exception {
         var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var date=DashboardService.today();long id=workBooking("Usługa domknięcia",date);
+        assertEquals(0,work.paid(id).signum());
         work.complete(id,0,"180","60","Notatka",Map.of(),Map.of(),List.of(),OWNER);
-        assertEquals(new BigDecimal("200.00"),work.order(id).get("total"));assertEquals(new BigDecimal("180.00"),work.order(id).get("final_total"));assertEquals(new BigDecimal("0"),work.paid(id));
-        var token=UUID.randomUUID();long first=work.pay(id,token,date,"50","TRANSFER","");assertEquals(first,work.pay(id,token,date,"50","TRANSFER",""));work.pay(id,UUID.randomUUID(),date,"130","CASH","");assertEquals(new BigDecimal("180.00"),work.paid(id));
-        assertThrows(IllegalArgumentException.class,()->work.pay(id,UUID.randomUUID(),date,"1","CASH",""));assertThrows(IllegalArgumentException.class,()->work.complete(id,1,"170","60","",Map.of(),Map.of(),List.of(),OWNER));
-        work.reverse(id,first,UUID.randomUUID(),date,"Błędny przelew");assertEquals(new BigDecimal("130.00"),work.paid(id));assertEquals(3,work.payments(id).size());assertThrows(IllegalArgumentException.class,()->work.reverse(id,first,UUID.randomUUID(),date,"Ponownie"));
-        assertEquals(new BigDecimal("50.00"),work.finance(date,date,new BigDecimal("180"),new BigDecimal("150"),true).outstanding());assertEquals(new BigDecimal("130.00"),work.finance(date,date,new BigDecimal("180"),new BigDecimal("150"),true).received());
-        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(new BigDecimal("130.00"),app.context().getBean(pl.nclean.crm.work.WorkService.class).paid(id));
+        assertEquals(new BigDecimal("200.00"),work.order(id).get("total"));assertEquals(new BigDecimal("180.00"),work.paid(id));
+        assertTrue(work.payments(id).isEmpty());
+        work.complete(id,1,"170","60","Korekta",Map.of(),Map.of(),List.of(),OWNER);
+        assertEquals(new BigDecimal("170.00"),work.paid(id));
+        assertThrows(IllegalArgumentException.class,()->work.complete(id,1,"160","60","Stara wersja",Map.of(),Map.of(),List.of(),OWNER));
+        assertEquals(0,work.finance(date,date,new BigDecimal("170"),new BigDecimal("150"),true).outstanding().signum());
+        assertEquals(new BigDecimal("170.00"),work.finance(date,date,new BigDecimal("170"),new BigDecimal("150"),true).received());
+        app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(new BigDecimal("170.00"),app.context().getBean(pl.nclean.crm.work.WorkService.class).paid(id));
     }
     @Test void timerSurvivesRestartAndOnlyOneCanRunAndManualRescheduleStopsIt() {
         var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var date=DashboardService.today();long id=workBooking("Pomiar A",date),other=workBooking("Pomiar B",date);work.timer(id,0,true,OWNER);
@@ -792,11 +795,21 @@ class CalendarPostgresIT {
         assertEquals(new BigDecimal("100.00"),records.items(id).get(0).get("final_amount"));assertEquals(0,((BigDecimal)records.actuals(id).get(0).get("amount")).signum());assertFalse((Boolean)records.items(id).get(1).get("actual_defined"));
         var stats=work.analytics(date,date);assertEquals(2,stats.size());assertTrue(stats.stream().anyMatch(row->new BigDecimal("100.00").equals(row.get("net"))));
     }
-    @Test void paymentDatesAreIndependentOfServiceDayAndFuturePaymentsAreRejected() {
-        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var today=DashboardService.today();long id=workBooking("Wczorajsza usługa",today.minusDays(1));work.complete(id,0,"200","60","",Map.of(),Map.of(),List.of(),OWNER);work.pay(id,UUID.randomUUID(),today,"100","CARD","");
-        assertEquals(new BigDecimal("0"),work.finance(today.minusDays(1),today.minusDays(1),new BigDecimal("200"),BigDecimal.ZERO,false).received());assertEquals(new BigDecimal("100.00"),work.finance(today,today,BigDecimal.ZERO,BigDecimal.ZERO,false).received());
-        assertThrows(IllegalArgumentException.class,()->work.pay(id,UUID.randomUUID(),today.plusDays(1),"100","CASH",""));
-        assertEquals(new BigDecimal("200.00"),app.context().getBean(DashboardService.class).summary(today.minusDays(1),"day","actual").revenue());
+    @Test void settlementUsesServiceDayAndIgnoresLegacyLedgerWithoutDestroyingIt() throws Exception {
+        var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var today=DashboardService.today();var yesterday=today.minusDays(1);long id=workBooking("Wczorajsza usługa",yesterday);
+        jdbc.update("INSERT INTO booking_payment(booking_id,request_token,paid_on,amount,method,note) VALUES (?,?,?,?,?,?)",id,UUID.randomUUID(),today,new BigDecimal("100"),"CARD","Dawny zapis");
+        var legacy=work.payments(id);work.complete(id,0,"200","60","",Map.of(),Map.of(),List.of(),OWNER);
+        assertEquals(new BigDecimal("200.00"),work.finance(yesterday,yesterday,new BigDecimal("200"),BigDecimal.ZERO,false).received());
+        assertEquals(0,work.finance(today,today,BigDecimal.ZERO,BigDecimal.ZERO,false).received().signum());
+        assertEquals(legacy,work.payments(id));
+        var browser=app.browser();browser.login();var html=browser.get("/work/"+id).body();assertTrue(html.contains("Zapłacono · 200.00"));assertTrue(html.contains("Archiwum dawnych wpłat"));assertFalse(html.contains("id=\"payment-form\""));
+        for(String path:List.of("/work/"+id+"/payments","/work/"+id+"/payments/1/reverse")){
+            assertEquals(403,browser.settings(path,Map.of(),false).statusCode());assertEquals(410,browser.settings(path,Map.of(),true).statusCode());
+        }
+        assertEquals(legacy,work.payments(id));
+        var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);records.reschedule(id,1,yesterday.minusDays(1),java.time.LocalTime.NOON,"DONE");
+        assertEquals(0,work.revenue(yesterday,yesterday,"actual").signum());assertEquals(new BigDecimal("200.00"),work.revenue(yesterday.minusDays(1),yesterday.minusDays(1),"actual"));
+        assertTrue(browser.get("/export/orders.csv").body().contains("200.00"));
     }
     @Test void workScreensAndCsvAndPwaRenderWithoutPublicCustomerData() throws Exception {
         long id=workBooking("Usługa interfejsu",DashboardService.today());var browser=app.browser();browser.login();
@@ -897,8 +910,8 @@ class CalendarPostgresIT {
         var day=DashboardService.today();long id=workBooking("Przełożenie",day);var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);var f=reviewFields(id);f.put("outcome","MOVED");f.put("new_day",day.plusDays(2).toString());f.put("new_starts","13:30");f.put("reason","Na prośbę klienta");service.save(id,day,f,OWNER);assertTrue(service.review(day).orders().isEmpty());assertEquals(1,service.review(day).moves().size());assertEquals(1,service.review(day.plusDays(2)).orders().size());
         long cancelled=workBooking("Anulowanie",day);f=reviewFields(cancelled);f.put("outcome","CANCELLED");service.save(cancelled,day,f,OWNER);assertEquals(1,service.review(day).complete());assertTrue(app.context().getBean(pl.nclean.crm.records.CrmRecords.class).actuals(cancelled).isEmpty());
     }
-    @Test void reviewEmptyDayAndPartialPaymentAndHttpSecurity() throws Exception {
-        var day=DashboardService.today();var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);service.close(day,service.review(day).fingerprint(),OWNER);assertTrue(service.review(day).closed());long id=workBooking("Przelew oczekujący",day);var f=reviewFields(id);f.put("final_total","200");service.save(id,day,f,OWNER);app.context().getBean(pl.nclean.crm.work.WorkService.class).pay(id,UUID.randomUUID(),day,"50","TRANSFER","");assertEquals(1,service.review(day).complete());
+    @Test void reviewEmptyDayAndAutomaticSettlementAndHttpSecurity() throws Exception {
+        var day=DashboardService.today();var service=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);service.close(day,service.review(day).fingerprint(),OWNER);assertTrue(service.review(day).closed());long id=workBooking("Przelew oczekujący",day);var f=reviewFields(id);f.put("final_total","200");service.save(id,day,f,OWNER);assertEquals(new BigDecimal("200.00"),app.context().getBean(pl.nclean.crm.work.WorkService.class).paid(id));assertEquals(1,service.review(day).complete());
         var browser=app.browser();browser.login();assertEquals(200,browser.get("/day-closeout?date="+day).statusCode());assertEquals(302,app.browser().get("/day-closeout").statusCode());assertEquals(403,browser.settings("/day-closeout/close",Map.of("date",day,"fingerprint",service.review(day).fingerprint()),false).statusCode());
         var stale=service.review(day).fingerprint();jdbc.update("UPDATE booking SET completion_note='Korekta' WHERE id=?",id);assertThrows(IllegalArgumentException.class,()->service.close(day,stale,OWNER));
     }
@@ -910,10 +923,13 @@ class CalendarPostgresIT {
         var future=day.plusDays(1);assertThrows(IllegalArgumentException.class,()->review.close(future,review.review(future).fingerprint(),OWNER));
     }
 
-    @Test void auditGenericCancellationCannotHideExistingPayments() {
-        var day=DashboardService.today();long id=workBooking("Anulowanie z wpłatą",day);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long payment=work.pay(id,UUID.randomUUID(),day,"50","TRANSFER","");
-        assertThrows(IllegalArgumentException.class,()->records.reschedule(id,0,day,java.time.LocalTime.NOON,"CANCELLED"));assertEquals("PLANNED",work.order(id).get("status"));assertEquals(new BigDecimal("50.00"),work.paid(id));
-        work.reverse(id,payment,UUID.randomUUID(),day,"Rozliczenie wpłaty");records.reschedule(id,0,day,java.time.LocalTime.NOON,"CANCELLED");assertEquals("CANCELLED",work.order(id).get("status"));
+    @Test void cancellationAndReopeningPreserveLegacyPaymentsAndUpdateSettlement() throws Exception {
+        var day=DashboardService.today();long id=workBooking("Anulowanie z historią",day);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
+        jdbc.update("INSERT INTO booking_payment(booking_id,request_token,paid_on,amount,method,note) VALUES (?,?,?,?,?,?)",id,UUID.randomUUID(),day,new BigDecimal("250"),"TRANSFER","Archiwalna wpłata");
+        var history=work.payments(id);work.complete(id,0,"180","60","",Map.of(),Map.of(),List.of(),OWNER);
+        records.reschedule(id,1,day,java.time.LocalTime.NOON,"CANCELLED");assertEquals(0,work.paid(id).signum());assertEquals(0,work.revenue(day,day,"actual").signum());
+        assertEquals(history,work.payments(id));records.reschedule(id,2,day,java.time.LocalTime.NOON,"PLANNED");assertEquals(0,work.paid(id).signum());
+        records.reschedule(id,3,day,java.time.LocalTime.NOON,"DONE");assertEquals(new BigDecimal("180.00"),work.paid(id));assertEquals(history,work.payments(id));
     }
     @Test void auditConcurrentBookingReplayReturnsSameIdAndOneCustomer() throws Exception {
         var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Jedna rezerwacja");var token=UUID.randomUUID();var day=DashboardService.today();var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
@@ -1602,13 +1618,13 @@ class CalendarPostgresIT {
         var restored=app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id);assertEquals(snapshot.get("final_total"),restored.get("final_total"));assertEquals(snapshot.get("completion_note"),restored.get("completion_note"));assertEquals(items,jdbc.queryForList("SELECT * FROM booking_item WHERE booking_id=?",id));assertEquals(1,app.context().getBean(pl.nclean.crm.work.WorkService.class).orders(day).size());
     }
 
-    @Test void removalRequiresConfirmationOwnerCsrfCurrentVersionAndCorrectedPayments() throws Exception {
+    @Test void removalRequiresConfirmationOwnerCsrfCurrentVersionAndKeepsPaymentArchive() throws Exception {
         var day=DashboardService.today();long id=workBooking("Ochrona usuwania",day);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
         var browser=app.browser();browser.login();var form=new LinkedHashMap<String,Object>(Map.of("kind","booking","id",id,"version",0,"confirmed",true));
         assertEquals(403,browser.settings("/manage/remove",form,false).statusCode());form.put("confirmed",false);assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());form.put("confirmed",true);
-        long paid=work.pay(id,UUID.randomUUID(),day,"50","CASH","");assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());
-        work.reverse(id,paid,UUID.randomUUID(),day,"Błędny wpis");work.timer(id,0,true,OWNER);form.put("version",1);assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());work.timer(id,1,false,OWNER);
-        form.put("version",0);assertEquals(409,browser.settings("/manage/remove",form,true).statusCode());form.put("version",2);assertEquals(200,browser.settings("/manage/remove",form,true).statusCode());assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM booking_payment WHERE booking_id=?",Integer.class,id));assertEquals(404,browser.get("/work/"+id).statusCode());
+        jdbc.update("INSERT INTO booking_payment(booking_id,request_token,paid_on,amount,method,note) VALUES (?,?,?,?,?,?)",id,UUID.randomUUID(),day,new BigDecimal("50"),"CASH","Historia");
+        work.timer(id,0,true,OWNER);form.put("version",1);assertEquals(400,browser.settings("/manage/remove",form,true).statusCode());work.timer(id,1,false,OWNER);
+        form.put("version",0);assertEquals(409,browser.settings("/manage/remove",form,true).statusCode());form.put("version",2);assertEquals(200,browser.settings("/manage/remove",form,true).statusCode());assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking_payment WHERE booking_id=?",Integer.class,id));assertEquals(404,browser.get("/work/"+id).statusCode());
         assertThrows(IllegalArgumentException.class,()->remove.change("not_a_table",id,3,false,OWNER));
     }
 

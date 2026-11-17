@@ -15,7 +15,7 @@ swojego tokena ani hasła. Sam push nie nadaje dostępu do prywatnego repozytori
 W PowerShell:
 
 ```powershell
-git clone --branch feat/docker-pc-deployment https://github.com/nikodemwierchlewski-web/ncleancrm.git
+git clone --branch feat/completed-means-paid https://github.com/nikodemwierchlewski-web/ncleancrm.git
 cd ncleancrm
 git status --short --branch
 git log -1 --oneline
@@ -99,7 +99,7 @@ Najpierw sprawdź, że nie masz własnych niezapisanych zmian:
 
 ```powershell
 git status --short
-git pull --ff-only origin feat/docker-pc-deployment
+git pull --ff-only origin feat/completed-means-paid
 .\scripts\CRM-PC.ps1 -Action Update
 ```
 

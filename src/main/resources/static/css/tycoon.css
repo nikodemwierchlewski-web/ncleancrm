@@ -336,3 +336,5 @@ form[aria-busy=true] :is(.save-error,#customer-search-status,.review-error,.note
 .tycoon-base.tycoon-action-feedback :is(img,svg.tycoon-world){width:140px!important;height:62px!important;flex-shrink:0}
 @media(max-width:767px){.tycoon-base.tycoon-action-feedback{top:auto;bottom:calc(80px + env(safe-area-inset-bottom))}}
 .tycoon-motion-off :is(.button:active,.icon-button:active,.settings-links .card:hover,.equipment-card:hover){transform:none!important}
+/* Keep a moving tab underline inside its own navigation when the viewport shrinks. */
+.period-tabs.tycoon-marked-nav,.mode-tabs.tycoon-marked-nav{overflow:clip;overflow-clip-margin:4px}

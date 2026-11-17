@@ -16,8 +16,8 @@
     if(json){const result=await response.json();message=result?.message||result?.error;}else{const parsed=new DOMParser().parseFromString(await response.text(),'text/html');message=parsed.querySelector('[role=alert]')?.textContent;}
     throw Error(message||'Zapis nie powiódł się. Sprawdź dane lub sesję. Wpisane pola pozostają w tej karcie.');}
    window.NcleanDrafts?.saved(form);
-   const destination=new URL(response.redirected?response.url:location.href);const action=Nclean.path(target.url);
-   if(target.id==='payment-form'||action.includes('/payments/'))destination.hash='payments';if(target.id==='fuel-purchase-form')destination.hash='purchases';
+   const destination=new URL(response.redirected?response.url:location.href);
+   if(target.id==='fuel-purchase-form')destination.hash='purchases';
    if(destination.href===location.href)location.reload();else location.assign(destination.href);
   }catch(e){notice.textContent=e.message;for(let p=notice.parentElement;p&&p!==form;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;notice.scrollIntoView({block:'nearest'});}finally{delete form.dataset.saving;delete form.dataset.motionNativePending;form.removeAttribute('aria-busy');if(button)button.disabled=false;}
  });

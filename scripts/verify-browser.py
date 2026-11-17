@@ -24,6 +24,7 @@ from browser_lean_checks import verify_lean_disclosures
 from browser_reliability_checks import verify_daily_reliability
 from browser_closeout_checks import verify_historical_closeout
 from browser_full_tank_checks import verify_full_tank
+from browser_settlement_checks import verify_automatic_settlement
 
 
 def main():
@@ -34,6 +35,7 @@ def main():
     parser.add_argument('--pixel-tycoon', action='store_true', help='Also verify Tycoon artwork, progress and motion settings.')
     parser.add_argument('--historical-closeout-only', action='store_true', help='Run only the historical order and missing-photo closeout regression.')
     parser.add_argument('--full-tank-only', action='store_true', help='Run only the full-tank and October expense regression; export a synthetic fuel snapshot.')
+    parser.add_argument('--settlement-only', action='store_true', help='Verify automatic paid completion and fuel expenses in a disposable schema.')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     jar = root / 'target/nclean-crm-0.0.1-SNAPSHOT.jar'
@@ -109,6 +111,12 @@ def main():
                 page.locator('button[type=submit]').click()
             if args.historical_closeout_only:
                 verify_historical_closeout(page, base, run_dir)
+                assert not errors, errors
+                browser.close()
+                return
+            if args.settlement_only:
+                verify_automatic_settlement(page, base, run_dir)
+                verify_full_tank(page, base, run_dir)
                 assert not errors, errors
                 browser.close()
                 return
@@ -252,6 +260,7 @@ def main():
             verify_entity_reminders(page, base, run_dir)
             verify_lean_disclosures(page, base, run_dir)
             verify_daily_reliability(page, base, run_dir)
+            verify_automatic_settlement(page, base, run_dir)
             verify_historical_closeout(page, base, run_dir)
             verify_full_tank(page, base, run_dir)
             assert not errors, errors
