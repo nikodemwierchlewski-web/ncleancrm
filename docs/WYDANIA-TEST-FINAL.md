@@ -1,5 +1,18 @@
 # TEST → FINAL: wersja kodu, ta sama trwała baza
 
+## Kolejne wydanie TEST — sprzęt i serwis
+
+`nclean-v0.1-test.2` rozszerza FINAL o działającą kartotekę sprzętu i pojazdów,
+niezależne liczniki, historię i przeglądy na ekranie DZISIAJ oraz u ncLEANKA.
+Gałąź: `feat/equipment-maintenance-test`. Nowa migracja: V21.
+[Zakres i weryfikacja](verification/2026-11-19-equipment-test.md).
+
+Poprzednie tagi TEST/FINAL i gałąź backupowa pozostają bez zmian. Nowy TEST
+nie oznacza wdrożenia na komputerze właściciela. Aktualizacja istniejącej instalacji
+wymaga backupu i przebudowy obrazu z tego taga, przy zachowaniu rzeczywistego
+podłączenia PostgreSQL, dotychczasowego wolumenu i `.local`, zgodnie z procedurą poniżej.
+Nie uruchamiaj inicjalizacji ani środowiska QA na bazie właściciela.
+
 ## Oznaczenia pierwszego wydania
 
 | Etap | Nieprzesuwany tag Git | Commit |

@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class GuideSecurityTest {
+ @MockitoBean pl.nclean.crm.costs.EquipmentService equipment;
  @Autowired MockMvc mvc;@MockitoBean GuideService guide;
  @Test void helpIsOwnerOnlyAndNeverPubliclyCached() throws Exception {
   mvc.perform(get("/help/context")).andExpect(status().is3xxRedirection());mvc.perform(get("/help/context").with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());when(guide.context(null,null)).thenReturn(Map.of("total",0));mvc.perform(get("/help/context").with(user("owner").roles("OWNER"))).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));

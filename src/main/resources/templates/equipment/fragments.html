@@ -1,0 +1,24 @@
+<!doctype html><html lang="pl" xmlns:th="http://www.thymeleaf.org"><head>
+<th:block th:fragment="assets">
+<link rel="stylesheet" th:href="@{/css/crm.css}"><link rel="stylesheet" th:href="@{/css/records.css}"><link rel="stylesheet" th:href="@{/css/interface.css}">
+<script th:src="@{/js/app.js}" defer></script><script th:src="@{/js/interface.js}" defer></script>
+<th:block th:replace="~{fragments/theme :: assets}"></th:block><link rel="stylesheet" th:href="@{/css/equipment.css}"><script th:src="@{/js/equipment.js}" defer></script>
+</th:block></head><body>
+<div th:fragment="dialog"><dialog id="equipment-editor" aria-labelledby="equipment-editor-title"><header class="equipment-dialog-head"><h2 id="equipment-editor-title">Sprzęt i serwis</h2><button type="button" class="button secondary" data-equipment-close aria-label="Zamknij formularz">×</button></header><div data-equipment-editor-content></div></dialog><p class="equipment-live" role="status" aria-live="polite"></p></div>
+<article th:fragment="plan(p)" class="equipment-plan">
+<span class="equipment-tag" th:classappend="${p.severity}" th:text="${p.label}"></span>
+<span class="equipment-tag" th:if="${p.snoozedUntil != null}" th:text="${'Odroczono do '+#temporals.format(p.snoozedUntil,'dd.MM.yyyy')}"></span>
+<h3 th:text="${p.title}"></h3><p class="field-help" th:text="${p.assetName}"></p>
+<p class="field-help"><span th:if="${p.dueOn != null}" th:text="${'Termin: '+#temporals.format(p.dueOn,'dd.MM.yyyy')}"></span><span th:if="${p.dueValue != null}" th:text="${' · próg: '+p.dueValue+' '+p.unit}"></span></p>
+<p class="field-help" th:if="${p.dueOn != null and p.dueValue != null}">Data lub licznik — którykolwiek próg nastąpi wcześniej.</p>
+<div class="equipment-actions"><a class="button secondary" th:href="@{/equipment/{id}(id=${p.assetId})}">Kartoteka</a>
+<th:block th:if="${p.active and p.assetActive}"><a class="button primary" data-equipment-edit th:href="@{/equipment/editor(type='execute',id=${p.id})}">Zapisz wykonanie</a><a class="button secondary" data-equipment-edit th:href="@{/equipment/editor(type='snooze',id=${p.id})}">Odrocz</a><a class="text-link" data-equipment-edit th:href="@{/equipment/editor(type='cancel',id=${p.id})}">Zakończ plan</a></th:block></div>
+</article>
+<section th:fragment="attention(items)" class="equipment-panel main-goal-card" id="equipment-maintenance" aria-labelledby="equipment-maintenance-title">
+<span class="goal-eyebrow">Gotowość do pracy</span><h2 id="equipment-maintenance-title">Przeglądy sprzętu</h2>
+<p class="field-help">Aktualne terminy i progi według dzisiejszych danych.</p>
+<th:block th:each="p : ${items}" th:insert="~{equipment/fragments :: plan(${p})}"></th:block>
+<p class="equipment-empty" th:if="${#lists.isEmpty(items)}">Brak przeglądów wymagających uwagi.</p>
+<a class="text-link" th:href="@{/equipment}">Sprzęt i pojazdy →</a>
+</section>
+</body></html>

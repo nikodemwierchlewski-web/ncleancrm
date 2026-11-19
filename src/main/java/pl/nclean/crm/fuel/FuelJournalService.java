@@ -21,6 +21,16 @@ public class FuelJournalService {
     private void lock(){db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
     private static void changed(int rows){if(rows!=1)throw new IllegalArgumentException("Dane zmieniły się w innym oknie. Zachowano formularz; odśwież go przed kolejnym zapisem.");}
     private static void fuel(String type){if(type==null||!Set.of("PETROL","DIESEL","LPG").contains(type))throw new IllegalArgumentException("Wybierz rodzaj paliwa.");}
+    /** Cumulative confirmed meter only; daily generator durations are not cumulative readings. */
+    public Map<String,Object> equipmentMeter(String target,LocalDate at) {
+        BusinessDates.period(at,"day");
+        if(!Set.of("CAR","GENERATOR").contains(target))throw new IllegalArgumentException("Nieznany licznik paliwa.");
+        String meter=target.equals("CAR")?"odometer":"generator_meter";
+        String daily=target.equals("CAR")?" UNION ALL SELECT odometer value,day read_on,day::timestamp observed_at FROM fuel_day WHERE day<=?":"";
+        String sql="SELECT value,read_on FROM (SELECT "+meter+" value,purchased_at::date read_on,purchased_at observed_at FROM fuel_purchase WHERE target=? AND NOT cancelled AND "+meter+" IS NOT NULL AND purchased_at<? UNION ALL SELECT reading,started_at::date,started_at FROM fuel_baseline WHERE target=? AND started_at<?"+daily+") meters ORDER BY read_on DESC,value DESC,observed_at DESC LIMIT 1";
+        Object[] args=target.equals("CAR")?new Object[]{target,at.plusDays(1).atStartOfDay(),target,at.plusDays(1).atStartOfDay(),at}:new Object[]{target,at.plusDays(1).atStartOfDay(),target,at.plusDays(1).atStartOfDay()};
+        return db.queryForList(sql,args).stream().findFirst().orElse(Map.of());
+    }
     public List<Map<String,Object>> parameters(){return db.queryForList("SELECT * FROM fuel_parameters ORDER BY effective_day DESC,id DESC");}
     public Map<String,Object> parameters(LocalDate date){return db.queryForList("SELECT * FROM fuel_parameters WHERE effective_day<=? ORDER BY effective_day DESC,id DESC LIMIT 1",date).stream().findFirst().orElse(Map.of());}
     @Transactional public void saveParameters(UUID token,LocalDate date,String carRate,String generatorRate,String carFuel,String generatorFuel,String carPrice,String generatorPrice){

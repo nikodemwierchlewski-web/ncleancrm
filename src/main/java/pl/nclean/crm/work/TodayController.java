@@ -15,7 +15,8 @@ public class TodayController {
     private final DayReviewService reviews;
     private final DashboardService dashboard;
     private final NoteService notes;
-    public TodayController(WorkService work,DayReviewService reviews,DashboardService dashboard,NoteService notes){this.work=work;this.reviews=reviews;this.dashboard=dashboard;this.notes=notes;}
+    private final pl.nclean.crm.costs.EquipmentService equipment;
+    public TodayController(WorkService work,DayReviewService reviews,DashboardService dashboard,NoteService notes,pl.nclean.crm.costs.EquipmentService equipment){this.equipment=equipment;this.work=work;this.reviews=reviews;this.dashboard=dashboard;this.notes=notes;}
     @GetMapping("/today") String today(@RequestParam(required=false) LocalDate date,@RequestParam(required=false) String range,@RequestParam(required=false) String finance,@RequestParam(required=false) LocalDate from,@RequestParam(required=false) LocalDate to,@RequestParam(required=false) LocalDate periodDate,Model model){
         var day=date==null?BusinessDates.today():date;BusinessDates.period(day,"day");
         var review=reviews.review(day);var orders=work.orders(day);orders.forEach(o->o.put("navigation",Navigation.destination((String)o.get("address"))));
@@ -25,6 +26,7 @@ public class TodayController {
         var focus=periodDate==null?day:periodDate;var filter=finance==null?(range==null?"month-to-date":range):finance;
         model.addAttribute("periodFocus",focus);model.addAttribute("financeFilter",filter);model.addAttribute("trend",dashboard.trend(focus,filter,from,to));
         model.addAttribute("todayNotes",notes.todayPinned());model.addAttribute("todayNoteCount",notes.todayPinnedCount());
+        model.addAttribute("equipmentAttention",equipment.attention(BusinessDates.today()));
         return "work/today";
     }
     @ExceptionHandler({IllegalArgumentException.class,java.time.DateTimeException.class}) @ResponseStatus(org.springframework.http.HttpStatus.BAD_REQUEST)

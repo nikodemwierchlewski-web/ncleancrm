@@ -26,7 +26,25 @@
  const today=()=>data?.today||new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Warsaw'}).format(new Date());
  const savePrefs=()=>{try{localStorage.setItem(key,JSON.stringify(prefs));}catch{}preferences();};
  function preferences(){root.classList.toggle('ncleanek-off',prefs.hidden);document.querySelectorAll('[data-ncleanek-enabled]').forEach(n=>n.checked=!prefs.hidden);badge();}
- function badge(){const pending=Boolean(data?.reminder)&&prefs.muted!==today()&&Date.now()>=snooze&&!prefs.hidden;reminderChip.hidden=!pending;if(pending){reminderLink.href=Nclean.url(/^\/day-closeout$/.test(Nclean.path(data.reminder.url))?data.reminder.url:'/day-closeout');reminderLink.title=data.reminder.message;reminderDetail.textContent=data.reminder.missing>0?'Do uzupełnienia: '+data.reminder.missing+' · '+data.reminder.date:'Dane uzupełnione · zamknij dzień';}document.dispatchEvent(new Event('ncleanek:reminder-layout'));launch.querySelector('.ncleanek-dot').hidden=!pending;launch.setAttribute('aria-label',pending?'ncLEANEK — pomoc, przypomnienie o dokumentacji':'ncLEANEK — pomoc');if(!document.hidden&&!document.activeElement?.matches('input,textarea,select')&&!document.querySelector('dialog[open]')){const text=pending?'ncLEANEK: jest przypomnienie o dokumentacji.':'';if(status.textContent!==text)status.textContent=text;}}
+ const currentReminder=()=>data?.reminder||data?.equipmentReminder;
+ const reminderUrl=reminder=>Nclean.url(['/day-closeout','/today'].includes(Nclean.path(reminder.url))?reminder.url:'/today#equipment-maintenance');
+ function badge(){
+  const reminder=currentReminder(),equipment=reminder===data?.equipmentReminder;
+  const pending=Boolean(reminder)&&prefs.muted!==today()&&Date.now()>=snooze&&!prefs.hidden;
+  reminderChip.hidden=!pending;
+  if(pending){
+   reminderLink.href=reminderUrl(reminder);reminderLink.title=reminder.message;
+   reminderHeading.textContent=equipment?'Przeglądy sprzętu':'Dokończ dzień';
+   reminderDetail.textContent=equipment?reminder.message:reminder.missing>0?'Do uzupełnienia: '+reminder.missing+' · '+reminder.date:'Dane uzupełnione · zamknij dzień';
+  }
+  document.dispatchEvent(new Event('ncleanek:reminder-layout'));
+  launch.querySelector('.ncleanek-dot').hidden=!pending;
+  launch.setAttribute('aria-label',pending?'ncLEANEK — pomoc i przypomnienia':'ncLEANEK — pomoc');
+  if(!document.hidden&&!document.activeElement?.matches('input,textarea,select')&&!document.querySelector('dialog[open]')){
+   const text=pending?(equipment?'ncLEANEK: przegląd sprzętu wymaga uwagi.':'ncLEANEK: jest przypomnienie o dokumentacji.'):'';
+   if(status.textContent!==text)status.textContent=text;
+  }
+ }
  function clearTarget(){target?.classList.remove('ncleanek-target');target=null;}
  function hide(restore=true){clearTimeout(hoverTimer);clearTarget();if(panel.hidePopover&&panel.matches(':popover-open'))panel.hidePopover();panel.hidden=true;launch.setAttribute('aria-expanded','false');document.querySelectorAll('.ncleanek-help[aria-expanded=true]').forEach(n=>{n.setAttribute('aria-expanded','false');n.removeAttribute('aria-describedby');});if(restore&&opener?.isConnected&&opener.getClientRects().length){restoring=true;opener.focus({preventScroll:true});restoring=false;}mode='home';}
  function place(){
@@ -40,10 +58,11 @@
  function show(heading,source,focus=true){const transient=mode==='tip'&&!pinned;panel.classList.toggle('ncleanek-hover',transient);panel.setAttribute('role',transient?'tooltip':'dialog');if(transient&&source?.matches('.ncleanek-help'))source.setAttribute('aria-describedby',panel.id);const parent=document.querySelector('dialog[open]')||document.body;if(panel.parentElement!==parent)parent.append(panel);title.textContent=heading;panel.hidden=false;if(panel.showPopover){try{panel.showPopover();}catch{}}launch.setAttribute('aria-expanded','true');if(source)opener=source;if(focus)title.focus({preventScroll:true});place();}
  const visible=selector=>[...document.querySelectorAll(selector)].find(n=>n.getClientRects().length&&!n.closest('[hidden],.ncleanek-panel'));
  function screen(){if(document.querySelector('#booking-editor[open]'))return 'booking';if(document.querySelector('#cost-editor[open]'))return 'costForm';if(document.querySelector('#note-editor[open]'))return 'noteForm';const path=Nclean.path(window.previewRoute||location.href);
-  if(path.startsWith('/work/'))return 'work';if(path==='/day-closeout')return 'closeout';if(path==='/settings/areas')return 'areas';if(path==='/settings/services')return 'services';if(/^\/customers\/\d+$/.test(path))return 'customer';return ({'/calendar':'calendar','/today':'today','/customers':'customers','/dashboard':'dashboard','/costs':'costs','/fuel':'fuel','/notes':'notes','/settings':'settings','/settings/costs':'costs','/more':'more','/search':'search','/callbacks':'callbacks','/orders':'booking'})[path]||'fallback';}
+  if(path.startsWith('/equipment'))return 'equipment';if(path.startsWith('/work/'))return 'work';if(path==='/day-closeout')return 'closeout';if(path==='/settings/areas')return 'areas';if(path==='/settings/services')return 'services';if(/^\/customers\/\d+$/.test(path))return 'customer';return ({'/calendar':'calendar','/today':'today','/customers':'customers','/dashboard':'dashboard','/costs':'costs','/fuel':'fuel','/notes':'notes','/settings':'settings','/settings/costs':'costs','/more':'more','/search':'search','/callbacks':'callbacks','/orders':'booking'})[path]||'fallback';}
  function home(source=launch){hide(false);mode='home';pinned=true;content.replaceChildren();show('Pomogę Ci znaleźć właściwe miejsce',source);content.append(el('p','Wyjaśnię opcje i wskażę braki. Wszystkie zapisy wykonujesz samodzielnie.'));
   if(data?.focused){const p=el('p',data.focused.message);content.append(p);}
-  if(data?.reminder&&prefs.muted!==today()&&Date.now()>=snooze){const box=el('div',null,'ncleanek-reminder');box.append(el('p',data.reminder.message));const link=el('a','Przejdź do dokumentacji →','button primary');link.href=Nclean.url(/^\/day-closeout$/.test(Nclean.path(data.reminder.url))?data.reminder.url:'/day-closeout');box.append(link,button('Później',()=>{snoozeReminder();home(opener);}),button('Wycisz na dziś',()=>{prefs.muted=today();savePrefs();home(opener);}));content.append(box);}
+  const reminder=currentReminder();
+  if(reminder&&prefs.muted!==today()&&Date.now()>=snooze){const box=el('div',null,'ncleanek-reminder');box.append(el('p',reminder.message));const link=el('a',reminder===data?.equipmentReminder?'Otwórz przeglądy →':'Przejdź do dokumentacji →','button primary');link.href=reminderUrl(reminder);box.append(link,button('Później',()=>{snoozeReminder();home(opener);}),button('Wycisz na dziś',()=>{prefs.muted=today();savePrefs();home(opener);}));content.append(box);}
   else if(!data)content.append(el('p','Przypomnienia pojawią się po odczycie danych. Samouczek działa niezależnie od połączenia.'));
   const k=screen();content.append(button(prefs.seen.includes(k)?'Przypomnij mi ten ekran':'Pokaż mi ten ekran',()=>startTour()));content.append(button('Przywróć położenie',()=>document.dispatchEvent(new Event('ncleanek:position-reset'))),button('Przenieś na drugą stronę',()=>document.dispatchEvent(new Event('ncleanek:position-side'))));content.append(button('Ukryj ncLEANKA',()=>{prefs.hidden=true;savePrefs();hide();}));content.append(el('p','Pomoc przywrócisz w Ustawienia → Wygląd i aplikacja.','field-help'));place();
  }
