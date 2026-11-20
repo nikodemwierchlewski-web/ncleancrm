@@ -1,5 +1,15 @@
 # TEST → FINAL: wersja kodu, ta sama trwała baza
 
+## Najnowszy TEST — amortyzacja ekonomiczna
+
+`nclean-v0.1-test.3`, gałąź `feat/economic-depreciation`: parametry i historia
+amortyzacji sprzętu oraz opcjonalne uwzględnienie jej w Podsumowaniu i na ekranie
+DZISIAJ. Nowa migracja V22; bez zapisywania dodatkowych wydatków.
+[Zasady i weryfikacja](verification/2026-11-20-depreciation-test.md).
+Poprzednie TEST/FINAL pozostają niezmienne. Instalacja PC wymaga backupu
+oraz przebudowy obrazu z wybranego taga, z zachowaniem istniejącej bazy i `.local`.
+To wydanie nie dodaje jeszcze automatycznego naliczania godzin ze zleceń.
+
 ## Kolejne wydanie TEST — sprzęt i serwis
 
 `nclean-v0.1-test.2` rozszerza FINAL o działającą kartotekę sprzętu i pojazdów,

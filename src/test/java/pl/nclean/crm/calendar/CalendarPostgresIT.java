@@ -87,7 +87,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -112,7 +112,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -232,7 +232,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(21, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(22, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -1043,7 +1043,7 @@ class CalendarPostgresIT {
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
         var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(false,afterNote.remove("today_pinned"));assertNull(afterNote.remove("due_time"));assertEquals(beforeNote,afterNote);
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(21,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(22,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test

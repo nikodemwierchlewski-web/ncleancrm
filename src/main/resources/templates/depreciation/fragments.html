@@ -1,0 +1,10 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
+<section th:fragment="report" class="economic-report" aria-labelledby="economic-report-title">
+<h2 id="economic-report-title">Amortyzacja ekonomiczna</h2>
+<p class="field-help">Informacja o zużyciu wartości sprzętu. Nie tworzy wydatku ani amortyzacji podatkowej.</p>
+<dl class="economic-totals"><div><dt>Wynik przed amortyzacją</dt><dd data-before-depreciation th:text="${#numbers.formatDecimal(beforeDep,1,'WHITESPACE',2,'COMMA')+' zł'}"></dd></div><div><dt>Amortyzacja za wybrany okres</dt><dd data-period-depreciation th:text="${#numbers.formatDecimal(economicReport.total,1,'WHITESPACE',2,'COMMA')+' zł'}"></dd></div><div th:if="${includeDep}"><dt>Wynik po amortyzacji</dt><dd data-after-depreciation th:text="${#numbers.formatDecimal(afterDep,1,'WHITESPACE',2,'COMMA')+' zł'}"></dd></div></dl>
+<p class="economic-warning" role="status" th:if="${economicReport.unconfigured>0}" th:text="${'Brak planu dla '+economicReport.unconfigured+' aktywnych kartotek. Amortyzacja obejmuje tylko skonfigurowany sprzęt; wynik po jej uwzględnieniu jest orientacyjny.'}"></p>
+<p class="field-help" th:if="${!includeDep}">Amortyzacja jest wyłączona z wyniku. Włącz opcję powyżej, aby uwzględnić ją tylko w tym podsumowaniu.</p>
+<details><summary>Sprzęt i zasady rozliczania</summary><div class="economic-item" th:each="item:${economicReport.items}"><a th:href="@{/equipment/{id}(id=${item.assetId})}+'#economic-depreciation'" th:text="${item.name}"></a><strong th:text="${#numbers.formatDecimal(item.amount,1,'WHITESPACE',2,'COMMA')+' zł'}"></strong></div><p class="field-help" th:if="${#lists.isEmpty(economicReport.items)}">Brak zaplanowanych kwot dla tego okresu.</p><p class="field-help">Plan liniowy obejmuje pełne miesiące. Dzień, tydzień i niepełny miesiąc otrzymują proporcjonalny udział, z wyrównaniem groszy. Pełny przyszły okres pokazuje także zaplanowane kwoty. Przełącznik nie zmienia kosztów, zakupów paliwa ani przepływów pieniężnych.</p><a class="text-link" th:href="@{/equipment}">Ustaw plany sprzętu →</a></details>
+</section>
+</body></html>

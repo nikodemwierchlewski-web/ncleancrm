@@ -13,7 +13,8 @@ import pl.nclean.crm.shared.BusinessDates;
 @Controller
 public class EquipmentController {
     private final EquipmentService equipment;
-    public EquipmentController(EquipmentService equipment) { this.equipment=equipment; }
+    private final DepreciationService depreciation;
+    public EquipmentController(EquipmentService equipment,DepreciationService depreciation) { this.equipment=equipment;this.depreciation=depreciation; }
 
     @GetMapping("/equipment") String list(@RequestParam(defaultValue="active") String status,
             @RequestParam(defaultValue="") String q,Model model) {
@@ -34,11 +35,12 @@ public class EquipmentController {
         model.addAttribute("asset",equipment.asset(id));model.addAttribute("counters",equipment.counters(id,BusinessDates.today()));
         model.addAttribute("plans",equipment.plans(id,BusinessDates.today()));model.addAttribute("readings",equipment.readings(id,history));
         model.addAttribute("executions",equipment.executions(id,history));model.addAttribute("expenses",equipment.expenses(id,history));
+        model.addAttribute("economic",depreciation.detail(id,BusinessDates.today()));
         model.addAttribute("history",history);model.addAttribute("token",UUID.randomUUID());return "equipment/detail";
     }
     @GetMapping("/equipment/editor") String editor(@RequestParam String type,@RequestParam(required=false) Long id,
             @RequestParam(required=false) Long asset,Model model) {
-        if(!List.of("asset","counter","reading","plan","execute","snooze","cancel").contains(type))throw new IllegalArgumentException("Nieznany formularz.");
+        if(!List.of("asset","counter","reading","plan","execute","snooze","cancel","depreciation").contains(type))throw new IllegalArgumentException("Nieznany formularz.");
         Long assetId=asset;
         if(type.equals("asset") && id!=null)assetId=id;
         if(type.equals("reading")) {var c=equipment.counter(requiredId(id),BusinessDates.today());assetId=c.assetId();model.addAttribute("counter",c);}
@@ -47,6 +49,12 @@ public class EquipmentController {
             if(plan.counterId()!=null)model.addAttribute("counter",equipment.counter(plan.counterId(),BusinessDates.today()));
         }
         if(assetId==null && !type.equals("asset"))throw new IllegalArgumentException("Wybierz sprzęt.");
+        if(type.equals("depreciation") && assetId!=null) {
+            var a=equipment.asset(assetId);var plan=depreciation.latest(assetId);
+            model.addAttribute("depreciationPlan",plan);
+            model.addAttribute("suggestedMonth",plan!=null?plan.startMonth():java.time.YearMonth.from(a.startedOn()!=null?a.startedOn():a.purchasedOn()!=null?a.purchasedOn():BusinessDates.today()));
+            model.addAttribute("currentMonth",java.time.YearMonth.from(BusinessDates.today()));
+        }
         if(assetId!=null) {model.addAttribute("asset",equipment.asset(assetId));model.addAttribute("counters",equipment.counters(assetId,BusinessDates.today()));}
         model.addAttribute("type",type);model.addAttribute("token",UUID.randomUUID());model.addAttribute("today",BusinessDates.today());
         model.addAttribute("tomorrow",BusinessDates.today().plusDays(1));return "equipment/editor";
@@ -74,6 +82,9 @@ public class EquipmentController {
     }
     @PostMapping("/equipment/cancel") @ResponseBody ResponseEntity<?> cancel(@ModelAttribute EquipmentService.PlanAction c,Principal p) {
         return save(()->equipment.cancelPlan(c,p.getName()));
+    }
+    @PostMapping("/equipment/depreciation") @ResponseBody ResponseEntity<?> depreciation(@ModelAttribute DepreciationService.Command c,Principal p) {
+        return save(()->depreciation.save(c,p.getName()));
     }
     private static long requiredId(Long id) { if(id==null)throw new IllegalArgumentException("Wybierz licznik lub plan.");return id; }
     private ResponseEntity<?> save(LongSupplier operation) {

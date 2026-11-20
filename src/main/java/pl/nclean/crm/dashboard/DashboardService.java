@@ -35,10 +35,7 @@ public class DashboardService {
     }
     private static BigDecimal money(BigDecimal n){return n.setScale(2,RoundingMode.HALF_UP);}
     public static BigDecimal allocated(BigDecimal amount,LocalDate day){
-        // Cumulative rounding makes every month's daily shares sum to exactly the monthly amount.
-        var length=BigDecimal.valueOf(YearMonth.from(day).lengthOfMonth());
-        return amount.multiply(BigDecimal.valueOf(day.getDayOfMonth())).divide(length,2,RoundingMode.HALF_UP)
-            .subtract(amount.multiply(BigDecimal.valueOf(day.getDayOfMonth()-1)).divide(length,2,RoundingMode.HALF_UP));
+        return pl.nclean.crm.shared.MonthlyAllocation.forDay(amount,day);
     }
     public record Point(LocalDate day,BigDecimal revenue,BigDecimal profit){}
     public record Trend(Summary summary,List<Point> points){}

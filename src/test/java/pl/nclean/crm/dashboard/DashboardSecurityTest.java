@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class DashboardSecurityTest {
+ @MockitoBean pl.nclean.crm.costs.DepreciationService depreciation;
  @Autowired MockMvc mvc;
  @MockitoBean DashboardService service;
  @MockitoBean pl.nclean.crm.notes.NoteService notes;

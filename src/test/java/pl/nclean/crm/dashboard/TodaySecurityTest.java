@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class TodaySecurityTest {
  @MockitoBean pl.nclean.crm.costs.EquipmentService equipment;
+ @MockitoBean pl.nclean.crm.costs.DepreciationService depreciation;
  @Autowired MockMvc mvc;
  @MockitoBean WorkService work;@MockitoBean DayReviewService reviews;@MockitoBean DashboardService dashboard;@MockitoBean NoteService notes;@MockitoBean ReminderService reminders;
  @Test void todayAndRemindersRequireOwner() throws Exception {

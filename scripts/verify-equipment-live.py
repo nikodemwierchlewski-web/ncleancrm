@@ -11,12 +11,14 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--work-dir',type=Path,required=True)
 parser.add_argument('--java',default='java')
 parser.add_argument('--chromium',default='/usr/bin/chromium')
+parser.add_argument('--depreciation-only',action='store_true')
 parser.add_argument('--context-path',default='/crm',choices=['','/crm'])
 args=parser.parse_args()
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import bcrypt
 from playwright.sync_api import sync_playwright
 from browser_equipment_checks import verify_equipment
+from browser_depreciation_checks import verify_depreciation
 root=Path(__file__).resolve().parents[1];out=args.work_dir.resolve()
 if not shutil.which(args.java):parser.error('Wskaż Java 17 przez --java.')
 if not (root/'target/nclean-crm-0.0.1-SNAPSHOT.jar').is_file():parser.error('Najpierw zbuduj JAR przez ./mvnw verify.')
@@ -44,7 +46,8 @@ try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=args.chromium,args=['--no-sandbox']);page=browser.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(base+'/login');page.locator('[name=username]').fill(owner);page.locator('[name=password]').fill(password);page.locator('button[type=submit]').click();page.wait_for_url('**/calendar')
-  verify_equipment(page,base,out)
+  if args.depreciation_only:verify_depreciation(page,base,out)
+  else:verify_equipment(page,base,out)
   assert not errors,errors
   print('PASS no JS errors; context path '+(args.context_path or '/')+'; Java 17; synthetic isolated PostgreSQL',flush=True);browser.close()
 finally:
