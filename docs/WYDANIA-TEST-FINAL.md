@@ -1,6 +1,15 @@
 # TEST → FINAL: wersja kodu, ta sama trwała baza
 
-## Najnowszy TEST — amortyzacja ekonomiczna
+## Najnowszy TEST — standardy zleceń i godziny sprzętu
+
+`nclean-v0.1-test.4`, gałąź `feat/job-equipment-usage`: obowiązkowa notatka
+przy dodawaniu, opcjonalne imię, domyślna chemia i czas oraz szacowane godziny
+sprzętu ze zleceń. Nowa migracja V23; istniejące tagi pozostają niezmienione.
+[Zasady i weryfikacja](verification/2026-11-21-job-defaults-test.md).
+Wdrożenie wymaga backupu oraz przebudowy obrazu z zachowaniem obecnego
+podłączenia bazy, wolumenu i `.local`. Nie wykonano wdrożenia na komputerze właściciela.
+
+## Poprzedni TEST — amortyzacja ekonomiczna
 
 `nclean-v0.1-test.3`, gałąź `feat/economic-depreciation`: parametry i historia
 amortyzacji sprzętu oraz opcjonalne uwzględnienie jej w Podsumowaniu i na ekranie

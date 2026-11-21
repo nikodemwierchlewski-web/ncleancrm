@@ -1,0 +1,6 @@
+<!doctype html><html xmlns:th="http://www.thymeleaf.org"><body>
+<section th:fragment="summary(job)" class="equipment-panel" id="job-equipment"><h2>Szacowane użycie sprzętu</h2><p class="field-help">Odrębne liczniki urządzeń. Szacunki zwiększają użycie tylko dla wykonanego zlecenia, według daty usługi.</p>
+<p class="notice" th:unless="${job.prepared}">Nie przygotowano szacunku. Starsze zlecenie nie dostaje automatycznie dzisiejszych standardów.</p><p class="field-help" th:if="${job.historical}">Wpis historyczny — dane mogą być niepełne.</p><p th:if="${job.noEquipment}">Zadeklarowano: nie użyto sprzętu.</p><p class="field-help" th:if="${job.prepared and job.missingItems>0}" th:text="${'Pozycje bez standardu sprzętu: '+job.missingItems+'. Możesz wpisać łączny czas ręcznie.'}"></p>
+<div class="equipment-row" th:each="u:${job.usages}"><div><a th:href="@{/equipment/{id}(id=${u.assetId})}" th:text="${u.name}"></a><p th:text="${u.minutes+' min · szacunek'+(u.overrideMinutes!=null?' po korekcie':' ze standardu')}"></p></div></div>
+<p class="field-help" th:if="${job.status!='DONE'}">Zlecenie nie jest wykonane — te czasy nie powiększają liczników.</p><a class="button secondary" th:href="@{/equipment/jobs/{id}(id=${job.id})}" th:text="${job.prepared?'Zmień czasy sprzętu':'Przygotuj szacunek sprzętu'}"></a>
+</section></body></html>

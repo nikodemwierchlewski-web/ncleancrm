@@ -212,7 +212,8 @@
   const historical=form.querySelector('#booking-historical');
   const historicalState=()=>{
     const active=historical.checked;
-    for(const input of [contactName,phone,address])input.required=!active;
+    contactName.required=false;
+    for(const input of [phone,address])input.required=!active;
     form.querySelector('#historical-help').hidden=!active;
   };
   historical.addEventListener('change',historicalState);historicalState();

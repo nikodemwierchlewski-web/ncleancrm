@@ -15,7 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class DayReviewSecurityTest {
- @Autowired MockMvc mvc;@MockitoBean DayReviewService review;@MockitoBean WorkService work;@MockitoBean pl.nclean.crm.records.CrmRecords records;@MockitoBean pl.nclean.crm.context.ContextService context;@MockitoBean DashboardService dashboard;
+ @Autowired MockMvc mvc;@MockitoBean DayReviewService review;@MockitoBean WorkService work;
+ @MockitoBean pl.nclean.crm.records.CompletionDefaults defaults;@MockitoBean pl.nclean.crm.records.CrmRecords records;@MockitoBean pl.nclean.crm.context.ContextService context;@MockitoBean DashboardService dashboard;
  @Test void newContextAndImagesRequireOwnerAndCsrf() throws Exception {
   for(String p:new String[]{"/day-closeout"}){mvc.perform(get(p)).andExpect(status().is3xxRedirection());mvc.perform(get(p).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());}
   for(String p:new String[]{"/day-closeout/1","/day-closeout/close"}){mvc.perform(post(p).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());mvc.perform(post(p).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());}

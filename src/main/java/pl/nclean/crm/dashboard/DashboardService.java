@@ -28,10 +28,10 @@ public class DashboardService {
     public record Slice(String name,String color,BigDecimal amount,BigDecimal percentage){}
     public record Summary(Period period,String mode,List<Map<String,Object>> orders,int planned,int done,int cancelled,
                           BigDecimal revenue,BigDecimal chemistry,BigDecimal fuel,BigDecimal marketing,BigDecimal fixed,
-                          BigDecimal costs,BigDecimal remaining,int missingChemistry,int missingFuel,int missingMonths,List<Slice> slices,BigDecimal operating,BigDecimal investments){
+                          BigDecimal costs,BigDecimal remaining,int missingChemistry,int missingFuel,int missingMonths,List<Slice> slices,BigDecimal operating,BigDecimal investments,int estimatedChemistry){
         public boolean complete(){return missingChemistry+missingFuel+missingMonths==0;}
         public long unconfirmedPrices(){return mode.equals("actual")?orders.stream().filter(o->"DONE".equals(o.get("status"))&&o.get("final_total")==null).count():0;}
-        public boolean financialComplete(){return complete()&&unconfirmedPrices()==0;}
+        public boolean financialComplete(){return complete()&&unconfirmedPrices()==0&&estimatedChemistry==0;}
     }
     private static BigDecimal money(BigDecimal n){return n.setScale(2,RoundingMode.HALF_UP);}
     public static BigDecimal allocated(BigDecimal amount,LocalDate day){
@@ -59,9 +59,10 @@ public class DashboardService {
             var day=((java.sql.Date)order.get("day")).toLocalDate();bookingDays.put(id,day);if(chart)revenueDays.merge(day,amount,BigDecimal::add);
         }
         // Aggregate before joining to avoid multiplying booking/item prices by chemical rows.
-        var lines=db.queryForList("SELECT i.booking_id,i.forecast_defined,i.chemical_cost,i.actual_defined,COALESCE((SELECT SUM(a.amount) FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position),0) actual_cost, EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position AND a.amount IS NULL) unknown_price, EXISTS(SELECT 1 FROM booking_chemical c WHERE c.booking_id=i.booking_id AND c.item_position=i.position AND c.quantity>0 AND NOT EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=c.booking_id AND a.item_position=c.item_position AND a.chemical_id=c.chemical_id AND a.unit=c.unit)) missing_material FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND b.day BETWEEN ? AND ?",p.start(),p.end());
-        var missingBookings=new HashSet<Long>();
+        var lines=db.queryForList("SELECT i.booking_id,i.forecast_defined,i.chemical_cost,i.actual_defined,i.actual_source,COALESCE((SELECT SUM(a.amount) FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position),0) actual_cost, EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position AND a.amount IS NULL) unknown_price, EXISTS(SELECT 1 FROM booking_chemical c WHERE c.booking_id=i.booking_id AND c.item_position=i.position AND c.quantity>0 AND NOT EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=c.booking_id AND a.item_position=c.item_position AND a.chemical_id=c.chemical_id AND a.unit=c.unit)) missing_material FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND b.day BETWEEN ? AND ?",p.start(),p.end());
+        var missingBookings=new HashSet<Long>();var estimatedBookings=new HashSet<Long>();
         for(var line:lines){long id=((Number)line.get("booking_id")).longValue();if(!included.contains(id))continue;
+            if(mode.equals("actual") && "STANDARD".equals(line.get("actual_source")))estimatedBookings.add(id);
             var chemistryBefore=chem;
             if(mode.equals("plan")){if(!(Boolean)line.get("forecast_defined")||line.get("chemical_cost")==null)missingBookings.add(id);else chem=chem.add((BigDecimal)line.get("chemical_cost"));}
             else {chem=chem.add((BigDecimal)line.get("actual_cost"));if(!(Boolean)line.get("actual_defined")||(Boolean)line.get("unknown_price")||(Boolean)line.get("missing_material"))missingBookings.add(id);}
@@ -97,7 +98,7 @@ public class DashboardService {
         chem=money(chem);fuel=money(fuel);marketing=money(marketing);fixed=money(fixed);var additionalMarketing=money(entries.operatingMarketing(p.start(),p.end()));marketing=marketing.add(additionalMarketing);var operating=money(entries.operating(p.start(),p.end()).subtract(additionalMarketing));var investments=money(entries.investments(p.start(),p.end()));var total=chem.add(fuel).add(marketing).add(fixed).add(operating);var slices=new ArrayList<Slice>();
         String[] names={"Chemia","Paliwo","Marketing","Koszty stałe","Utrzymanie i inne"},colors={"#218DCA","#F1AA42","#9D77CA","#42AC93","#637bb9"};BigDecimal[] amounts={chem,fuel,marketing,fixed,operating};
         for(int i=0;i<amounts.length;i++)slices.add(new Slice(names[i],colors[i],amounts[i],total.signum()==0?BigDecimal.ZERO:amounts[i].multiply(new BigDecimal("100")).divide(total,2,RoundingMode.HALF_UP)));
-        var summary=new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices,operating,investments);
+        var summary=new Summary(p,mode,orders,planned,done,cancelled,money(revenue),chem,fuel,marketing,fixed,total,money(revenue.subtract(total)),missingChem,missingFuel,missingMonths.size(),slices,operating,investments,estimatedBookings.size());
         var points=new ArrayList<Point>();
         if(chart){entries.operatingByDay(p.start(),p.end()).forEach((day,cost)->costDays.merge(day,cost,BigDecimal::add));
             for(var day=p.start();!day.isAfter(p.end());day=day.plusDays(1)){var earned=money(revenueDays.getOrDefault(day,BigDecimal.ZERO));points.add(new Point(day,earned,money(earned.subtract(costDays.getOrDefault(day,BigDecimal.ZERO)))));}}

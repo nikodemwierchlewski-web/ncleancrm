@@ -18,9 +18,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfiguration.class)
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class WorkSecurityTest {
+ @MockitoBean pl.nclean.crm.costs.EquipmentUsageService equipmentUsage;
  @Autowired MockMvc mvc;
  @MockitoBean ExportQueries exports;
  @MockitoBean WorkService work;
+ @MockitoBean pl.nclean.crm.records.CompletionDefaults defaults;
  @MockitoBean DayReviewService review;
  @MockitoBean pl.nclean.crm.context.ContextService context;
  @MockitoBean CrmRecords records;

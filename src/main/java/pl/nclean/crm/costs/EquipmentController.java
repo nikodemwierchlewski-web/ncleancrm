@@ -14,7 +14,8 @@ import pl.nclean.crm.shared.BusinessDates;
 public class EquipmentController {
     private final EquipmentService equipment;
     private final DepreciationService depreciation;
-    public EquipmentController(EquipmentService equipment,DepreciationService depreciation) { this.equipment=equipment;this.depreciation=depreciation; }
+    private final EquipmentUsageService usage;
+    public EquipmentController(EquipmentService equipment,DepreciationService depreciation,EquipmentUsageService usage) { this.usage=usage;this.equipment=equipment;this.depreciation=depreciation; }
 
     @GetMapping("/equipment") String list(@RequestParam(defaultValue="active") String status,
             @RequestParam(defaultValue="") String q,Model model) {
@@ -36,6 +37,7 @@ public class EquipmentController {
         model.addAttribute("plans",equipment.plans(id,BusinessDates.today()));model.addAttribute("readings",equipment.readings(id,history));
         model.addAttribute("executions",equipment.executions(id,history));model.addAttribute("expenses",equipment.expenses(id,history));
         model.addAttribute("economic",depreciation.detail(id,BusinessDates.today()));
+        model.addAttribute("jobUsages",usage.history(id,history,equipment.asset(id).historyBoundary()));
         model.addAttribute("history",history);model.addAttribute("token",UUID.randomUUID());return "equipment/detail";
     }
     @GetMapping("/equipment/editor") String editor(@RequestParam String type,@RequestParam(required=false) Long id,

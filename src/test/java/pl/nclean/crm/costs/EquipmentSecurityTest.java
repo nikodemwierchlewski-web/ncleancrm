@@ -12,11 +12,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(EquipmentController.class)
+@WebMvcTest({EquipmentController.class,EquipmentUsageController.class})
 @Import(SecurityConfiguration.class)
 @TestPropertySource(properties={"crm.admin.username=test-owner","crm.admin.password-hash=$2a$12$....................................................."})
 class EquipmentSecurityTest {
     @MockitoBean pl.nclean.crm.costs.DepreciationService depreciation;
+ @MockitoBean pl.nclean.crm.costs.EquipmentUsageService usage;
  @Autowired MockMvc mvc;
     @MockitoBean EquipmentService service;
     @Test void blankOptionalFieldsAndUncheckedHistoryBindToCommand() throws Exception {
@@ -39,12 +40,18 @@ class EquipmentSecurityTest {
         org.junit.jupiter.api.Assertions.assertEquals(java.time.YearMonth.of(2026,1),command.getValue().startMonth());
         org.junit.jupiter.api.Assertions.assertTrue(command.getValue().enabled());
     }
+    @Test void missingUsageTokenIsRejectedWithoutWriting() throws Exception {
+        mvc.perform(post("/equipment/jobs/usage").with(user("owner").roles("OWNER")).with(csrf())
+                .param("bookingId","1").param("bookingVersion","0").param("version","0").param("minutes_1","30"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
+        org.mockito.Mockito.verify(usage,org.mockito.Mockito.never()).override(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyString());
+    }
     @Test void readsAndWritesRequireOwnerAndCsrf() throws Exception {
-        for(String path:new String[]{"/equipment","/equipment/1","/equipment/editor?type=asset"}) {
+        for(String path:new String[]{"/equipment","/equipment/1","/equipment/editor?type=asset","/equipment/standards","/equipment/jobs/1"}) {
             mvc.perform(get(path)).andExpect(status().is3xxRedirection());
             mvc.perform(get(path).with(user("employee").roles("EMPLOYEE"))).andExpect(status().isForbidden());
         }
-        for(String path:new String[]{"asset","archive","counter","reading","plan","execute","snooze","cancel","depreciation"}) {
+        for(String path:new String[]{"asset","archive","counter","reading","plan","execute","snooze","cancel","depreciation","standards","jobs/prepare","jobs/usage"}) {
             mvc.perform(post("/equipment/"+path).with(user("owner").roles("OWNER"))).andExpect(status().isForbidden());
             mvc.perform(post("/equipment/"+path).with(user("employee").roles("EMPLOYEE")).with(csrf())).andExpect(status().isForbidden());
         }

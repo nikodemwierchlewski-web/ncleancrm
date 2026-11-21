@@ -13,8 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class CrmRecords {
  private final JdbcTemplate db;
  private final ChemistryService chemistry;
+ private final pl.nclean.crm.costs.EquipmentUsageService equipmentUsage;
  private final pl.nclean.crm.tycoon.AchievementService achievements;
- public CrmRecords(JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
+ public CrmRecords(JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements,pl.nclean.crm.costs.EquipmentUsageService equipmentUsage){this.equipmentUsage=equipmentUsage;this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
  public List<ChemistryService.Material> materials(){return chemistry.materials();}
  public List<ChemistryService.Material> materialsForBooking(long id){return chemistry.materialsForBooking(id);}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
@@ -74,7 +75,7 @@ public class CrmRecords {
  static BigDecimal money(String value){try{BigDecimal n=new BigDecimal(value.replace(',','.')).setScale(2,RoundingMode.UNNECESSARY);if(n.signum()<0||n.compareTo(new BigDecimal("9999999999.99"))>0)throw new IllegalArgumentException();return n;}catch(Exception ex){throw new IllegalArgumentException("Podaj cenę od 0 do 9999999999,99, z najwyżej dwoma miejscami po przecinku.");}}
  static void changed(int rows){if(rows!=1)throw new IllegalArgumentException("Rekord zmienił się lub nie istnieje. Odśwież stronę przed ponowną edycją.");}
  @Transactional public long saveCustomer(Long id,long version,String name,String number,String address,String notes,boolean active){
-  name=text(name,120,true);number=phone(number);address=text(address,240,false);notes=text(notes,2000,false);
+  number=phone(number);name=text(name,120,false);if(name.isBlank())name=number;address=text(address,240,false);notes=text(notes,2000,false);
   if(id==null)return db.queryForObject("INSERT INTO crm_customer(name,phone,address,notes) VALUES (?,?,?,?) RETURNING id",Long.class,name,number,address,notes);
   changed(db.update("UPDATE crm_customer SET name=?,phone=?,address=?,notes=?,active=?,version=version+1 WHERE id=? AND version=?",name,number,address,notes,active,id,version));return id;
  }
@@ -109,7 +110,7 @@ public class CrmRecords {
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
   if(historical && !day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny wymaga daty wcześniejszej niż dzisiaj.");
-  address=text(address,240,!historical);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";note=text(note,2000,false);
+  address=text(address,240,!historical);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";if(note==null||note.isBlank())throw new IllegalArgumentException("Dodaj notatkę do zlecenia — wpisz ustalenia lub znane informacje o usłudze.");note=text(note,2000,true);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
   if(prices==null||forecasts==null||!quantities.keySet().containsAll(prices.keySet())||!quantities.keySet().containsAll(forecasts.keySet()))throw new IllegalArgumentException("Cena lub prognoza dotyczy niewybranej usługi.");
   var quotes=new ArrayList<ChemistryService.Quote>();boolean allDefined=true;BigDecimal chemistryTotal=BigDecimal.ZERO;
@@ -131,14 +132,17 @@ public class CrmRecords {
   }
   String visitName=name==null||name.isBlank()?Objects.toString(person.get("name"),"Klient nieustalony"):text(name,120,true);
   String visitPhone=number==null||number.isBlank()?Objects.toString(person.get("phone"),""):phone(number);
+  if((name==null||name.isBlank()) && person.get("name")==null && !visitPhone.isBlank())visitName=visitPhone;
   long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,historical,status) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,visitName,visitPhone,address,total,historical,historical?"DONE":"PLANNED");
   db.update("UPDATE booking SET work_note=? WHERE id=?",note,id);
   for(int i=0;i<lines.size();i++){
    var line=lines.get(i);var quote=quotes.get(i);
    db.update("INSERT INTO booking_item(booking_id,position,service_id,name,unit,quantity,price,amount,suggested_price,forecast_defined,chemical_cost) VALUES (?,?,?,?,?,?,?,?,?,?,?)",id,i,line.get("id"),line.get("name"),line.get("unit"),line.get("quantity"),line.get("price"),line.get("amount"),line.get("suggested_price"),quote.defined(),quote.cost());
+   db.update("UPDATE booking_item SET standard_work_minutes=?,standard_time_origin='BOOKING',standard_time_captured_at=CURRENT_TIMESTAMP WHERE booking_id=? AND position=?",((BigDecimal)line.get("quantity")).multiply(BigDecimal.valueOf(((Number)line.get("minutes")).longValue())),id,i);
    for(var usage:quote.usages())db.update("INSERT INTO booking_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) VALUES (?,?,?,?,?,?,?,?)",id,i,usage.chemicalId(),usage.name(),usage.unit(),usage.quantity(),usage.unitCost(),usage.amount());
   }
   db.update("UPDATE booking SET chemical_cost=? WHERE id=?",allDefined?chemistryTotal:null,id);
+  equipmentUsage.snapshotNewJob(id);
   return id;
  }
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){

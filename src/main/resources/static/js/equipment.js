@@ -28,7 +28,13 @@
     } catch (error) { if (live) live.textContent = error.message; }
     finally { busy = false; }
   });
-  dialog?.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+  document.addEventListener('change', event => {
+    if (event.target.matches('[data-equipment-zero]')) {
+      const form=event.target.closest('form');
+      form.querySelectorAll('[data-equipment-minutes]').forEach(input=>input.disabled=event.target.checked);
+    }
+  });
+  dialog?.addEventListener('cancel' , event => { if (busy) event.preventDefault(); });
   dialog?.addEventListener('close', () => opener?.focus({preventScroll: true}));
   document.addEventListener('submit', async event => {
     const form = event.target;
@@ -50,7 +56,8 @@
       if (!response.ok || response.redirected || result.saved !== true)
         throw Error(result.message || 'Nie udało się zapisać. Sprawdź połączenie i sesję.');
       const creating = body.has('name') && body.has('kind') && !body.get('id');
-      if (creating) location.assign(url('/equipment/' + result.id));
+      if (form.dataset.equipmentReturn) location.assign(url(form.dataset.equipmentReturn));
+      else if (creating) location.assign(url('/equipment/' + result.id));
       else if (!dialog) location.assign(url('/equipment'));
       else location.reload();
     } catch (failure) { error.textContent = failure.message || 'Brak połączenia. Pola zachowano.'; }

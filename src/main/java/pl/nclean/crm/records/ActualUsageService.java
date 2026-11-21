@@ -21,7 +21,7 @@ public class ActualUsageService {
         record(booking,position,version,Map.of());
         // Historical units remain valid for explicit zeros, even after catalogue changes.
         db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) SELECT booking_id,item_position,chemical_id,name,unit,0,unit_cost,0 FROM booking_chemical WHERE booking_id=? AND item_position=?",booking,position);
-        db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=TRUE WHERE booking_id=? AND position=?",booking,position);
+        db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=TRUE,actual_source='NONE' WHERE booking_id=? AND position=?",booking,position);
     }
     public record Suggestion(long serviceId,long chemicalId,String name,String unit,BigDecimal quantity,
                              int samples,BigDecimal minimum,BigDecimal maximum,LocalDate lastDate) {}
@@ -39,7 +39,7 @@ public class ActualUsageService {
             if(!materials.containsKey(entry.getKey())||entry.getValue()==null)throw new IllegalArgumentException("Wybierz istniejący środek.");
             normalized.put(entry.getKey(),ChemistryService.quantity(entry.getValue().toPlainString(),false));
         }
-        CrmRecords.changed(db.update("UPDATE booking_item SET actual_no_chem=FALSE,actual_defined=?,actual_version=actual_version+1 WHERE booking_id=? AND position=? AND actual_version=?",!normalized.isEmpty(),booking,position,version));
+        CrmRecords.changed(db.update("UPDATE booking_item SET actual_no_chem=FALSE,actual_source=CASE WHEN ? THEN 'MEASURED' ELSE 'UNKNOWN' END,actual_defined=?,actual_version=actual_version+1 WHERE booking_id=? AND position=? AND actual_version=?",!normalized.isEmpty(),!normalized.isEmpty(),booking,position,version));
         var previous=new HashMap<Long,Map<String,Object>>();
         for(var row:db.queryForList("SELECT * FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position))previous.put(((Number)row.get("chemical_id")).longValue(),row);
         db.update("DELETE FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position);
@@ -53,10 +53,26 @@ public class ActualUsageService {
         }
     }
 
+    /** Copies immutable booking forecast prices, not today's catalogue prices. */
+    @Transactional public void standard(long booking,int position,Long expectedVersion,boolean force) {
+        db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
+        var row=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.id=? AND i.position=? AND b.removed_at IS NULL",booking,position).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznana pozycja."));
+        if(!"DONE".equals(row.get("status")))throw new IllegalArgumentException("Standard zużycia przyjmujemy po wykonaniu zlecenia.");
+        if(expectedVersion!=null && ((Number)row.get("actual_version")).longValue()!=expectedVersion)throw new IllegalArgumentException("Zużycie zmieniło się w innym oknie.");
+        if(!force && Boolean.TRUE.equals(row.get("actual_defined")))return;
+        if(!Boolean.TRUE.equals(row.get("forecast_defined"))) {
+            if(force)throw new IllegalArgumentException("Brak standardu zapisanego w tym zleceniu. Podaj własne ilości.");
+            return;
+        }
+        db.update("DELETE FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position);
+        db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) SELECT booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount FROM booking_chemical WHERE booking_id=? AND item_position=?",booking,position);
+        db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=FALSE,actual_source='STANDARD',actual_version=actual_version+1 WHERE booking_id=? AND position=?",booking,position);
+    }
+
     public Map<Long,List<Suggestion>> suggestions(){
         var materials=new HashMap<Long,ChemistryService.Material>();chemistry.materials().forEach(m->materials.put(m.id(),m));
         // One observation per booking/service/chemical, including explicit zeros.
-        var rows=db.queryForList("SELECT b.id booking_id,i.service_id,a.chemical_id,a.unit,SUM(a.quantity) amount,SUM(i.quantity) service_quantity,b.day FROM booking_actual_chemical a JOIN booking_item i ON i.booking_id=a.booking_id AND i.position=a.item_position JOIN booking b ON b.id=i.booking_id JOIN service_definition s ON s.id=i.service_id WHERE b.removed_at IS NULL AND b.status='DONE' AND i.actual_defined=TRUE AND i.unit=s.unit GROUP BY b.id,i.service_id,a.chemical_id,a.unit,b.day");
+        var rows=db.queryForList("SELECT b.id booking_id,i.service_id,a.chemical_id,a.unit,SUM(a.quantity) amount,SUM(i.quantity) service_quantity,b.day FROM booking_actual_chemical a JOIN booking_item i ON i.booking_id=a.booking_id AND i.position=a.item_position JOIN booking b ON b.id=i.booking_id JOIN service_definition s ON s.id=i.service_id WHERE b.removed_at IS NULL AND b.status='DONE' AND i.actual_defined=TRUE AND i.actual_source IN ('MEASURED','NONE') AND i.unit=s.unit GROUP BY b.id,i.service_id,a.chemical_id,a.unit,b.day");
         record Key(long service,long chemical){}
         record Sample(BigDecimal quantity,LocalDate day){}
         var groups=new LinkedHashMap<Key,List<Sample>>();

@@ -21,8 +21,10 @@ public class EquipmentService {
     private final CostService costs;
     private final FuelJournalService fuel;
     private final ObjectMapper json;
+    private final EquipmentUsageService usage;
 
-    public EquipmentService(JdbcTemplate db, CostService costs, FuelJournalService fuel, ObjectMapper json) {
+    public EquipmentService(JdbcTemplate db, CostService costs, FuelJournalService fuel, ObjectMapper json,EquipmentUsageService usage) {
+        this.usage=usage;
         this.db = db; this.costs = costs; this.fuel = fuel; this.json = json;
     }
 
@@ -41,7 +43,7 @@ public class EquipmentService {
     public record PlanAction(long planId, long version, UUID token, LocalDate until) {}
     public record ArchiveCommand(long assetId, long version, UUID token, boolean active) {}
     public record Counter(long id, long assetId, long version, String name, String unit, String fuelTarget,
-            BigDecimal actual, LocalDate actualOn, BigDecimal estimate, LocalDate estimateOn) {
+            BigDecimal actual, LocalDate actualOn, BigDecimal estimate, LocalDate estimateOn,BigDecimal trackedHours,int trackedJobs) {
         public BigDecimal current() { return estimated() ? estimate : actual; }
         public boolean estimated() { return estimate != null && (actual == null || estimateOn.isAfter(actualOn)); }
     }
@@ -153,8 +155,9 @@ public class EquipmentService {
         var r=db.queryForList("SELECT * FROM equipment_counter WHERE id=?",id).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznany licznik."));
         var actual=reading(id,"ACTUAL",at);var estimate=reading(id,"ESTIMATE",at);
         if(r.get("fuel_target")!=null) actual=fuel.equipmentMeter((String)r.get("fuel_target"),at);
+        var projection="h".equals(r.get("unit"))?usage.estimate(id,at,(BigDecimal)actual.get("value"),day(actual.get("read_on")),(BigDecimal)estimate.get("value"),day(estimate.get("read_on"))):null;
         return new Counter(id,id(r,"asset_id"),id(r,"version"),(String)r.get("name"),(String)r.get("unit"),(String)r.get("fuel_target"),
-                (BigDecimal)actual.get("value"),day(actual.get("read_on")),(BigDecimal)estimate.get("value"),day(estimate.get("read_on")));
+                (BigDecimal)actual.get("value"),day(actual.get("read_on")),projection==null?(BigDecimal)estimate.get("value"):projection.value(),projection==null?day(estimate.get("read_on")):projection.day(),projection==null?BigDecimal.ZERO:projection.trackedHours(),projection==null?0:projection.jobs());
     }
     private Map<String,Object> reading(long id,String kind,LocalDate at) {
         return db.queryForList("SELECT value,read_on FROM equipment_reading WHERE counter_id=? AND kind=? AND read_on<=? ORDER BY read_on DESC,id DESC LIMIT 1",id,kind,at).stream().findFirst().orElse(Map.of());

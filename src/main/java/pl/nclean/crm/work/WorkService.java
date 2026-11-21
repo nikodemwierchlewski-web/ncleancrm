@@ -15,7 +15,8 @@ import pl.nclean.crm.records.ActualUsageService;
 public class WorkService {
     private final JdbcTemplate db;private final ActualUsageService actual;
     private final pl.nclean.crm.tycoon.AchievementService achievements;
-    public WorkService(JdbcTemplate db,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements){this.db=db;this.actual=actual;this.achievements=achievements;}
+    private final pl.nclean.crm.records.CompletionDefaults defaults;
+    public WorkService(JdbcTemplate db,ActualUsageService actual,pl.nclean.crm.tycoon.AchievementService achievements,pl.nclean.crm.records.CompletionDefaults defaults){this.defaults=defaults;this.db=db;this.actual=actual;this.achievements=achievements;}
     public static BigDecimal money(String value){return DecimalInput.parse(value,2,new BigDecimal("9999999999.99"),false);}
     public static Integer minutes(String value){if(value==null||value.isBlank())return null;try{int n=Integer.parseInt(value);if(n<0||n>10080)throw new NumberFormatException();return n;}catch(NumberFormatException ex){throw new IllegalArgumentException("Podaj czas od 0 do 10080 minut lub pozostaw brak danych.");}}
     private void guard(){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
@@ -29,7 +30,7 @@ public class WorkService {
     public Map<String,Object> active(){return db.queryForList("SELECT id,customer_name,timer_started FROM booking WHERE removed_at IS NULL AND timer_started IS NOT NULL").stream().findFirst().orElse(Map.of());}
     public List<Map<String,Object>> history(long id){return db.queryForList("SELECT created_at,after_data->>'status' status,after_data->>'final_total' final_total,after_data->>'work_minutes' work_minutes FROM booking_audit WHERE booking_id=? ORDER BY id DESC LIMIT 20",id);}
     @Transactional public void timer(long id,long version,boolean start,String actor){guard();var b=locked(id,version);if(!"PLANNED".equals(b.get("status")))throw new IllegalArgumentException("Pomiar czasu dotyczy niezakończonego zlecenia.");String before=before(id);
-        if(start){if(!active().isEmpty())throw new IllegalArgumentException("Najpierw zakończ aktywny pomiar czasu.");db.update("UPDATE booking SET timer_started=CURRENT_TIMESTAMP,work_started_at=NULL,work_finished_at=NULL,work_minutes=CASE WHEN work_time_source='PHOTO' THEN NULL ELSE work_minutes END,work_time_source='TIMER',version=version+1 WHERE id=?",id);}
+        if(start){if(!active().isEmpty())throw new IllegalArgumentException("Najpierw zakończ aktywny pomiar czasu.");db.update("UPDATE booking SET timer_started=CURRENT_TIMESTAMP,work_started_at=NULL,work_finished_at=NULL,work_minutes=CASE WHEN work_time_source IN ('PHOTO','STANDARD') THEN NULL ELSE work_minutes END,work_time_source='TIMER',version=version+1 WHERE id=?",id);}
         else {if(b.get("timer_started")==null)throw new IllegalArgumentException("Pomiar nie jest uruchomiony.");int total=(b.get("work_minutes")==null?0:((Number)b.get("work_minutes")).intValue())+elapsed(b);if(total>10080)throw new IllegalArgumentException("Czas przekracza 7 dni. Popraw go ręcznie w panelu zakończenia.");db.update("UPDATE booking SET work_minutes=?,work_time_source='TIMER',timer_started=NULL,version=version+1 WHERE id=?",total,id);}
         db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);
         if(!start&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE removed_at IS NULL AND id=?) WHERE booking_id=?",id,id);
@@ -37,28 +38,37 @@ public class WorkService {
     }
     public record Measurement(int position,long version,Map<Long,BigDecimal> values){}
     @Transactional public void complete(long id,long version,String finalPrice,String duration,String note,Map<Integer,BigDecimal> allocations,Map<Integer,Integer> times,List<Measurement> measured,String actor){
+        complete(id,version,finalPrice,duration,note,allocations,times,measured,actor,Set.of());
+    }
+    @Transactional public void complete(long id,long version,String finalPrice,String duration,String note,Map<Integer,BigDecimal> allocations,Map<Integer,Integer> times,List<Measurement> measured,String actor,Set<Integer> skipStandards){
         guard();var b=locked(id,version);pl.nclean.crm.records.CrmRecords.validateCompletionDay(((java.sql.Date)b.get("day")).toLocalDate());if("CANCELLED".equals(b.get("status")))throw new IllegalArgumentException("Najpierw przywróć anulowane zlecenie do planu.");var price=money(finalPrice);Integer mins=minutes(duration);if(note==null||note.length()>2000)throw new IllegalArgumentException("Notatka może mieć do 2000 znaków.");
         if(mins==null&&b.get("timer_started")!=null)mins=(b.get("work_minutes")==null?0:((Number)b.get("work_minutes")).intValue())+elapsed(b);if(mins!=null&&mins>10080)throw new IllegalArgumentException("Sprawdź czas pracy.");
+        boolean standardTime=false;
+        if(mins==null && b.get("work_minutes")!=null && Set.of("PHOTO","TIMER").contains((String)b.get("work_time_source")))mins=((Number)b.get("work_minutes")).intValue();
+        if(mins==null){mins=defaults.captureTime(id);standardTime=mins!=null;}
         var items=db.queryForList("SELECT position FROM booking_item WHERE booking_id=? ORDER BY position",id);var positions=new HashSet<Integer>();items.forEach(i->positions.add(((Number)i.get("position")).intValue()));
         if(items.size()==1){allocations=new LinkedHashMap<>(allocations);allocations.put(positions.iterator().next(),price);if(mins!=null){times=new LinkedHashMap<>(times);times.put(positions.iterator().next(),mins);}}
         if(!allocations.isEmpty()&&(!allocations.keySet().equals(positions)||allocations.values().stream().anyMatch(v->v==null||v.signum()<0||v.scale()>2)||allocations.values().stream().reduce(BigDecimal.ZERO,BigDecimal::add).compareTo(price)!=0))throw new IllegalArgumentException("Podaj kwoty wszystkich pozycji sumujące się do ceny końcowej albo pozostaw cały podział pusty.");
         if(!times.isEmpty()&&(!times.keySet().equals(positions)||mins==null||times.values().stream().anyMatch(v->v==null||v<0)||times.values().stream().mapToInt(Integer::intValue).sum()!=mins))throw new IllegalArgumentException("Czasy pozycji muszą sumować się do łącznego czasu. Możesz pozostawić cały podział pusty.");
-        String timeSource=b.get("timer_started")!=null?"TIMER":(Objects.equals(mins,b.get("work_minutes"))?(String)b.get("work_time_source"):mins==null?"UNKNOWN":"MANUAL");
+        String timeSource=standardTime?"STANDARD":b.get("timer_started")!=null?"TIMER":(Objects.equals(mins,b.get("work_minutes"))?(String)b.get("work_time_source"):mins==null?"UNKNOWN":"MANUAL");
         String before=before(id);if(!"PHOTO".equals(timeSource)&&!Objects.equals(mins,b.get("work_minutes")))db.update("UPDATE booking SET work_started_at=NULL,work_finished_at=NULL WHERE id=?",id);db.update("UPDATE booking SET work_time_source=? WHERE id=?",timeSource,id);db.update("UPDATE booking SET status='DONE',final_total=?,work_minutes=?,completion_note=?,completion_no_notes=CASE WHEN ?='' THEN completion_no_notes ELSE FALSE END,timer_started=NULL,version=version+1 WHERE id=?",price,mins,note.strip(),note.strip(),id);
         db.update("UPDATE booking_item SET final_amount=NULL,work_minutes=NULL WHERE booking_id=?",id);
         for(var e:allocations.entrySet())db.update("UPDATE booking_item SET final_amount=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
         for(var e:times.entrySet())db.update("UPDATE booking_item SET work_minutes=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
-        for(var m:measured)actual.record(id,m.position(),m.version(),m.values());audit(id,before,actor);achievements.performed(id);
+        for(var m:measured)actual.record(id,m.position(),m.version(),m.values());
+        for(var item:items){int position=((Number)item.get("position")).intValue();if(!skipStandards.contains(position))actual.standard(id,position,null,false);}
+        audit(id,before,actor);achievements.performed(id);
     }
     /** Current settlement follows service status; legacy payment rows are read-only history. */
     public BigDecimal paid(long id){return (BigDecimal)order(id).get("paid");}
-    public record Finance(BigDecimal received,BigDecimal outstanding,int minutes,boolean timeComplete,BigDecimal perHour,BigDecimal remainingPerHour){}
+    public record Finance(BigDecimal received,BigDecimal outstanding,int minutes,boolean timeComplete,BigDecimal perHour,BigDecimal remainingPerHour,int estimatedTimeBookings){}
     public Finance finance(LocalDate start,LocalDate end,BigDecimal revenue,BigDecimal remaining,boolean costsComplete){
         var cash=revenue(start,end,"actual");
         var due=BigDecimal.ZERO;
         int mins=db.queryForObject("SELECT COALESCE(SUM(work_minutes),0) FROM booking WHERE removed_at IS NULL AND day BETWEEN ? AND ? AND status='DONE'",Integer.class,start,end);
         boolean complete=db.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NULL AND day BETWEEN ? AND ? AND status='DONE' AND (work_minutes IS NULL OR final_total IS NULL)",Integer.class,start,end)==0;
-        return new Finance(cash,due,mins,complete,complete&&mins>0?revenue.multiply(new BigDecimal("60")).divide(BigDecimal.valueOf(mins),2,RoundingMode.HALF_UP):null,complete&&costsComplete&&mins>0?remaining.multiply(new BigDecimal("60")).divide(BigDecimal.valueOf(mins),2,RoundingMode.HALF_UP):null);
+        return new Finance(cash,due,mins,complete,complete&&mins>0?revenue.multiply(new BigDecimal("60")).divide(BigDecimal.valueOf(mins),2,RoundingMode.HALF_UP):null,complete&&costsComplete&&mins>0?remaining.multiply(new BigDecimal("60")).divide(BigDecimal.valueOf(mins),2,RoundingMode.HALF_UP):null,
+                db.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NULL AND day BETWEEN ? AND ? AND status='DONE' AND work_time_source='STANDARD'",Integer.class,start,end));
     }
     public BigDecimal revenue(LocalDate start,LocalDate end,String mode){return db.queryForObject("SELECT COALESCE(SUM(CASE WHEN ?='actual' THEN COALESCE(final_total,total) ELSE total END),0) FROM booking WHERE removed_at IS NULL AND day BETWEEN ? AND ? AND status<>'CANCELLED' AND (?='plan' OR status='DONE')",BigDecimal.class,mode,start,end,mode);}
     public boolean previousComplete(LocalDate start,LocalDate end){return db.queryForObject("SELECT count(*) FROM booking WHERE removed_at IS NULL AND day BETWEEN ? AND ? AND status='DONE' AND final_total IS NULL",Integer.class,start,end)==0;}

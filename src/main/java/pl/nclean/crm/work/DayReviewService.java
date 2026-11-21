@@ -84,10 +84,11 @@ public class DayReviewService {
         String original=db.queryForObject("SELECT to_jsonb(b)::text FROM booking b WHERE b.removed_at IS NULL AND id=?",String.class,id);
         if(outcome.equals("DONE")){
             CrmRecords.validateCompletionDay(day);
-            var measured=new ArrayList<WorkService.Measurement>();var zero=new ArrayList<int[]>();
+            var measured=new ArrayList<WorkService.Measurement>();var zero=new ArrayList<int[]>();var standard=new ArrayList<int[]>();
             for(var item:records.items(id)){
                 int pos=((Number)item.get("position")).intValue();String mode=p.getOrDefault("chem_"+pos,"KEEP");
-                if(!Set.of("KEEP","MEASURED","ZERO").contains(mode))throw new IllegalArgumentException("Wybierz sposób potwierdzenia chemii.");
+                if(!Set.of("KEEP","MEASURED","ZERO","STANDARD").contains(mode))throw new IllegalArgumentException("Wybierz sposób potwierdzenia chemii.");
+                if(mode.equals("STANDARD"))standard.add(new int[]{pos});
                 if(mode.equals("ZERO"))zero.add(new int[]{pos});
                 if(mode.equals("MEASURED")){
                     var values=new LinkedHashMap<Long,BigDecimal>();String prefix="usage_"+pos+"_";
@@ -104,8 +105,9 @@ public class DayReviewService {
                 prices.clear();times.clear();
                 for(var item:records.items(id)){int pos=((Number)item.get("position")).intValue();String amount=p.get("amount_"+pos),minutes=p.get("time_"+pos);if(amount!=null&&!amount.isBlank())prices.put(pos,WorkService.money(amount));if(minutes!=null&&!minutes.isBlank())times.put(pos,WorkService.minutes(minutes));}
             }else if(b.get("final_total")==null||WorkService.money(p.get("final_total")).compareTo((BigDecimal)b.get("final_total"))!=0)prices.clear();
-            work.complete(id,version,p.get("final_total"),b.get("timer_started")!=null?null:p.getOrDefault("minutes",Objects.toString(b.get("work_minutes"),"")),note,prices,times,measured,actor);
+            work.complete(id,version,p.get("final_total"),b.get("timer_started")!=null?null:p.getOrDefault("minutes",Objects.toString(b.get("work_minutes"),"")),note,prices,times,measured,actor,java.util.stream.Stream.concat(zero.stream(),standard.stream()).map(z->z[0]).collect(java.util.stream.Collectors.toSet()));
             for(var z:zero)actual.zero(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])));
+            for(var z:standard)actual.standard(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])),true);
             db.update("UPDATE booking SET completion_no_notes=?,photo_before_exception=?,photo_after_exception=? WHERE id=?",noNotes,before,after,id);
         }else{
             var target=day;var starts=((java.sql.Time)b.get("starts")).toLocalTime();

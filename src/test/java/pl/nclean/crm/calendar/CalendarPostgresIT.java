@@ -61,6 +61,12 @@ class CalendarPostgresIT {
     private static final List<String> SEED_NAMES = List.of("Fabryczna", "Krzyki", "Psie Pole", "Stare Miasto", "Śródmieście");
     private static final List<String> SEED_COLORS = List.of("#DBEAFE", "#D1FAE5", "#FEF3C7", "#FCE7F3", "#EDE9FE");
 
+    /** Explicit visit details for creation fixtures; validation tests send their own raw fields. */
+    private static Map<String,Object> withBookingNote(Map<String,?> fields) {
+        var copy=new LinkedHashMap<String,Object>(fields);
+        copy.putIfAbsent("note","Ustalenia testowej wizyty");return copy;
+    }
+
     @BeforeEach
     void startIsolatedApplication() {
         app = RunningApp.start();
@@ -87,7 +93,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -112,7 +118,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -232,7 +238,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(22, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(23, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -246,8 +252,8 @@ class CalendarPostgresIT {
         var service=records.services().get(0);long serviceId=((Number)service.get("id")).longValue();
         var price=(java.math.BigDecimal)service.get("price");String token=UUID.randomUUID().toString();
         var fields=new LinkedHashMap<String,Object>();fields.put("token",token);fields.put("day",DAY);fields.put("starts","09:00");fields.put("customer",person);fields.put("address","Adres realizacji 2");fields.put("qty_"+serviceId,"2");
-        assertEquals(302,browser.settings("/orders",fields,true).statusCode());
-        assertEquals(302,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(302,browser.settings("/orders",withBookingNote(fields),true).statusCode());
+        assertEquals(302,browser.settings("/orders",withBookingNote(fields),true).statusCode());
         long booking=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,token);
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking WHERE request_token=?::uuid",Integer.class,token));
         assertEquals(200,browser.get("/orders?day="+DAY).statusCode());
@@ -258,7 +264,7 @@ class CalendarPostgresIT {
         assertEquals("Klient syntetyczny",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,booking));
         assertEquals(service.get("name"),jdbc.queryForObject("SELECT name FROM booking_item WHERE booking_id=?",String.class,booking));
         long count=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
-        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisuj","500000010","Adres",Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE)));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisuj","500000010","Adres",Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(count,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
         assertThrows(IllegalArgumentException.class,()->records.saveCustomer(person,0,"Nie nadpisuj","500000010","","",true));
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
@@ -273,7 +279,7 @@ class CalendarPostgresIT {
         records.service(null,0,category,"Próba rollback","szt.","9999999999.99",1,true);
         long service=jdbc.queryForObject("SELECT id FROM service_definition WHERE name='Próba rollback'",Long.class);
         long before=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
-        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Wycofaj","500000010","Adres",Map.of(service,new java.math.BigDecimal("10000"))));
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Wycofaj","500000010","Adres",Map.of(service,new java.math.BigDecimal("10000")),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
         var browser=app.browser();browser.login();
         assertHtmlBadRequest(browser.settings("/orders",Map.of("day",DAY,"starts","09:00"),true));
@@ -283,7 +289,7 @@ class CalendarPostgresIT {
         long created=jdbc.queryForObject("SELECT id FROM service_category WHERE name='Nowa kategoria'",Long.class);
         records.category(created,"Kategoria zmieniona");
         records.service(service,0,created,"Usługa wyłączona","m²","12.50",20,false);
-        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie dodawaj","500000010","Adres",Map.of(service,java.math.BigDecimal.ONE)));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie dodawaj","500000010","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
     }
 
@@ -299,21 +305,21 @@ class CalendarPostgresIT {
         var browser=app.browser();browser.login();
         long person=data.saveCustomer(null,0,"Klient kalendarza","500000020","Adres domyślny","",true);
         long service=((Number)data.services().get(0).get("id")).longValue();
-        for(int hour=15;hour>=8;hour--)data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.of(hour,0),person,null,null,"Adres wizyty",Map.of(service,java.math.BigDecimal.ONE));
+        for(int hour=15;hour>=8;hour--)data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.of(hour,0),person,null,null,"Adres wizyty",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         var month=data.monthBookings(java.time.YearMonth.of(2026,10));assertEquals(8,month.size());
         assertEquals("08:00:00",month.get(0).get("starts").toString());
         var page=browser.get(calendarPath(DAY));assertEquals(200,page.statusCode());assertTrue(page.body().contains("+6 kolejnych"));
         String token=UUID.randomUUID().toString();
         var fields=Map.<String,Object>of("calendar","1","token",token,"day",DAY,"starts","16:00","customer",person,"name","Kontakt na tę wizytę","phone","500000021","address","Inny adres","qty_"+service,"1");
-        assertEquals(403,browser.settings("/orders",fields,false).statusCode());
-        var created=browser.settings("/orders",fields,true);assertEquals(200,created.statusCode());assertTrue(created.body().contains("saved"));
-        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(403,browser.settings("/orders",withBookingNote(fields),false).statusCode());
+        var created=browser.settings("/orders",withBookingNote(fields),true);assertEquals(200,created.statusCode());assertTrue(created.body().contains("saved"));
+        assertEquals(200,browser.settings("/orders",withBookingNote(fields),true).statusCode());
         assertEquals(9,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
         assertEquals("Klient kalendarza",jdbc.queryForObject("SELECT name FROM crm_customer WHERE id=?",String.class,person));
         long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,token);
         assertEquals("Kontakt na tę wizytę",jdbc.queryForObject("SELECT customer_name FROM booking WHERE id=?",String.class,id));
         var invalid=new LinkedHashMap<String,Object>(fields);invalid.put("token",UUID.randomUUID());invalid.put("qty_"+service,"-1");
-        var rejected=browser.settings("/orders",invalid,true);assertEquals(400,rejected.statusCode());assertTrue(rejected.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+        var rejected=browser.settings("/orders",withBookingNote(invalid),true);assertEquals(400,rejected.statusCode());assertTrue(rejected.headers().firstValue("Content-Type").orElse("").contains("application/json"));
         assertEquals(200,browser.settings("/calendar/areas",Map.of("calendar","1","date",DAY,"districtIds",List.of(areaId("Krzyki"),areaId("Fabryczna"))),true).statusCode());
         assertEquals(200,browser.settings("/orders/"+id,Map.of("calendar","1","version","0","day",DAY,"starts","07:30","status","DONE"),true).statusCode());
         assertEquals(400,browser.settings("/orders/"+id,Map.of("calendar","1","version","0","day",DAY,"starts","07:30","status","DONE"),true).statusCode());
@@ -336,9 +342,9 @@ class CalendarPostgresIT {
         fields.put("name","Kontakt wizyty lean");fields.put("phone","500000042");fields.put("address","Adres tej wizyty lean");
         fields.put("qty_"+firstId,"2");fields.put("qty_"+secondId,"1.5");
         var browser=app.browser();browser.login();
-        assertEquals(403,browser.settings("/orders",fields,false).statusCode());
-        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
-        assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(403,browser.settings("/orders",withBookingNote(fields),false).statusCode());
+        assertEquals(200,browser.settings("/orders",withBookingNote(fields),true).statusCode());
+        assertEquals(200,browser.settings("/orders",withBookingNote(fields),true).statusCode());
         long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?",Long.class,token);
         assertEquals(2,data.items(id).size());
         var expected=((java.math.BigDecimal)first.get("price")).multiply(new java.math.BigDecimal("2")).add(((java.math.BigDecimal)second.get("price")).multiply(new java.math.BigDecimal("1.5"))).setScale(2,java.math.RoundingMode.HALF_UP);
@@ -419,7 +425,7 @@ class CalendarPostgresIT {
         var quote=chemistry.quote(service,new java.math.BigDecimal("2"),null);assertEquals(0,new java.math.BigDecimal("5.00").compareTo(quote.cost()));
         var browser=app.browser();browser.login();var token=UUID.randomUUID();
         var fields=Map.<String,Object>of("calendar","1","token",token,"day",DAY,"starts","11:00","name","Klient prognozy","phone","500000070","address","Adres prognozy","qty_"+service,"2","price_"+service,"220.00");
-        assertEquals(200,browser.settings("/orders",fields,true).statusCode());assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals(200,browser.settings("/orders",withBookingNote(fields),true).statusCode());assertEquals(200,browser.settings("/orders",withBookingNote(fields),true).statusCode());
         long booking=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?",Long.class,token);
         var item=data.items(booking).get(0);assertEquals(0,new java.math.BigDecimal("180").compareTo((java.math.BigDecimal)item.get("suggested_price")));assertEquals(0,new java.math.BigDecimal("220").compareTo((java.math.BigDecimal)item.get("price")));
         assertEquals(0,new java.math.BigDecimal("440").compareTo(jdbc.queryForObject("SELECT total FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
@@ -438,10 +444,10 @@ class CalendarPostgresIT {
         chemistry.saveRecipe(service,0,true,Map.of(liquid,new java.math.BigDecimal("50")));
         assertEquals(0,new java.math.BigDecimal("0.04").compareTo(chemistry.materials().stream().filter(m->m.id()==powder).findFirst().orElseThrow().unitCost()));
         var forecast=new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(liquid,new java.math.BigDecimal("20"),powder,new java.math.BigDecimal("10")));
-        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Ręczna prognoza","500000071","Adres",Map.of(service,new java.math.BigDecimal("2")),Map.of(),Map.of(service,forecast));
+        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Ręczna prognoza","500000071","Adres",Map.of(service,new java.math.BigDecimal("2")),Map.of(),Map.of(service,forecast),"UNKNOWN","","Ustalenia testowej wizyty");
         assertEquals(2,data.chemicals(booking).size());assertEquals(0,new java.math.BigDecimal("1.40").compareTo(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,booking)));
         var zero=chemistry.quote(service,java.math.BigDecimal.ONE,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of()));assertTrue(zero.defined());assertEquals(0,zero.cost().signum());
-        long zeroBooking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Prognoza zero","500000079","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of())));
+        long zeroBooking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Prognoza zero","500000079","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of())),"UNKNOWN","","Ustalenia testowej wizyty");
         assertTrue((Boolean)data.items(zeroBooking).get(0).get("forecast_defined"));assertEquals(0,jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,zeroBooking).signum());
         var unknown=chemistry.quote(service,java.math.BigDecimal.ONE,new pl.nclean.crm.records.ChemistryService.Forecast(false,Map.of()));assertFalse(unknown.defined());assertNull(unknown.cost());
         assertThrows(IllegalArgumentException.class,()->chemistry.saveMaterial(liquid,0,"Płyn","kg","1","50"));
@@ -452,12 +458,12 @@ class CalendarPostgresIT {
     @Test
     void missingStandardDoesNotBlockBookingAndInvalidForecastRollsBack() {
         var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Usługa bez standardu");
-        long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Bez prognozy","500000072","Adres",Map.of(service,java.math.BigDecimal.ONE));
+        long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Bez prognozy","500000072","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         assertNull(jdbc.queryForObject("SELECT chemical_cost FROM booking WHERE id=?",java.math.BigDecimal.class,id));assertFalse((Boolean)data.items(id).get(0).get("forecast_defined"));
         long before=jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class);
-        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz","500000073","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE)))));
+        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz","500000073","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(Long.MAX_VALUE,java.math.BigDecimal.ONE))),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
-        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz ceny","500000074","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(service,new java.math.BigDecimal("-1")),Map.of()));
+        assertThrows(IllegalArgumentException.class,()->data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Nie zapisz ceny","500000074","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(service,new java.math.BigDecimal("-1")),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(before,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Long.class));
     }
 
@@ -468,7 +474,7 @@ class CalendarPostgresIT {
         chemistry.saveRecipe(service,0,true,Map.of(liquid,new java.math.BigDecimal("50"),other,new java.math.BigDecimal("20")));
         var ids=new java.util.ArrayList<Long>();
         for(int index=0;index<7;index++){
-            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient próby obserwacji","500000091","Adres próby",Map.of(service,new java.math.BigDecimal("2")));
+            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient próby obserwacji","500000091","Adres próby",Map.of(service,new java.math.BigDecimal("2")),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
             data.reschedule(id,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,index==6?"CANCELLED":"DONE");ids.add(id);
         }
         assertTrue(actual.suggestions().isEmpty(),"Forecasts and completion alone are not observations");
@@ -492,7 +498,7 @@ class CalendarPostgresIT {
     void actualUsageRejectsUnfinishedInvalidAndStaleWritesAndBlankMeansUnknown() {
         var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
         long service=estimateService("Usługa walidacji pomiarów");long material=chemistry.saveMaterial(null,0,"Środek rzeczywisty","l","1","40");
-        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient pomiarów","500000092","Adres",Map.of(service,java.math.BigDecimal.ONE));
+        long booking=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient pomiarów","500000092","Adres",Map.of(service,java.math.BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(material,java.math.BigDecimal.ONE)));
         data.reschedule(booking,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"DONE");
         assertThrows(IllegalArgumentException.class,()->actual.record(booking,0,0,Map.of(material,new java.math.BigDecimal("-1"))));
@@ -512,7 +518,7 @@ class CalendarPostgresIT {
         var browser=app.browser();browser.login();
         long first=0;
         for(int index=0;index<6;index++){
-            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient jednostek","500000093","Adres",Map.of(service,new java.math.BigDecimal("2")));
+            long id=data.book(UUID.randomUUID(),java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,null,"Klient jednostek","500000093","Adres",Map.of(service,new java.math.BigDecimal("2")),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
             data.reschedule(id,0,java.time.LocalDate.parse(DAY),java.time.LocalTime.NOON,"DONE");if(index==0)first=id;
             if(index<5){
                 String path="/orders/"+id+"/items/0/actual";
@@ -552,9 +558,9 @@ class CalendarPostgresIT {
         var dashboard=app.context().getBean(DashboardService.class);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);
         var date=DashboardService.today();long service=estimateService("Dashboard fotel");long liquid=chemistry.saveMaterial(null,0,"Płukanka dashboard","l","1","50");
         chemistry.saveRecipe(service,0,true,Map.of(liquid,new BigDecimal("100")));
-        long first=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of());
-        long second=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("300")),Map.of());
-        long cancelled=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE));
+        long first=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
+        long second=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("300")),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
+        long cancelled=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient dashboard","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         data.reschedule(first,0,date,java.time.LocalTime.NOON,"DONE");data.reschedule(cancelled,0,date,java.time.LocalTime.NOON,"CANCELLED");
         dashboard.saveMonth(YearMonth.from(date),-1,List.of(new DashboardService.Cost("Reklama","MARKETING",new BigDecimal("300")),new DashboardService.Cost("Telefon","PHONE",new BigDecimal("150"))));
         dashboard.saveFuel(date,-1,new BigDecimal("8"),new BigDecimal("6"),new BigDecimal("100"),new BigDecimal("50"),null);
@@ -587,7 +593,7 @@ class CalendarPostgresIT {
         jdbc.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES ('2026-12-01','Grudzień','MARKETING',310),('2027-01-01','Styczeń','OTHER',620)");
         var week=dashboard.summary(LocalDate.of(2026,12,31),"week","plan");assertEquals(new BigDecimal("40.00"),week.marketing());assertEquals(new BigDecimal("60.00"),week.fixed());assertEquals(0,week.missingMonths());
         var historyDay=DashboardService.today().minusDays(1);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Bez historycznej wyceny");var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);long chemical=chemistry.saveMaterial(null,0,"Stary pomiar","ml","1000","50");
-        long id=data.book(UUID.randomUUID(),historyDay,java.time.LocalTime.NOON,null,"Klient próbny","500000095","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(id,0,historyDay,java.time.LocalTime.NOON,"DONE");
+        long id=data.book(UUID.randomUUID(),historyDay,java.time.LocalTime.NOON,null,"Klient próbny","500000095","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");data.reschedule(id,0,historyDay,java.time.LocalTime.NOON,"DONE");
         jdbc.update("UPDATE booking_item SET actual_defined=TRUE WHERE booking_id=?",id);jdbc.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity) VALUES (?,0,?,'Stary pomiar','ml',100)",id,chemical);
         assertEquals(1,dashboard.summary(historyDay,"day","actual").missingChemistry());
     }
@@ -629,7 +635,7 @@ class CalendarPostgresIT {
     void dashboardPartialMeasurementsAndInvalidCostsRemainExplicit() {
         var dashboard=app.context().getBean(DashboardService.class);var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);var date=DashboardService.today();
         long service=estimateService("Częściowy pomiar");long a=chemistry.saveMaterial(null,0,"Środek A","l","1","50"),b=chemistry.saveMaterial(null,0,"Środek B","l","1","50");chemistry.saveRecipe(service,0,true,Map.of(a,new BigDecimal("100"),b,new BigDecimal("100")));
-        long booking=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient próbny","500000099","Adres",Map.of(service,BigDecimal.ONE));data.reschedule(booking,0,date,java.time.LocalTime.NOON,"DONE");actual.record(booking,0,0,Map.of(a,new BigDecimal("100")));
+        long booking=data.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient próbny","500000099","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");data.reschedule(booking,0,date,java.time.LocalTime.NOON,"DONE");actual.record(booking,0,0,Map.of(a,new BigDecimal("100")));
         assertEquals(1,dashboard.summary(date,"day","actual").missingChemistry());actual.record(booking,0,1,Map.of(a,new BigDecimal("100"),b,BigDecimal.ZERO));assertEquals(0,dashboard.summary(date,"day","actual").missingChemistry());
         assertThrows(IllegalArgumentException.class,()->dashboard.saveMonth(YearMonth.from(date),-1,List.of(new DashboardService.Cost("Zły koszt",null,BigDecimal.ONE))));assertEquals(-1,dashboard.monthVersion(YearMonth.from(date)));
         assertThrows(IllegalArgumentException.class,()->dashboard.saveFuel(date,-1,new BigDecimal("-1"),BigDecimal.ONE,null,null,null));assertEquals(-1,((Number)dashboard.fuel(date).get("version")).longValue());
@@ -765,7 +771,7 @@ class CalendarPostgresIT {
 
     private long workBooking(String name,LocalDate day) {
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService(name);
-        return records.book(UUID.randomUUID(),day,java.time.LocalTime.of(9,0),null,"Klient dnia","500000098","Adres wizyty",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of());
+        return records.book(UUID.randomUUID(),day,java.time.LocalTime.of(9,0),null,"Klient dnia","500000098","Adres wizyty",Map.of(service,BigDecimal.ONE),Map.of(service,new BigDecimal("200")),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
     }
     @Test void completionAutomaticallySettlesAndPriceCorrectionsSurviveRestart() throws Exception {
         var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var date=DashboardService.today();long id=workBooking("Usługa domknięcia",date);
@@ -788,7 +794,7 @@ class CalendarPostgresIT {
     }
     @Test void closingBundleNeedsExplicitBalancedAllocationAndActualConfirmation() {
         var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var chem=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var date=DashboardService.today();long a=estimateService("Pakiet A"),b=estimateService("Pakiet B"),material=chem.saveMaterial(null,0,"Płyn do pakietu","l","1","50");
-        var quantities=new LinkedHashMap<Long,BigDecimal>();quantities.put(a,BigDecimal.ONE);quantities.put(b,BigDecimal.ONE);long id=records.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient pakietu","500000097","Adres",quantities);
+        var quantities=new LinkedHashMap<Long,BigDecimal>();quantities.put(a,BigDecimal.ONE);quantities.put(b,BigDecimal.ONE);long id=records.book(UUID.randomUUID(),date,java.time.LocalTime.NOON,null,"Klient pakietu","500000097","Adres",quantities,Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         assertThrows(IllegalArgumentException.class,()->work.complete(id,0,"300","90","",Map.of(0,new BigDecimal("100")),Map.of(),List.of(),OWNER));
         work.complete(id,0,"300","90","",Map.of(),Map.of(),List.of(),OWNER);assertNull(records.items(id).get(0).get("final_amount"));assertTrue(records.actuals(id).isEmpty());
         work.complete(id,1,"300","90","",Map.of(0,new BigDecimal("100"),1,new BigDecimal("200")),Map.of(0,30,1,60),List.of(new pl.nclean.crm.work.WorkService.Measurement(0,0,Map.of(material,BigDecimal.ZERO))),OWNER);
@@ -835,7 +841,7 @@ class CalendarPostgresIT {
     @Test void customerSourceNotesSearchAndCallbacksPreserveHistory() {
         var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var context=app.context().getBean(pl.nclean.crm.context.ContextService.class);var day=DashboardService.today().minusMonths(7);long service=estimateService("Usługa powrotu");long id=data.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"Anna Źródło","500000096","Adres szukany",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"REFERRAL","Od Ewy","Piętro 3, jest winda");var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);long person=((Number)work.order(id).get("customer_id")).longValue();data.reschedule(id,0,day,java.time.LocalTime.NOON,"DONE");assertEquals("REFERRAL",jdbc.queryForObject("SELECT source FROM crm_customer WHERE id=?",String.class,person));assertEquals("Piętro 3, jest winda",work.order(id).get("work_note"));assertEquals(2,context.search("500000096").size());assertEquals(2,context.search("szukany").size());assertTrue(context.search("x").isEmpty());assertTrue(context.callbacks().stream().anyMatch(c->((Number)c.get("id")).longValue()==person));
         var token=UUID.randomUUID();context.contact(person,0,token,DashboardService.today().plusMonths(1),"Rozmawiałem");context.contact(person,0,token,DashboardService.today().plusMonths(1),"Ponowienie");assertEquals(1,context.contacts(person).size());assertTrue(context.callbacks().isEmpty());
-        jdbc.update("UPDATE crm_customer SET contact_due=CURRENT_DATE-1 WHERE id=?",person);data.book(UUID.randomUUID(),DashboardService.today().plusDays(2),java.time.LocalTime.NOON,person,null,null,"Inny adres",Map.of(service,BigDecimal.ONE));assertTrue(context.callbacks().isEmpty());assertEquals("REFERRAL",jdbc.queryForObject("SELECT source FROM crm_customer WHERE id=?",String.class,person));
+        jdbc.update("UPDATE crm_customer SET contact_due=CURRENT_DATE-1 WHERE id=?",person);data.book(UUID.randomUUID(),DashboardService.today().plusDays(2),java.time.LocalTime.NOON,person,null,null,"Inny adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");assertTrue(context.callbacks().isEmpty());assertEquals("REFERRAL",jdbc.queryForObject("SELECT source FROM crm_customer WHERE id=?",String.class,person));
     }
 
 
@@ -933,7 +939,7 @@ class CalendarPostgresIT {
     }
     @Test void auditConcurrentBookingReplayReturnsSameIdAndOneCustomer() throws Exception {
         var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Jedna rezerwacja");var token=UUID.randomUUID();var day=DashboardService.today();var gate=new java.util.concurrent.CountDownLatch(1);var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
-        try{java.util.concurrent.Callable<Long> create=()->{gate.await();return data.book(token,day,java.time.LocalTime.NOON,null,"Próba równoczesna","500000096","Adres",Map.of(service,BigDecimal.ONE));};var a=pool.submit(create);var b=pool.submit(create);gate.countDown();assertEquals(a.get(20,java.util.concurrent.TimeUnit.SECONDS),b.get(20,java.util.concurrent.TimeUnit.SECONDS));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));}finally{pool.shutdownNow();}
+        try{java.util.concurrent.Callable<Long> create=()->{gate.await();return data.book(token,day,java.time.LocalTime.NOON,null,"Próba równoczesna","500000096","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");};var a=pool.submit(create);var b=pool.submit(create);gate.countDown();assertEquals(a.get(20,java.util.concurrent.TimeUnit.SECONDS),b.get(20,java.util.concurrent.TimeUnit.SECONDS));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));}finally{pool.shutdownNow();}
     }
     @Test void auditKnownCostsDoNotConfirmUnconfirmedFinalPrice() {
         var day=DashboardService.today();long id=workBooking("Cena niepotwierdzona",day);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);records.reschedule(id,0,day,java.time.LocalTime.NOON,"DONE");app.context().getBean(pl.nclean.crm.records.ActualUsageService.class).zero(id,0,0);
@@ -1041,9 +1047,9 @@ class CalendarPostgresIT {
         old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
         var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);assertEquals(beforeItem,old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking));var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(false,afterNote.remove("today_pinned"));assertNull(afterNote.remove("due_time"));assertEquals(beforeNote,afterNote);
+        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals(beforeBooking,afterBooking);var afterItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);assertEquals("UNKNOWN",afterItem.remove("actual_source"));assertNull(afterItem.remove("standard_work_minutes"));assertNull(afterItem.remove("standard_time_origin"));assertNull(afterItem.remove("standard_time_captured_at"));assertEquals(beforeItem,afterItem);var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(false,afterNote.remove("today_pinned"));assertNull(afterNote.remove("due_time"));assertEquals(beforeNote,afterNote);
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(22,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(23,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -1335,10 +1341,10 @@ class CalendarPostgresIT {
     @Test void animationSignalsCarryTheCommittedBookingIdAndNeverAppearOnError() throws Exception {
         var browser=app.browser();browser.login();long service=((Number)app.context().getBean(pl.nclean.crm.records.CrmRecords.class).services().get(0).get("id")).longValue();
         var fields=new LinkedHashMap<String,Object>();fields.put("token",UUID.randomUUID());fields.put("day",DashboardService.today());fields.put("starts","09:30");fields.put("name","Klient reakcji");fields.put("phone","500000097");fields.put("address","Adres próbny");fields.put("qty_"+service,"1");fields.put("calendar","1");
-        var first=browser.settings("/orders",fields,true);assertEquals(200,first.statusCode());
+        var first=browser.settings("/orders",withBookingNote(fields),true);assertEquals(200,first.statusCode());
         long id=jdbc.queryForObject("SELECT id FROM booking WHERE request_token=?::uuid",Long.class,fields.get("token").toString());
         assertTrue(first.body().contains("\"id\":"+id));assertTrue(first.body().contains("\"motion\":\"booked\""));
-        var retry=browser.settings("/orders",fields,true);assertEquals(200,retry.statusCode());assertTrue(retry.body().contains("\"id\":"+id));
+        var retry=browser.settings("/orders",withBookingNote(fields),true);assertEquals(200,retry.statusCode());assertTrue(retry.body().contains("\"id\":"+id));
         var update=Map.of("calendar","1","version","0","day",DashboardService.today().toString(),"starts","11:00","status","CANCELLED");
         var saved=browser.settings("/orders/"+id,update,true);assertEquals(200,saved.statusCode());assertTrue(saved.body().contains("\"motion\":\"updated\""));
         var stale=browser.settings("/orders/"+id,update,true);assertEquals(400,stale.statusCode());assertFalse(stale.body().contains("\"motion\""));assertFalse(stale.body().contains("\"saved\":true"));
@@ -1370,7 +1376,7 @@ class CalendarPostgresIT {
 
     @Test void sharedCompletionRetainsOptionalAllocationsAndRejectsInvalidSumAtomically() {
         var day=DashboardService.today();var data=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long first=estimateService("Lean pakiet A"),second=estimateService("Lean pakiet B");
-        long id=data.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"Pakiet testowy","500000093","Adres pakietu",Map.of(first,BigDecimal.ONE,second,BigDecimal.ONE));
+        long id=data.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"Pakiet testowy","500000093","Adres pakietu",Map.of(first,BigDecimal.ONE,second,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");
         var fields=reviewFields(id);fields.put("final_total","300");fields.put("minutes","90");fields.put("allocations","1");fields.put("amount_0","100");fields.put("amount_1","200");fields.put("time_0","30");fields.put("time_1","60");
         var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);review.save(id,day,fields,OWNER);assertEquals(new BigDecimal("100.00"),data.items(id).get(0).get("final_amount"));assertEquals(90,app.context().getBean(pl.nclean.crm.work.WorkService.class).order(id).get("work_minutes"));
         var before=jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id);fields.put("version","1");fields.put("amount_1","500");assertThrows(IllegalArgumentException.class,()->review.save(id,day,fields,OWNER));assertEquals(before,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",id));
@@ -1392,6 +1398,18 @@ class CalendarPostgresIT {
             assertThrows(IllegalArgumentException.class,()->records.reschedule(past,1,day.plusDays(1),java.time.LocalTime.NOON,"DONE"));
             assertEquals(completed,jdbc.queryForMap("SELECT * FROM booking WHERE id=?",past));
         }
+    }
+
+    @Test void bookingWithoutNoteIsRejectedOverHttpWithoutPartialCustomerOrJob() throws Exception {
+        var browser=app.browser();browser.login();long service=estimateService("Notatka przy dodawaniu");
+        var fields=new LinkedHashMap<String,Object>();fields.put("calendar","1");fields.put("token",UUID.randomUUID());fields.put("day",DAY);fields.put("starts","09:00");fields.put("phone","500000941");fields.put("address","Adres testowy");fields.put("qty_"+service,"1");
+        for(String note:List.of("","   ","\n\t")){
+            if(note.isEmpty())fields.remove("note");else fields.put("note",note);
+            var response=browser.settings("/orders",fields,true);assertEquals(400,response.statusCode());assertTrue(response.body().contains("notatkę"));
+            assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM crm_customer",Integer.class));
+        }
+        fields.put("note","  Dwie plamy, dostęp do wody, piętro 2  ");assertEquals(200,browser.settings("/orders",fields,true).statusCode());
+        assertEquals("Dwie plamy, dostęp do wody, piętro 2",jdbc.queryForObject("SELECT work_note FROM booking",String.class));
     }
 
     @Test void explicitCloseoutIdNeverFallsBackToAnotherCustomer() throws Exception {
@@ -1461,7 +1479,7 @@ class CalendarPostgresIT {
         var day=LocalDate.of(2026,10,10);
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);
         long service=estimateService("Archiwalna kanapa");
-        long id=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true);
+        long id=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Znane informacje o dawnej realizacji",true);
         var browser=app.browser();browser.login();
         String panel=browser.get("/work/"+id).body();
         assertTrue(Pattern.compile("<details[^>]*class=\"photo-exceptions\"[^>]*\\bopen(?:=|[ >])").matcher(panel).find());
@@ -1493,7 +1511,7 @@ class CalendarPostgresIT {
         var review=app.context().getBean(pl.nclean.crm.work.DayReviewService.class);
         review.save(ordinary,day,reviewFields(ordinary),OWNER);review.close(day,review.review(day).fingerprint(),OWNER);
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Dopisane archiwum");
-        long history=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true);
+        long history=records.book(UUID.randomUUID(),day,java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Znane informacje o dawnej realizacji",true);
         var guide=app.context().getBean(pl.nclean.crm.help.GuideService.class);
         assertFalse(guide.context(DashboardService.today(),null).containsKey("reminder"));
         assertFalse(guide.context(day,null).containsKey("reminder"));
@@ -1505,7 +1523,7 @@ class CalendarPostgresIT {
     @Test void historicalModeRejectsTodayAndDoesNotWeakenOrdinaryBookingValidation() {
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);long service=estimateService("Walidacja historii");
         assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"","","",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","",true));
-        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"","","Adres",Map.of(service,BigDecimal.ONE)));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"","","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
     }
 
@@ -1610,7 +1628,7 @@ class CalendarPostgresIT {
         assertThrows(org.springframework.web.server.ResponseStatusException.class,()->work.complete(id,2,"180","45","",Map.of(),Map.of(),List.of(),OWNER));
         assertThrows(IllegalStateException.class,()->remove.change("booking",id,0,true,OWNER));
         assertEquals(items,jdbc.queryForList("SELECT * FROM booking_item WHERE booking_id=?",id));
-        assertThrows(IllegalArgumentException.class,()->records.book((UUID)snapshot.get("request_token"),day,java.time.LocalTime.NOON,null,"Ponowienie","500000098","Adres",Map.of(((Number)items.get(0).get("service_id")).longValue(),BigDecimal.ONE)));
+        assertThrows(IllegalArgumentException.class,()->records.book((UUID)snapshot.get("request_token"),day,java.time.LocalTime.NOON,null,"Ponowienie","500000098","Adres",Map.of(((Number)items.get(0).get("service_id")).longValue(),BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM booking",Integer.class));
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);
         assertTrue(app.context().getBean(pl.nclean.crm.records.CrmRecords.class).monthBookings(YearMonth.from(day)).isEmpty());
@@ -1632,9 +1650,9 @@ class CalendarPostgresIT {
         var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
         records.category(null,"ZZZ Kategoria usuwania");long category=jdbc.queryForObject("SELECT max(id) FROM service_category",Long.class);
         records.service(null,0,category,"ZZZ Usługa próbna","szt.","123",45,true);long service=jdbc.queryForObject("SELECT max(id) FROM service_definition",Long.class);
-        long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres testowy",Map.of(service,BigDecimal.ONE));var snapshot=records.items(id);
+        long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres testowy",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty");var snapshot=records.items(id);
         remove.change("service",service,0,false,OWNER);assertTrue(records.services().stream().noneMatch(s->s.get("id").equals(service)));assertEquals(snapshot,records.items(id));
-        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Nowy","500000099","Adres",Map.of(service,BigDecimal.ONE)));
+        assertThrows(IllegalArgumentException.class,()->records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Nowy","500000099","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(),"UNKNOWN","","Ustalenia testowej wizyty"));
         remove.change("category",category,0,false,OWNER);assertTrue(records.categories().stream().noneMatch(c->c.get("id").equals(category)));assertThrows(IllegalArgumentException.class,()->remove.change("service",service,1,true,OWNER));
         remove.change("category",category,1,true,OWNER);remove.change("service",service,1,true,OWNER);assertEquals(Boolean.TRUE,jdbc.queryForObject("SELECT active FROM service_definition WHERE id=?",Boolean.class,service));assertEquals(snapshot,records.items(id));
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=? AND price<>123",Integer.class,id));
@@ -1649,8 +1667,8 @@ class CalendarPostgresIT {
 
     @Test void archivedChemicalRemainsEditableInItsHistoricalVisitWithSnapshotPrice() throws Exception {
         var chemistry=app.context().getBean(pl.nclean.crm.records.ChemistryService.class);var records=app.context().getBean(pl.nclean.crm.records.CrmRecords.class);var actual=app.context().getBean(pl.nclean.crm.records.ActualUsageService.class);var work=app.context().getBean(pl.nclean.crm.work.WorkService.class);var remove=app.context().getBean(pl.nclean.crm.removal.RemovalService.class);
-        long material=chemistry.saveMaterial(null,0,"Historyczny środek","ml","1000","50");long service=estimateService("Historia usuniętej chemii");long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(material,new BigDecimal("10")))));
-        work.complete(id,0,"100","30","",Map.of(),Map.of(),List.of(),OWNER);actual.record(id,0,0,Map.of(material,new BigDecimal("8")));var before=records.actuals(id);remove.change("chemical",material,0,false,OWNER);assertTrue(chemistry.materials().isEmpty());assertEquals(material,chemistry.materialsForBooking(id).get(0).id());actual.record(id,0,1,Map.of(material,new BigDecimal("8")));var after=records.actuals(id);before.forEach(row->row.remove("recorded_at"));after.forEach(row->row.remove("recorded_at"));assertEquals(before,after);var browser=app.browser();browser.login();assertTrue(browser.get("/work/"+id).body().contains("Historyczny środek"));
+        long material=chemistry.saveMaterial(null,0,"Historyczny środek","ml","1000","50");long service=estimateService("Historia usuniętej chemii");long id=records.book(UUID.randomUUID(),DashboardService.today(),java.time.LocalTime.NOON,null,"Klient testowy","500000099","Adres",Map.of(service,BigDecimal.ONE),Map.of(),Map.of(service,new pl.nclean.crm.records.ChemistryService.Forecast(true,Map.of(material,new BigDecimal("10")))),"UNKNOWN","","Ustalenia testowej wizyty");
+        work.complete(id,0,"100","30","",Map.of(),Map.of(),List.of(),OWNER);assertEquals("STANDARD",records.items(id).get(0).get("actual_source"));actual.record(id,0,1,Map.of(material,new BigDecimal("8")));var before=records.actuals(id);remove.change("chemical",material,0,false,OWNER);assertTrue(chemistry.materials().isEmpty());assertEquals(material,chemistry.materialsForBooking(id).get(0).id());actual.record(id,0,2,Map.of(material,new BigDecimal("8")));var after=records.actuals(id);before.forEach(row->row.remove("recorded_at"));after.forEach(row->row.remove("recorded_at"));assertEquals(before,after);var browser=app.browser();browser.login();assertTrue(browser.get("/work/"+id).body().contains("Historyczny środek"));
     }
 
     @Test void expensesAndFuelRemoveAndRestoreOnceWithoutLosingHistory() {
