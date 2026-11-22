@@ -80,6 +80,7 @@ public class CrmRecords {
   changed(db.update("UPDATE crm_customer SET name=?,phone=?,address=?,notes=?,active=?,version=version+1 WHERE id=? AND version=?",name,number,address,notes,active,id,version));return id;
  }
  @Transactional public long saveCustomerProfile(CustomerProfileCommand command) {
+  if(command.customerType()!=null)CustomerType.parse(command.customerType());
   long saved=saveCustomer(command.id(),command.version(),command.name(),command.phone(),command.address(),command.notes(),command.active());
   if(command.updateSource()) {
    String source=CustomerAcquisitionSource.normalize(command.source());
@@ -87,6 +88,7 @@ public class CrmRecords {
    if(referral.length()>200)throw new IllegalArgumentException("Polecenie: maksymalnie 200 znaków.");
    db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,saved);
   }
+  if(command.customerType()!=null)db.update("UPDATE crm_customer SET customer_type=? WHERE id=?",command.customerType(),saved);
   return saved;
  }
  @Transactional public void category(Long id,String name){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);name=text(name,100,true);if(id==null)db.update("INSERT INTO service_category(name) VALUES (?)",name);else changed(db.update("UPDATE service_category SET name=?,version=version+1 WHERE removed_at IS NULL AND id=?",name,id));}
@@ -106,6 +108,9 @@ public class CrmRecords {
   return book(token,day,starts,customer,name,number,address,quantities,prices,forecasts,source,referral,note,false);
  }
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note,boolean historical){
+  return book(token,day,starts,customer,name,number,address,quantities,prices,forecasts,source,referral,note,historical,null);
+ }
+ @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note,boolean historical,CustomerType.Choice typeChoice){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
   var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
@@ -123,6 +128,7 @@ public class CrmRecords {
    var quote=chemistry.quote(entry.getKey(),qty,forecasts.get(entry.getKey()));quotes.add(quote);allDefined&=quote.defined();if(quote.cost()!=null)chemistryTotal=chemistryTotal.add(quote.cost());
    BigDecimal amount=((BigDecimal)line.get("price")).multiply(qty).setScale(2,RoundingMode.HALF_UP);line.put("quantity",qty);line.put("amount",amount);lines.add(line);total=total.add(amount);
   }
+  boolean newCustomer=customer==null;
   Map<String,Object> person=Map.of();
   if(customer==null && !historical){customer=saveCustomer(null,0,name,number,address,"",true);db.update("UPDATE crm_customer SET source=?,referral_note=? WHERE id=?",source,referral,customer);}
   if(customer!=null){
@@ -130,10 +136,19 @@ public class CrmRecords {
    if(people.isEmpty())throw new IllegalArgumentException("Wybierz aktywnego klienta.");
    person=people.get(0);
   }
+  String visitType=Objects.toString(person.get("customer_type"),"UNKNOWN");
+  if(typeChoice!=null){
+   visitType=typeChoice.type().name();
+   if(customer!=null){
+    long actualVersion=((Number)person.get("version")).longValue();
+    if(!newCustomer && !Objects.equals(typeChoice.customerVersion(),actualVersion))throw new IllegalArgumentException("Kartoteka klienta zmieniła się. Wybierz klienta ponownie przed zapisem rodzaju.");
+    if(!visitType.equals(person.get("customer_type")))changed(db.update("UPDATE crm_customer SET customer_type=?,version=version+1 WHERE id=? AND version=?",visitType,customer,actualVersion));
+   }
+  }
   String visitName=name==null||name.isBlank()?Objects.toString(person.get("name"),"Klient nieustalony"):text(name,120,true);
   String visitPhone=number==null||number.isBlank()?Objects.toString(person.get("phone"),""):phone(number);
   if((name==null||name.isBlank()) && person.get("name")==null && !visitPhone.isBlank())visitName=visitPhone;
-  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,historical,status) VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,visitName,visitPhone,address,total,historical,historical?"DONE":"PLANNED");
+  long id=db.queryForObject("INSERT INTO booking(request_token,customer_id,day,starts,customer_name,phone,address,total,historical,status,customer_type) VALUES (?,?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,customer,day,starts,visitName,visitPhone,address,total,historical,historical?"DONE":"PLANNED",visitType);
   db.update("UPDATE booking SET work_note=? WHERE id=?",note,id);
   for(int i=0;i<lines.size();i++){
    var line=lines.get(i);var quote=quotes.get(i);

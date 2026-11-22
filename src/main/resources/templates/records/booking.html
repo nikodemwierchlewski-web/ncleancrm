@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pl" xmlns:th="http://www.thymeleaf.org"><body>
 <form th:fragment="booking" id="booking-form" th:action="@{/orders}" method="post">
-  <template id="repeat-booking" th:if="${repeatPerson != null}" th:attr="data-id=${repeatPerson.id},data-name=${repeatPerson.name},data-phone=${repeatPerson.phone},data-address=${repeatAddress}"><i th:each="i:${repeatItems}" th:attr="data-service=${i.service_id},data-quantity=${i.quantity}"></i></template>
+  <template id="repeat-booking" th:if="${repeatPerson != null}" th:attr="data-id=${repeatPerson.id},data-name=${repeatPerson.name},data-phone=${repeatPerson.phone},data-address=${repeatAddress},data-customer-type=${repeatPerson.customer_type},data-version=${repeatPerson.version}"><i th:each="i:${repeatItems}" th:attr="data-service=${i.service_id},data-quantity=${i.quantity}"></i></template>
   <input type="hidden" name="token" th:value="${token}">
   <div class="booking-layout">
     <section class="booking-services" aria-labelledby="services-heading">
@@ -22,6 +22,7 @@
       <label class="check"><input type="checkbox" name="historical" value="true" id="booking-historical"> Wpisuję dawną realizację</label>
       <p id="historical-help" class="field-help" hidden>Wybierz wcześniejszą datę. Imię, telefon i adres mogą pozostać puste. Zapiszemy wykonaną wizytę bez tworzenia fikcyjnego klienta. Kwota końcowa i zużycie pozostaną niepotwierdzone do uzupełnienia.</p>
       <input type="hidden" name="customer" id="booking-customer">
+      <input type="hidden" name="customer_version">
       <div id="customer-picker">
         <label for="customer-search">Telefon lub klient</label>
         <input id="customer-search" type="search" autocomplete="off" aria-controls="customer-results" aria-describedby="customer-lookup-status" placeholder="Numer telefonu lub imię">
@@ -30,6 +31,8 @@
       </div>
       <div id="selected-customer" hidden><strong id="selected-customer-label"></strong><div><button type="button" class="text-button" id="change-customer">Zmień klienta</button><button type="button" class="text-button" id="edit-contact">Edytuj kontakt wizyty</button></div></div>
       <div id="new-customer" class="contact-fields"><label>Imię / nazwa (opcjonalnie)<input name="name" placeholder="Puste — użyj numeru telefonu" maxlength="120" autocomplete="name"></label><label>Telefon<input name="phone" type="tel" required maxlength="30" autocomplete="tel" inputmode="tel"></label></div>
+      <label>Rodzaj klienta<select name="customer_type" id="booking-customer-type"><option th:each="t:${T(pl.nclean.crm.records.CustomerType).LABELS}" th:value="${t.key}" th:text="${t.value}"></option></select></label>
+      <p class="field-help">Rodzaj zapisujemy w kartotece i w tym zleceniu. Starsze zlecenia zachowują swój zapis.</p>
       <details class="booking-extras"><summary>Źródło klienta — opcjonalnie</summary>      <label id="booking-source">Skąd klient do nas trafił? <select name="source"><option value="UNKNOWN">Nieustalone</option><option value="GOOGLE">Google / Mapy</option><option value="FACEBOOK">Facebook</option><option value="REFERRAL">Polecenie</option><option value="OLX">OLX</option><option value="OTHER">Inne</option></select></label>
 <label id="booking-referral" hidden>Polecenie — od kogo<input name="referral_note" maxlength="200"></label>
 </details>

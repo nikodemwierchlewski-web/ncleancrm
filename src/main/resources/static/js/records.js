@@ -135,6 +135,8 @@
     clearTimeout(timer);
     sequence++;
     customer.value = person.id;
+    form.elements.customer_version.value = person.version ?? '';
+    form.elements.customer_type.value = person.customer_type || person.customerType || 'UNKNOWN';
     contactName.value = person.name;
     phone.value = person.phone;
     if (!address.value.trim() || address.value === suggestedAddress) {
@@ -195,6 +197,8 @@
   $('#change-customer').addEventListener('click', () => {
     sequence++;
     customer.value = '';
+    form.elements.customer_version.value = '';
+    form.elements.customer_type.value = 'UNKNOWN';
     suggestedName = contactName.value;
     suggestedPhone = phone.value;
     $('#selected-customer').hidden = true;

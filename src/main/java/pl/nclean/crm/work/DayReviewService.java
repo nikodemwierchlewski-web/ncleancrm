@@ -37,7 +37,7 @@ public class DayReviewService {
     }
     private static final String FINGERPRINT_SQL="""
         SELECT md5(jsonb_build_array(
-          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at'-'historical' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
+          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at'-'historical'-'customer_type' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
           (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),

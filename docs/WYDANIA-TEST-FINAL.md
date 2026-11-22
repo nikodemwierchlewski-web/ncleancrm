@@ -1,6 +1,15 @@
 # TEST → FINAL: wersja kodu, ta sama trwała baza
 
-## Najnowszy TEST — źródła klientów
+## Najnowszy TEST — wartości, powroty i rodzaj klienta
+
+`nclean-v0.1-test.6`, gałąź `feat/customer-value-and-returning`: średnia i mediana
+wartości według kategorii, statystyki powrotów i wybór prywatny/biznesowy
+przy dodawaniu zlecenia. Nowa migracja V24 pozostawia stare typy nieustalone.
+[Zasady i weryfikacja](verification/2026-11-22-customer-insights-test.md).
+Wdrożenie wymaga backupu i przebudowy obrazu, z zachowaniem istniejącej bazy,
+zewnętrznego wolumenu i `.local`. Dotychczasowych tagów nie przesuwano.
+
+## Poprzedni TEST — źródła klientów
 
 `nclean-v0.1-test.5`, gałąź `feat/customer-source-statistics`: słupki liczby
 klientów, zleceń i przychodu według źródła pozyskania w Podsumowaniu.

@@ -20,8 +20,8 @@ public class RecordsController {
  void common(Model m){m.addAttribute("categories",data.categories());m.addAttribute("services",data.services());m.addAttribute("chemicals",data.materials());m.addAttribute("recipes",data.recipes());m.addAttribute("standardCosts",data.standardCosts());m.addAttribute("usageSuggestions",actualUsage.suggestions());}
  @GetMapping("/customers") String customers(@RequestParam(defaultValue="") String query,@RequestParam(defaultValue="0") int page,Model m){if(query.length()>120)throw new IllegalArgumentException("Szukaj po nazwie lub telefonie — do 120 znaków.");var rows=data.customerPage(query,page,false);m.addAttribute("hasNext",rows.size()>25);m.addAttribute("page",page);m.addAttribute("customers",rows.stream().limit(25).toList());m.addAttribute("query",query);return "records/customers";}
  @PostMapping("/customers/search") String search(@RequestParam String query,Model m){if(query.length()>120)throw new IllegalArgumentException("Szukaj po nazwie lub telefonie — do 120 znaków.");return "redirect:/customers?query="+java.net.URLEncoder.encode(query,java.nio.charset.StandardCharsets.UTF_8);}
- @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customerPage(query,0,true).stream().map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"))).toList();}
- @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){data.saveCustomerProfile(new CustomerProfileCommand(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"),p.containsKey("source"),p.get("source"),p.get("referral_note")));return "redirect:/customers";}
+ @PostMapping("/customers/lookup") @ResponseBody List<Map<String,Object>> lookup(@RequestParam String query){return data.customerPage(query,0,true).stream().map(p->Map.of("id",p.get("id"),"name",p.get("name"),"phone",p.get("phone"),"address",p.get("address"),"customer_type",p.get("customer_type"),"version",p.get("version"))).toList();}
+ @PostMapping("/customers") String customer(@RequestParam Map<String,String> p){data.saveCustomerProfile(new CustomerProfileCommand(id(p,"id"),version(p),p.get("name"),p.get("phone"),p.get("address"),p.get("notes"),p.containsKey("active"),p.containsKey("source"),p.get("source"),p.get("referral_note"),p.get("customer_type")));return "redirect:/customers";}
  @GetMapping("/more") String more(){return "settings/more";}
  @GetMapping("/settings") String settings(){return "settings/index";}
  @GetMapping("/settings/services") String services(Model m){common(m);m.addAttribute("removedCatalogue",data.removedCatalogue());return "records/services";}
@@ -63,7 +63,7 @@ public class RecordsController {
     forecasts.put(service,new ChemistryService.Forecast(mode.equals("defined"),usage));
    }
   }
-  return data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""),"true".equals(p.get("historical")));
+  return data.book(UUID.fromString(required(p,"token")),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),id(p,"customer"),p.get("name"),p.get("phone"),p.get("address"),quantities,prices,forecasts,p.get("source"),p.getOrDefault("referral_note",""),p.getOrDefault("note",""),"true".equals(p.get("historical")),p.containsKey("customer_type")?new CustomerType.Choice(CustomerType.parse(p.get("customer_type")),id(p,"customer_version")):null);
  }
  @PostMapping(value="/orders",params="calendar",produces="application/json") @ResponseBody
  Map<String,Object> calendarBook(@RequestParam Map<String,String> p){return Map.of("saved",true,"id",createBooking(p),"motion","booked");}
