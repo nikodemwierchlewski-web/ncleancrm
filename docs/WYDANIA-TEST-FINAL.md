@@ -1,6 +1,15 @@
 # TEST → FINAL: wersja kodu, ta sama trwała baza
 
-## Najnowszy TEST — standardy zleceń i godziny sprzętu
+## Najnowszy TEST — źródła klientów
+
+`nclean-v0.1-test.5`, gałąź `feat/customer-source-statistics`: słupki liczby
+klientów, zleceń i przychodu według źródła pozyskania w Podsumowaniu.
+Wspólny okres i tryb Plan/Wykonanie; bez nowych migracji i zmian danych.
+[Zasady i weryfikacja](verification/2026-11-22-customer-sources-test.md).
+Wdrożenie wymaga przebudowy obrazu aplikacji z zachowaniem bazy i `.local`.
+Istniejące tagi TEST/FINAL pozostają niezmienione.
+
+## Poprzedni TEST — standardy zleceń i godziny sprzętu
 
 `nclean-v0.1-test.4`, gałąź `feat/job-equipment-usage`: obowiązkowa notatka
 przy dodawaniu, opcjonalne imię, domyślna chemia i czas oraz szacowane godziny

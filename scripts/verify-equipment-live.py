@@ -13,6 +13,7 @@ parser.add_argument('--java',default='java')
 parser.add_argument('--chromium',default='/usr/bin/chromium')
 parser.add_argument('--depreciation-only',action='store_true')
 parser.add_argument('--job-defaults-only',action='store_true')
+parser.add_argument('--customer-sources-only',action='store_true')
 parser.add_argument('--context-path',default='/crm',choices=['','/crm'])
 args=parser.parse_args()
 sys.path.insert(0,str(Path(__file__).resolve().parent))
@@ -21,6 +22,7 @@ from playwright.sync_api import sync_playwright
 from browser_equipment_checks import verify_equipment
 from browser_depreciation_checks import verify_depreciation
 from browser_job_defaults_checks import verify_job_defaults
+from browser_customer_sources_checks import verify_customer_sources
 root=Path(__file__).resolve().parents[1];out=args.work_dir.resolve()
 if not shutil.which(args.java):parser.error('Wskaż Java 17 przez --java.')
 if not (root/'target/nclean-crm-0.0.1-SNAPSHOT.jar').is_file():parser.error('Najpierw zbuduj JAR przez ./mvnw verify.')
@@ -48,7 +50,8 @@ try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=args.chromium,args=['--no-sandbox']);context=browser.new_context();page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(base+'/login');page.locator('[name=username]').fill(owner);page.locator('[name=password]').fill(password);page.locator('button[type=submit]').click();page.wait_for_url('**/calendar')
-  if args.job_defaults_only:verify_job_defaults(page,base,out)
+  if args.customer_sources_only:verify_customer_sources(page,base,out)
+  elif args.job_defaults_only:verify_job_defaults(page,base,out)
   elif args.depreciation_only:verify_depreciation(page,base,out)
   else:verify_equipment(page,base,out)
   assert not errors,errors

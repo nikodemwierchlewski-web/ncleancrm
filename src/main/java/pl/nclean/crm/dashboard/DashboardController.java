@@ -16,12 +16,14 @@ public class DashboardController {
     private final pl.nclean.crm.work.DayReviewService review;
     private final pl.nclean.crm.notes.NoteService notes;
     private final DashboardService service;
+    private final CustomerSourceStatistics customerSources;
     private final pl.nclean.crm.costs.DepreciationService depreciation;
     private final pl.nclean.crm.work.WorkService work;
     private final pl.nclean.crm.fuel.FuelJournalService fuel;
-    public DashboardController(DashboardService service,pl.nclean.crm.fuel.FuelJournalService fuel,pl.nclean.crm.work.WorkService work,pl.nclean.crm.work.DayReviewService review,pl.nclean.crm.notes.NoteService notes,pl.nclean.crm.costs.DepreciationService depreciation){this.depreciation=depreciation;this.notes=notes;this.review=review;this.service=service;this.fuel=fuel;this.work=work;}
+    public DashboardController(CustomerSourceStatistics customerSources,DashboardService service,pl.nclean.crm.fuel.FuelJournalService fuel,pl.nclean.crm.work.WorkService work,pl.nclean.crm.work.DayReviewService review,pl.nclean.crm.notes.NoteService notes,pl.nclean.crm.costs.DepreciationService depreciation){this.customerSources=customerSources;this.depreciation=depreciation;this.notes=notes;this.review=review;this.service=service;this.fuel=fuel;this.work=work;}
     @GetMapping("/dashboard") String dashboard(@RequestParam(required=false) LocalDate date,@RequestParam(defaultValue="day") String range,@RequestParam(defaultValue="actual") String mode,@RequestParam(name="depreciation",defaultValue="false") boolean includeDep,Model m){
         m.addAttribute("pinnedNotes",notes.pinned());m.addAttribute("pinnedNoteCount",notes.pinnedCount());var selected=date==null?BusinessDates.today():date;var s=service.summary(selected,range,mode);if(range.equals("day"))m.addAttribute("dayReview",review.review(selected));m.addAttribute("s",s);m.addAttribute("unconfirmedPrices",s.orders().stream().filter(o->"DONE".equals(o.get("status"))&&o.get("final_total")==null).count());
+        m.addAttribute("customerSources",customerSources.report(s.period().start(),s.period().end(),mode));
         var economic=depreciation.report(s.period().start(),s.period().end());
         m.addAttribute("economicReport",economic);m.addAttribute("includeDep",includeDep);
         m.addAttribute("beforeDep",s.remaining());m.addAttribute("afterDep",economic.after(s.remaining()));
