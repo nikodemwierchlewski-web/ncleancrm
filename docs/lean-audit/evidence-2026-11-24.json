@@ -1,0 +1,461 @@
+{
+  "commit": "1432e2a",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "screens": [
+    {
+      "screen": "today-8-jobs",
+      "url": "/today",
+      "height": 3390,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "newOrder",
+          "y": 87.5,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "firstJob",
+          "y": 402,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "firstPlanned",
+          "y": 639.9,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "dayCompletion",
+          "y": 298,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "finance",
+          "y": 1717.7,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "new-booking-mobile",
+      "url": "/calendar?day=2026-11-24&add=true",
+      "height": 897,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "clientSearch",
+          "y": 481.2,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "note",
+          "y": 924.8,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "save",
+          "y": 778.4,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": [
+        {
+          "selector": "booking-editor",
+          "clientHeight": 828,
+          "scrollHeight": 828
+        },
+        {
+          "selector": "dialog-content",
+          "clientHeight": 763,
+          "scrollHeight": 763
+        },
+        {
+          "selector": "service-picker",
+          "clientHeight": 106,
+          "scrollHeight": 106
+        }
+      ]
+    },
+    {
+      "screen": "planned-job-mobile",
+      "url": "/work/3",
+      "height": 1749,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "call",
+          "y": 236.2,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "photos",
+          "y": 683.5,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "completion",
+          "y": 825.3,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "save",
+          "y": 835.3,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "time",
+          "y": 591.5,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "completion-via-shortcut",
+      "url": "/work/3#completion",
+      "height": 1749,
+      "scrollY": 743,
+      "targets": [
+        {
+          "label": "completion",
+          "y": 82.3,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "save",
+          "y": 309.3,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "completed-job-mobile",
+      "url": "/work/3?saved=1",
+      "height": 2822,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "completion",
+          "y": 860.5,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "save",
+          "y": 870.5,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "closeout-mobile",
+      "url": "/day-closeout?date=2026-11-24&order=3",
+      "height": 2756,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "editor",
+          "y": 465.2,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "save",
+          "y": 723.6,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "closeDay",
+          "y": 2290.4,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "customers-mobile",
+      "url": "/customers",
+      "height": 2080,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "search",
+          "y": 218.9,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "firstClient",
+          "y": 461.7,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "customer-card-mobile",
+      "url": "/customers/1",
+      "height": 844,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "edit",
+          "y": 291.4,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "repeat",
+          "y": 591.0,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "summary-mobile",
+      "url": "/dashboard?range=month",
+      "height": 4087,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "metrics",
+          "y": 312,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "sources",
+          "y": 1303.0,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "insights",
+          "y": 2207.0,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "fuel-mobile",
+      "url": "/fuel",
+      "height": 2130,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "form",
+          "y": 672.7,
+          "visibleInFirstViewport": false
+        },
+        {
+          "label": "save",
+          "y": 839.7,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "search-mobile",
+      "url": "/search?q=500007100",
+      "height": 844,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "search",
+          "y": 122,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "firstResult",
+          "y": 254.7,
+          "visibleInFirstViewport": true
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": []
+    },
+    {
+      "screen": "orders-after-save-mobile",
+      "url": "/orders",
+      "height": 7029,
+      "scrollY": 0,
+      "targets": [
+        {
+          "label": "save",
+          "y": 786.5,
+          "visibleInFirstViewport": true
+        },
+        {
+          "label": "firstOrder",
+          "y": 1817.3,
+          "visibleInFirstViewport": false
+        }
+      ],
+      "hasHorizontalOverflow": false,
+      "scrollContainers": [
+        {
+          "selector": "service-picker",
+          "clientHeight": 106,
+          "scrollHeight": 106
+        }
+      ]
+    }
+  ],
+  "walkthroughs": [
+    {
+      "flow": "Nowy klient od Dzisiaj, jeden rodzaj usługi, ze źródłem",
+      "actions": [
+        {
+          "action": "tap",
+          "label": "Dzisiaj: + Zlecenie"
+        },
+        {
+          "action": "tap",
+          "label": "Kategoria"
+        },
+        {
+          "action": "fill",
+          "label": "Ilość usługi"
+        },
+        {
+          "action": "fill",
+          "label": "Telefon w wyszukiwaniu"
+        },
+        {
+          "action": "select",
+          "label": "Rodzaj klienta"
+        },
+        {
+          "action": "tap",
+          "label": "Otwórz źródło klienta"
+        },
+        {
+          "action": "select",
+          "label": "Źródło"
+        },
+        {
+          "action": "fill",
+          "label": "Wymagana notatka"
+        },
+        {
+          "action": "fill",
+          "label": "Adres"
+        },
+        {
+          "action": "fill",
+          "label": "Godzina"
+        },
+        {
+          "action": "tap",
+          "label": "Zapisz zlecenie"
+        }
+      ],
+      "count": 11,
+      "destination": "/calendar?day=2026-11-24&saved=1",
+      "phoneAutoFilled": true
+    },
+    {
+      "flow": "Wykonanie z ceną z wyceny, standardem chemii/czasu i Bez uwag, bez zdjęć",
+      "formActions": [
+        "Wybierz Wykonana",
+        "Bez uwag po wykonaniu",
+        "Zapisz wykonanie"
+      ],
+      "formActionCount": 3,
+      "serviceSaved": true,
+      "dayDocumentationStillMissing": true
+    },
+    {
+      "flow": "Powracający klient od kartoteki, nowy termin i aktualne ceny",
+      "actions": [
+        "Umów ponownie",
+        "Nowy dzień",
+        "Godzina",
+        "Notatka",
+        "Potwierdzenie terminu i cen",
+        "Zapisz zlecenie"
+      ],
+      "count": 6,
+      "destination": "/orders?day=2026-11-25&saved=1"
+    }
+  ],
+  "todayTopTexts": [
+    "2 z 8 zleceń uzupełnionych\n\nBrakuje: potwierdź, czy usługa się odbyła\n\nUzupełnij dzień"
+  ],
+  "stalePaymentCopyVisible": true,
+  "repeatPrefilled": {
+    "client": true,
+    "address": "Adres QA 1",
+    "type": "PRIVATE",
+    "noteEmpty": true,
+    "priceUsesCurrentCatalogue": "20.00"
+  },
+  "customerEditDestination": "/crm/customers",
+  "customerEditLeadsToSpecificForm": false,
+  "newOrderVisibleInputs": [
+    {
+      "name": "qty_10",
+      "type": "number"
+    },
+    {
+      "name": "qty_11",
+      "type": "number"
+    },
+    {
+      "name": "historical",
+      "type": "checkbox"
+    },
+    {
+      "name": null,
+      "type": "search"
+    },
+    {
+      "name": "name",
+      "type": null
+    },
+    {
+      "name": "phone",
+      "type": "tel"
+    },
+    {
+      "name": "customer_type",
+      "type": null
+    },
+    {
+      "name": "note",
+      "type": null
+    },
+    {
+      "name": "address",
+      "type": null
+    },
+    {
+      "name": "day",
+      "type": "date"
+    },
+    {
+      "name": "starts",
+      "type": "time"
+    }
+  ],
+  "limitations": [
+    "Synthetic data: eight visits today, two initially completed; configured zero-chemistry standard and catalogue time. Not the owner database.",
+    "390x844 headless Chromium, reduced motion. No physical keyboard, touch reach or actual owner time-and-motion study.",
+    "Actions count taps, selects and text fills, not individual keys, mental effort or elapsed human time. Category tap can be skipped if already selected.",
+    "Geometric visibility flags do not account fully for fixed navigation overlap, clipping inside nested containers or virtual keyboards.",
+    "Fuel page includes first-run baseline setup; its height is not treated as normal daily-use friction.",
+    "Scenario-specific page heights change with data and open sections. A long page alone is not a usability defect."
+  ]
+}
