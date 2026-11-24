@@ -1,0 +1,512 @@
+{
+  "auditedCommit": "c1a2a9ba134ac5d3b5eedd86c227069f907c0376",
+  "tag": "nclean-v0.1-test.6",
+  "date": "2026-11-24",
+  "productionAccess": false,
+  "productChanges": false,
+  "maven": {
+    "surefire": {
+      "totals": {
+        "tests": 76,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classes": [
+        {
+          "name": "pl.nclean.crm.help.GuideServiceTest",
+          "tests": "5",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.fuel.ImageOrientationTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EquipmentSecurityTest",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.ContextSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.shared.SharedConventionsTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EconomicDepreciationTest",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.PhotoNameTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.help.GuideSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.TodaySecurityTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.CalendarSecurityTest",
+          "tests": "12",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DashboardTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.architecture.ArchitectureTest",
+          "tests": "7",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.FuelSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CostSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.WorkSecurityTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.RecordsSecurityTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.FinanceWindowTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DayReviewSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notifications.NotificationSecurityTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.RemovalSecurityTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerInsightMathTest",
+          "tests": "2",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.TycoonSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.removal.RemovalServiceTest",
+          "tests": "3",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notifications.ReminderPlanTest",
+          "tests": "4",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notes.ReminderScheduleTest",
+          "tests": "5",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.NoteSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DashboardSecurityTest",
+          "tests": "1",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ]
+    },
+    "failsafe": {
+      "totals": {
+        "tests": 174,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "classes": [
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerInsightsPostgresIT",
+          "tests": "13",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EquipmentPostgresIT",
+          "tests": "11",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerSourcePostgresIT",
+          "tests": "8",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.JobDefaultsPostgresIT",
+          "tests": "15",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.CalendarPostgresIT",
+          "tests": "127",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0"
+        }
+      ]
+    }
+  },
+  "auditProbes": {
+    "tests": 7,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "purpose": "Characterize observed defects, not certify correct behaviour",
+    "observations": [
+      "AUDIT_OBSERVED A05 three simulated 10-second segments produce 3 minutes instead of a single rounded total of 1 minute",
+      "AUDIT_OBSERVED A04 actual 8->9 replaces chemical rows without a new before/after audit record; previous actual value cannot be read from application audit",
+      "AUDIT_OBSERVED A02 same token with edited memo or expense is accepted while old title/amount remain",
+      "AUDIT_OBSERVED PASS_BACKUP actual docker/pc/database.sh restored 58 public tables with identical hashes and photo bytes; corrupt checksum rejected before database creation",
+      "AUDIT_OBSERVED A03 quick/legacy entry permits CAR/PETROL and GENERATOR/DIESEL on new purchases",
+      "AUDIT_OBSERVED A02 changed booking request returned success with original 100.00 and original note; requested 900.00 ignored",
+      "AUDIT_OBSERVED A01 V22->V24 changes fingerprint for a fully populated completed visit despite preserving financial data"
+    ]
+  },
+  "staticChecks": {
+    "javascript": {
+      "files": 32,
+      "errors": []
+    },
+    "shell": {
+      "files": 3,
+      "errors": []
+    },
+    "python": {
+      "files": 29,
+      "errors": []
+    },
+    "dependencies": {
+      "count": 78,
+      "vulnerabilities": [
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "org.apache.logging.log4j:log4j-api"
+            },
+            "version": "2.24.3"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-qv9r-c865-cp47",
+                "modified": "2026-09-10T03:50:52.972700Z"
+              }
+            ]
+          }
+        },
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "com.fasterxml.jackson.core:jackson-databind"
+            },
+            "version": "2.21.4"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-5gvw-p9qm-jgwh",
+                "modified": "2026-10-19T19:45:04.650428Z"
+              },
+              {
+                "id": "GHSA-5jmj-h7xm-6q6v",
+                "modified": "2026-09-10T03:51:08.069993Z"
+              },
+              {
+                "id": "GHSA-cxp5-3px4-pw24",
+                "modified": "2026-09-30T15:46:18.051343Z"
+              },
+              {
+                "id": "GHSA-gx83-3vf8-gh7j",
+                "modified": "2026-09-28T21:00:05.608227Z"
+              },
+              {
+                "id": "GHSA-mhm7-754m-9p8w",
+                "modified": "2026-09-10T03:50:52.852212Z"
+              },
+              {
+                "id": "GHSA-q4xh-88c3-wmh7",
+                "modified": "2026-09-28T20:30:05.315085Z"
+              },
+              {
+                "id": "GHSA-vvgp-rfg2-7rr6",
+                "modified": "2026-09-28T20:30:05.324367Z"
+              },
+              {
+                "id": "GHSA-wjgm-6hv5-3cvf",
+                "modified": "2026-09-28T20:30:05.331167Z"
+              },
+              {
+                "id": "GHSA-wv8q-qhhj-9h54",
+                "modified": "2026-09-30T15:46:18.451708Z"
+              }
+            ]
+          }
+        },
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "org.apache.tomcat.embed:tomcat-embed-core"
+            },
+            "version": "10.1.55"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-5v3h-fjv2-54fg",
+                "modified": "2026-11-04T16:41:04.583757Z"
+              },
+              {
+                "id": "GHSA-9xv2-5v5q-p794",
+                "modified": "2026-09-11T08:25:52.825871Z"
+              },
+              {
+                "id": "GHSA-f525-44xv-f2qj",
+                "modified": "2026-10-27T15:10:58.130507Z"
+              },
+              {
+                "id": "GHSA-gcx9-497g-6cp6",
+                "modified": "2026-09-11T08:25:41.300012Z"
+              },
+              {
+                "id": "GHSA-h3x4-894j-xpx5",
+                "modified": "2026-09-11T08:25:40.118635Z"
+              },
+              {
+                "id": "GHSA-h792-v28v-ppgr",
+                "modified": "2026-11-04T17:11:10.238803Z"
+              },
+              {
+                "id": "GHSA-mqg3-r7h5-24x4",
+                "modified": "2026-11-04T16:55:37.235582Z"
+              }
+            ]
+          }
+        },
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "org.springframework:spring-webmvc"
+            },
+            "version": "6.2.19"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-j9f9-w8pj-32f8",
+                "modified": "2026-10-07T13:30:04.802772Z"
+              },
+              {
+                "id": "GHSA-pc63-qcmh-9cmg",
+                "modified": "2026-10-05T23:30:04.884745Z"
+              }
+            ]
+          }
+        },
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "com.fasterxml.jackson.core:jackson-core"
+            },
+            "version": "2.21.4"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-7hhh-6rmp-j9qf",
+                "modified": "2026-10-01T15:30:05.552671Z"
+              },
+              {
+                "id": "GHSA-p6pp-m3f8-5c89",
+                "modified": "2026-10-01T15:30:13.452657Z"
+              }
+            ]
+          }
+        },
+        {
+          "dependency": {
+            "package": {
+              "ecosystem": "Maven",
+              "name": "org.postgresql:postgresql"
+            },
+            "version": "42.7.11"
+          },
+          "matches": {
+            "vulns": [
+              {
+                "id": "GHSA-j92g-9f8w-j867",
+                "modified": "2026-09-10T03:50:12.377062Z"
+              }
+            ]
+          }
+        }
+      ],
+      "status": "queried OSV"
+    }
+  },
+  "dockerBuild": {
+    "status": "INCOMPLETE_ENVIRONMENT",
+    "reason": "Rootless Docker VFS exhausted 7.9 GiB environment at Dockerfile line 5 before application compilation",
+    "cleanup": "Only cache IDs created by this build were removed; no volumes or existing installation touched"
+  },
+  "browser": {
+    "featureSuites": [
+      {
+        "run": "insights",
+        "messages": [
+          "PASS customer insights: UI business/private selection and repeat prefill, lost-response retry, immutable visit type, category average/median and explicit split, new/returning history, local type/period filters, stale profile preserves fields, 20 responsive views, reduced motion and no-JS read.",
+          "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+        ]
+      },
+      {
+        "run": "root",
+        "messages": [
+          "PASS customer sources: repeated visits, clients/orders/revenue, missing source/identity/price, actual/plan, day/week/month and period navigation, profile correction, 36 responsive chart views, keyboard, reduced motion, no-JS fallback and login protection.",
+          "PASS no JS errors; context path /; Java 17; synthetic isolated PostgreSQL"
+        ]
+      },
+      {
+        "run": "broad",
+        "messages": [
+          "PASS job standards, lost-response retry, phone-only customer, required creation note and preserved rejected fields, standard chemistry/time without photos, custom measurements, equipment completion/correction/zero/reset, offline values, stale version, 28 responsive views, keyboard, reduced motion, CSRF.",
+          "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+        ]
+      },
+      {
+        "run": "equipment",
+        "messages": [
+          "PASS real CRM: create, retained offline fields/token, counters, overdue plan, Today/help, lost-response retry, one cost/history entry, archive/restore, 12 responsive views, Escape, CSRF.",
+          "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+        ]
+      },
+      {
+        "run": "depreciation",
+        "messages": [
+          "PASS real economic depreciation: 3600/36=100, retained lost-response retry, single revision, opt-in/off report, missing plan warning, period navigation, matching Today daily totals, partial month cents, preserved closed months, stop, 12 responsive views.",
+          "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+        ]
+      },
+      {
+        "run": "a11y",
+        "messages": [
+          "PASS customer insights: UI business/private selection and repeat prefill, lost-response retry, immutable visit type, category average/median and explicit split, new/returning history, local type/period filters, stale profile preserves fields, 20 responsive views, reduced motion and no-JS read.",
+          "PASS stored HTML escaped in client listing; no injected image/handler; authenticated CSV downloadable",
+          "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+        ]
+      }
+    ],
+    "extraRuns": [
+      "browser-root.json",
+      "browser-crm.json"
+    ],
+    "accessibility": "accessibility.json"
+  }
+}

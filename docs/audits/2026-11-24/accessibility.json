@@ -1,0 +1,92 @@
+{
+  "tool": "axe-core 4.10.3",
+  "width": 390,
+  "pages": [
+    {
+      "route": "/today",
+      "violations": [],
+      "passes": 27,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/calendar",
+      "violations": [],
+      "passes": 23,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/orders",
+      "violations": [],
+      "passes": 30,
+      "incomplete": [
+        "aria-valid-attr-value",
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/customers",
+      "violations": [],
+      "passes": 25,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/dashboard?range=month",
+      "violations": [],
+      "passes": 29,
+      "incomplete": [
+        "aria-prohibited-attr",
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/notes",
+      "violations": [],
+      "passes": 24,
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/equipment",
+      "violations": [],
+      "passes": 24,
+      "incomplete": [
+        "color-contrast",
+        "link-in-text-block"
+      ]
+    },
+    {
+      "route": "/costs",
+      "violations": [],
+      "passes": 22,
+      "incomplete": [
+        "color-contrast",
+        "link-in-text-block"
+      ]
+    },
+    {
+      "route": "/fuel",
+      "violations": [],
+      "passes": 25,
+      "incomplete": [
+        "aria-valid-attr-value",
+        "color-contrast"
+      ]
+    },
+    {
+      "route": "/settings/services",
+      "violations": [],
+      "passes": 23,
+      "incomplete": [
+        "color-contrast"
+      ]
+    }
+  ],
+  "htmlEscaping": "PASS"
+}
