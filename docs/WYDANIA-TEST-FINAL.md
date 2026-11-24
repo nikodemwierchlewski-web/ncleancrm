@@ -54,8 +54,8 @@ Nie uruchamiaj inicjalizacji ani środowiska QA na bazie właściciela.
 
 | Etap | Nieprzesuwany tag Git | Commit |
 | --- | --- | --- |
-| TEST | `nclean-v0.1-test.1` | `9787523fa73eeaf7a7b719ba72a0401835ab19ff` |
-| FINAL | `nclean-v0.1-final.1` | Odczytaj przez `git rev-parse 'nclean-v0.1-final.1^{commit}'` |
+| TEST | `nclean-v0.1-test.6` | `c1a2a9ba134ac5d3b5eedd86c227069f907c0376` |
+| FINAL (historyczny) | `nclean-v0.1-final.1` | Odczytaj przez `git rev-parse 'nclean-v0.1-final.1^{commit}'` |
 
 TEST jest istniejącym commitem sprawdzonym w poprzednim zadaniu: 192 testy bez błędów i pominięć oraz rzeczywista aplikacja w Chromium przy 360, 390, 768 i 1440 px. Wyniki: [raport weryfikacji](verification/2026-11-17-proste-rozliczenia.md).
 
@@ -75,44 +75,36 @@ Nie usuwaj wolumenu, `.local`, bazy ani kontenera bazy jako sposobu aktualizacji
 
 ## Aktualizacja istniejącej instalacji PC przez PowerShell
 
-Wykonuj w **dotychczasowym katalogu instalacji**, nie w nowym klonie pozbawionym `.local`. Najpierw sprawdź `git status --short`: jeżeli są własne zmiany, zachowaj je i wyjaśnij przed zmianą wersji. Nie resetuj plików. Ustal też, czy aktualny PostgreSQL rzeczywiście korzysta z `ncleancrm-pc-data` i tej samej bazy `nclean_crm`.
+Najnowsze opublikowane wydanie aplikacji to TEST.6 (`c1a2a9b`); TEST.1 i FINAL.1 są historyczne. Poprawki audytu są na `fix/audit-test6`; nie utworzono ani nie przesunięto tagu wydania. Dokładny commit poprawek podano w podsumowaniu zadania. Wybierz świadomie ten commit, a nie starsze przykłady aktualizacji.
 
-Przed zmianą kodu wykonaj kopię przy użyciu narzędzia **obecnie działającej instalacji**. Dla instalacji PC jest to:
+Wykonuj w **dotychczasowym katalogu instalacji** z oryginalnym `.local`. Sprawdź `git status --short` i zachowaj własne zmiany. Ustal, czy istniejący PostgreSQL rzeczywiście używa `ncleancrm-pc-data` i bazy `nclean_crm`. Nowy skrypt `Update` odrzuca inną konfigurację zamiast podłączać pusty wolumen.
+
+Najpierw wykonaj backup narzędziem obecnie działającej instalacji:
 
 ```powershell
 .\scripts\CRM-PC.ps1 -Action Backup
 ```
 
-Sprawdź, że polecenie zakończyło się powodzeniem i powstał `.dump` z plikiem `.sha256`; zachowaj je również poza instalacją. Jeżeli stara instalacja nie ma tego skryptu, nie kontynuuj na ślepo: użyj jej procedury backupu PostgreSQL.
+Sprawdź powodzenie i obecność `.dump` oraz `.sha256`; skopiuj je na inny nośnik. Jeżeli obecna instalacja nie ma tego narzędzia, użyj jej istniejącej procedury backupu. Nie inicjalizuj jej ponownie.
 
-Wybierz TEST:
+Wybór dokładnego commita z gałęzi poprawek (przed aktualizacją porównaj wyświetlony SHA z podsumowaniem zadania):
 
 ```powershell
-git fetch origin --tags
-git switch --detach nclean-v0.1-test.1
-git rev-parse HEAD
+git fetch origin
+$targetSha = (git rev-parse origin/fix/audit-test6).Trim()
+Write-Host "Docelowy commit: $targetSha"
+git switch --detach $targetSha
 $env:CRM_PC_VERSION = (git rev-parse --short=12 HEAD).Trim()
 .\scripts\CRM-PC.ps1 -Action Update
 .\scripts\CRM-PC.ps1 -Action Status
 ```
 
-`Update` zatrzymuje aplikację, robi kolejny backup, buduje obrazy z bieżącego checkoutu i odtwarza kontenery z zachowaniem wolumenu. Nie wykonuj kolejnych kroków, jeżeli którykolwiek zgłasza błąd. Po starcie zaloguj się na dotychczasowe konto i potwierdź wcześniejsze zlecenie, zdjęcie oraz zapis nowego wpisu.
+`Update` sprawdza rzeczywisty mount istniejącej bazy i buduje obrazy, gdy poprzednia aplikacja nadal działa. Następnie zatrzymuje zapis, wykonuje kolejny backup i uruchamia przygotowane obrazy z tym samym wolumenem. Jeżeli stop/backup zawiedzie przed uruchomieniem migracji, próbuje wznowić poprzedni kontener bez jego odtwarzania. Po rozpoczęciu migracji nie cofa automatycznie kodu ani schematu.
 
-Kiedy chcesz używać FINAL, ponownie sprawdź czystość katalogu, wykonaj backup i w **tym samym katalogu**:
+Po starcie sprawdź logowanie, wcześniejsze zlecenie i zdjęcie, zamknięte dni oraz nowy zapis. Sam restart lub nowa etykieta starego obrazu nie aktualizują kodu. Odłączony HEAD jest zamierzony; nie wykonuj w nim `git pull`.
 
-```powershell
-git fetch origin --tags
-git switch --detach nclean-v0.1-final.1
-git rev-parse HEAD
-$env:CRM_PC_VERSION = (git rev-parse --short=12 HEAD).Trim()
-.\scripts\CRM-PC.ps1 -Action Update
-.\scripts\CRM-PC.ps1 -Action Status
-```
+## Odzyskanie po nieudanej aktualizacji
 
-Odłączenie HEAD jest tutaj zamierzone: uruchamiasz niezmienny punkt wydania. Nie wykonuj `git pull` w celu przesunięcia tak wybranego wydania. W razie przyszłych aktualizacji wybieraj nowy, jawnie wskazany tag/commit. Nie cofaj w ciemno kodu po przyszłych migracjach bazy — wcześniejsza wersja może nie obsługiwać nowszego schematu.
+Nie przechodź automatycznie do FINAL.1 ani TEST.1 na bazie z nowszymi migracjami. Nie jest to zgodny rollback. Zachowaj dump sprzed aktualizacji, obecny wolumen i sekrety. Sprawdź kopię przez `RestoreTest` do nowej bazy `nclean_restore_...`; dopiero po ustaleniu wersji schematu i zgodnego kodu opracuj właściwe odtworzenie. Brak danych po starcie oznacza konieczność sprawdzenia podłączenia bazy, nigdy ponownej inicjalizacji ani kasowania wolumenu.
 
-Gdy przejście zakończy się prawidłowo, dane wprowadzone w TEST mają być widoczne w FINAL. Brak danych oznacza, że należy zatrzymać aplikację i sprawdzić podłączenie bazy; nie inicjalizować ani nie usuwać wolumenu.
-
-## Wiadomość do Gordona
-
-> Zaktualizuj istniejącą instalację repozytorium nikodemwierchlewski-web/ncleancrm do taga `nclean-v0.1-test.1`, czyli commita `9787523fa73eeaf7a7b719ba72a0401835ab19ff`. Najpierw sprawdź rzeczywiste podłączenie bazy i wolumen PostgreSQL, obecny katalog instalacji oraz obecność lokalnych sekretów, bez wypisywania ich treści. Zrób sprawdzony backup dotychczasowej bazy. Jeżeli instalacja nie korzysta z `compose.pc.yaml` i `ncleancrm-pc-data`, ustal bezpieczną ścieżkę zgodnie z docs/DOCKER-PC.md; nie twórz pustej bazy zamiast obecnej. Zachowaj istniejący wolumen, bazę, zdjęcia i `.local`. Pobierz tagi, wybierz dokładny commit, ustaw `CRM_PC_VERSION` na jego skrócony SHA i zbuduj obraz z tych źródeł. Dla standardowej instalacji PC użyj scripts/CRM-PC.ps1 -Action Update. Sam restart ani samo oznaczenie starego obrazu nową nazwą nie wystarcza. Nie używaj profilu test/DEMO, poleceń czyszczenia wolumenów, resetu Git ani ponownej inicjalizacji haseł. Po uruchomieniu sprawdź zdrowie kontenerów, logowanie i wcześniejsze dane oraz podaj SHA źródeł i identyfikator obrazu uruchomionego kontenera. Późniejsze przejście na `nclean-v0.1-final.1` wykonaj z backupem i dokładnie tą samą bazą, żeby pozostały wpisy z TEST. Nie łącz się z produkcyjną bazą nclean.pl.
+Polecenia dotyczą wyłącznie istniejącej instalacji PC. Nie łącz się z produkcyjną bazą nclean.pl. Instrukcje historycznych wydań w Git nie są poleceniem cofnięcia bieżącej instalacji.

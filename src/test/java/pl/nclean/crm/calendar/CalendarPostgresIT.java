@@ -71,6 +71,7 @@ class CalendarPostgresIT {
     void startIsolatedApplication() {
         app = RunningApp.start();
         jdbc = app.context().getBean(JdbcTemplate.class);
+        jdbc.update("DELETE FROM chemical_usage_audit");jdbc.update("DELETE FROM request_replay");
         jdbc.update("DELETE FROM removal_audit");jdbc.update("UPDATE service_category SET removed_at=NULL");jdbc.update("UPDATE service_definition SET removed_at=NULL");
         jdbc.update("DELETE FROM tycoon_award");jdbc.update("DELETE FROM cost_audit");jdbc.update("DELETE FROM cost_entry");jdbc.update("DELETE FROM equipment_item");jdbc.update("DELETE FROM notification_occurrence");jdbc.update("DELETE FROM entity_reminder");jdbc.update("DELETE FROM reminder_owner");jdbc.update("DELETE FROM memo_reminder_event");jdbc.update("DELETE FROM memo_reminder");jdbc.update("DELETE FROM memo_step");jdbc.update("DELETE FROM memo_entry");jdbc.update("DELETE FROM day_review");jdbc.update("DELETE FROM booking_move");jdbc.update("DELETE FROM booking_photo");jdbc.update("DELETE FROM customer_contact");
         jdbc.update("DELETE FROM booking_payment");jdbc.update("DELETE FROM booking_audit");
@@ -93,7 +94,7 @@ class CalendarPostgresIT {
 
     @Test
     void flywayCreatesLatestSchemaAndFiveOperationalAreas() {
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"), jdbc.queryForList(
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"), jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
         assertEquals(SEED_NAMES, jdbc.queryForList("SELECT name FROM district ORDER BY id", String.class));
         assertEquals(5, jdbc.queryForObject("SELECT count(*) FROM district WHERE active = TRUE", Integer.class));
@@ -118,7 +119,7 @@ class CalendarPostgresIT {
         legacy.update("INSERT INTO day_district(day, district_id) VALUES (?, ?)", java.sql.Date.valueOf(DAY), second);
         assertEquals(List.of(first, second), legacy.queryForList("SELECT district_id FROM day_district WHERE day = DATE '2026-10-28' ORDER BY district_id", Long.class));
         assertEquals(5, legacy.queryForObject("SELECT count(*) FROM district", Integer.class));
-        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
+        assertEquals(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"), legacy.queryForList("SELECT version FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL' ORDER BY installed_rank", String.class));
     }
 
     @Test
@@ -238,7 +239,7 @@ class CalendarPostgresIT {
         var newSession = app.browser(); assertEquals(302, newSession.get(calendarPath(DAY)).statusCode()); newSession.login();
         var page = newSession.get(calendarPath(DAY)); assertEquals(200, page.statusCode());
         assertTrue(page.body().contains("Po zmianie") && page.body().contains("#654321"));
-        assertEquals(24, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
+        assertEquals(25, jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer.class));
     }
 
     @Test
@@ -745,7 +746,10 @@ class CalendarPostgresIT {
         fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,0,"","",false,false,"CAR","DIESEL",null),OWNER);fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,1,"10","1100",true,true,"CAR","DIESEL",null),OWNER);
         assertFalse(fuel.comparisons(today).get(0).complete());assertNull(fuel.comparisons(today).get(0).actualRate());assertEquals(new BigDecimal("120.00"),fuel.totals(today,today).purchases());
         fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,2,"10","1200",true,false,"CAR","DIESEL",null),OWNER);assertFalse(fuel.comparisons(today).get(0).complete());
-        fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,3,"10","1300",true,true,"CAR","PETROL",null),OWNER);assertFalse(fuel.comparisons(today).get(0).complete());
+        assertThrows(IllegalArgumentException.class,()->fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,3,"10","1300",true,true,"CAR","PETROL",null),OWNER));
+        long legacyFuel=fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,3,"10","1300",true,true,"CAR","DIESEL",null),OWNER);
+        jdbc.update("UPDATE fuel_purchase SET fuel_type='PETROL' WHERE id=?",legacyFuel); // Existing legacy data remains readable, never silently rewritten.
+        assertFalse(fuel.comparisons(today).get(0).complete());
         fuel.savePurchase(purchaseInput(UUID.randomUUID(),today,4,"10","",false,false,"SHARED","PETROL",null),OWNER);assertEquals(3,fuel.comparisons(today).size());
     }
     @Test void fuelReceiptsValidateBytesStayPrivateAndSurviveRestartAndReplacement() throws Exception {
@@ -983,7 +987,7 @@ class CalendarPostgresIT {
 
     private Map<String,String> expense(String category,String title,String amount){var p=new LinkedHashMap<String,String>();p.put("token",UUID.randomUUID().toString());p.put("version","0");p.put("category",category);p.put("title",title);p.put("amount",amount);p.put("spent_on",DashboardService.today().toString());return p;}
     @Test void costBookReusesFuelAndSeparatesInvestmentFromOperatingCosts() {
-        var day=DashboardService.today();var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",null),OWNER);
+        var day=DashboardService.today();var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","DIESEL",null),OWNER);
         var repair=expense("CAR_REPAIR","Hamulce","200");repair.put("odometer","120000");long id=costs.save(repair,OWNER);assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM fuel_day",Integer.class));assertEquals(2,costs.entries(day,day,"car","",false,0).size());assertEquals(new BigDecimal("60.00"),costs.totals(day,day).get("fuel"));assertEquals(new BigDecimal("260.00"),costs.totals(day,day).get("all"));
         var equipment=expense("EQUIPMENT_PURCHASE","Ekstraktor","1000");equipment.put("quantity","2");long purchase=costs.save(equipment,OWNER);assertEquals(purchase,costs.save(equipment,OWNER));assertEquals(1,costs.assets().size());assertEquals(new BigDecimal("1000.00"),costs.investments(day,day));assertEquals(new BigDecimal("200.00"),costs.operating(day,day));var summary=app.context().getBean(DashboardService.class).summary(day,"day","actual");assertEquals(new BigDecimal("200.00"),summary.operating());assertEquals(new BigDecimal("1000.00"),summary.investments());assertEquals(new BigDecimal("-260.00"),summary.remaining());assertEquals(5,summary.slices().size());
         repair.put("id",Long.toString(id));repair.put("amount","250");costs.save(repair,OWNER);assertEquals(new BigDecimal("250.00"),costs.operating(day,day));costs.cancel(id,1,"Błędny rachunek",OWNER);assertEquals(0,costs.operating(day,day).signum());assertEquals(new BigDecimal("-60.00"),app.context().getBean(DashboardService.class).summary(day,"day","actual").remaining());assertTrue((Boolean)costs.entry(id).get("cancelled"));assertEquals(3,costs.audit(id).size());
@@ -1002,7 +1006,7 @@ class CalendarPostgresIT {
         app.close();app=RunningApp.start();jdbc=app.context().getBean(JdbcTemplate.class);assertEquals(2,app.context().getBean(pl.nclean.crm.costs.CostService.class).assetHistory(asset).size());assertTrue(app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class).image(picture).length>0);
     }
     @Test void cancelledFuelIsExcludedEverywhereButHistoryAndReceiptRemain() throws Exception {
-        var day=DashboardService.today();var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var receipt=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);UUID image=receipt.upload(serviceImage("paliwo.jpg"));long id=fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","PETROL",image),OWNER);fuel.cancelPurchase(id,0,"Pomyłka",OWNER);assertEquals(0,fuel.totals(day,day).purchases().signum());assertEquals(0,app.context().getBean(pl.nclean.crm.costs.CostService.class).totals(day,day).get("all").signum());assertEquals(1,fuel.purchases(day,day).size());assertTrue((Boolean)fuel.purchase(id).get("cancelled"));receipt.discard(image);assertTrue(receipt.image(image).length>0);assertTrue(fuel.comparisons(day).isEmpty());
+        var day=DashboardService.today();var fuel=app.context().getBean(pl.nclean.crm.fuel.FuelJournalService.class);var receipt=app.context().getBean(pl.nclean.crm.fuel.ReceiptService.class);UUID image=receipt.upload(serviceImage("paliwo.jpg"));long id=fuel.savePurchase(purchaseInput(UUID.randomUUID(),day,0,"","",false,false,"CAR","DIESEL",image),OWNER);fuel.cancelPurchase(id,0,"Pomyłka",OWNER);assertEquals(0,fuel.totals(day,day).purchases().signum());assertEquals(0,app.context().getBean(pl.nclean.crm.costs.CostService.class).totals(day,day).get("all").signum());assertEquals(1,fuel.purchases(day,day).size());assertTrue((Boolean)fuel.purchase(id).get("cancelled"));receipt.discard(image);assertTrue(receipt.image(image).length>0);assertTrue(fuel.comparisons(day).isEmpty());
     }
     @Test void expenseValidationVersionPrivacyAndAllViewsRender() throws Exception {
         var costs=app.context().getBean(pl.nclean.crm.costs.CostService.class);var bad=expense("CAR_REPAIR","Naprawa","-1");assertThrows(IllegalArgumentException.class,()->costs.save(bad,OWNER));var p=expense("CAR_SERVICE","Wymiana oleju","150");long id=costs.save(p,OWNER);p.put("id",Long.toString(id));costs.save(p,OWNER);assertThrows(IllegalArgumentException.class,()->costs.save(p,OWNER));var browser=app.browser();browser.login();for(String view:List.of("overview","car","equipment","chemistry","fixed","all"))assertEquals(200,browser.get("/costs?view="+view).statusCode(),view);assertEquals(200,browser.get("/costs?range=year").statusCode());assertEquals(200,browser.get("/costs/editor?id="+id).statusCode());assertEquals(403,browser.settings("/costs/"+id+"/cancel",Map.of("version",1,"reason","Test"),false).statusCode());assertEquals(302,app.browser().get("/costs").statusCode());assertEquals(0,costs.totals(DashboardService.today().minusYears(1),DashboardService.today().minusYears(1)).get("all").signum());
@@ -1047,9 +1051,9 @@ class CalendarPostgresIT {
         old.update("INSERT INTO dashboard_month(month,configured) VALUES (DATE '2026-10-01',true)");old.update("INSERT INTO dashboard_month_cost(month,name,category,amount) VALUES (DATE '2026-10-01','Reklama','MARKETING',300)");
         var beforeBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);var beforeItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);var beforeNote=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals("UNKNOWN",afterBooking.remove("customer_type"));assertEquals(beforeBooking,afterBooking);var afterItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);assertEquals("UNKNOWN",afterItem.remove("actual_source"));assertNull(afterItem.remove("standard_work_minutes"));assertNull(afterItem.remove("standard_time_origin"));assertNull(afterItem.remove("standard_time_captured_at"));assertEquals(beforeItem,afterItem);var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(false,afterNote.remove("today_pinned"));assertNull(afterNote.remove("due_time"));assertEquals(beforeNote,afterNote);
+        var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",booking);assertNull(afterBooking.remove("removed_at"));assertEquals(false,afterBooking.remove("historical"));assertEquals("UNKNOWN",afterBooking.remove("customer_type"));assertEquals(0L,afterBooking.remove("timer_seconds"));assertEquals(beforeBooking,afterBooking);var afterItem=old.queryForMap("SELECT * FROM booking_item WHERE booking_id=?",booking);assertEquals("UNKNOWN",afterItem.remove("actual_source"));assertNull(afterItem.remove("standard_work_minutes"));assertNull(afterItem.remove("standard_time_origin"));assertNull(afterItem.remove("standard_time_captured_at"));assertEquals(beforeItem,afterItem);var afterNote=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterNote.remove("main_goal"));assertEquals(false,afterNote.remove("today_pinned"));assertNull(afterNote.remove("due_time"));assertEquals(beforeNote,afterNote);
         assertArrayEquals(image,old.queryForObject("SELECT image FROM fuel_receipt WHERE id=?",byte[].class,receipt));assertEquals(new BigDecimal("200.00"),old.queryForObject("SELECT amount FROM fuel_purchase WHERE id=?",BigDecimal.class,fuel));assertFalse(old.queryForObject("SELECT cancelled FROM fuel_purchase WHERE id=?",Boolean.class,fuel));
-        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(24,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
+        assertEquals(new BigDecimal("300.00"),old.queryForObject("SELECT amount FROM dashboard_month_cost",BigDecimal.class));assertEquals(0,old.queryForObject("SELECT count(*) FROM cost_entry",Integer.class));assertEquals(25,old.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success AND type='SQL'",Integer.class));
     }
 
     @Test
@@ -1272,7 +1276,7 @@ class CalendarPostgresIT {
         long b=notes.save(null,0,UUID.randomUUID(),"GOAL","Cel B","",null,true,List.of());
         notes.action(b,0,"main",null,false);assertFalse(notes.get(a).mainGoal());assertEquals(1,notes.get(a).version());
         assertThrows(IllegalArgumentException.class,()->notes.save(a,0,token,"GOAL","Stara karta","",null,false,List.of(),true));assertEquals(b,notes.mainGoal().id());
-        assertEquals(a,notes.save(null,0,token,"GOAL","Powtórzenie","",null,false,List.of(),true));assertEquals(b,notes.mainGoal().id());
+        assertThrows(pl.nclean.crm.persistence.RequestReplay.Conflict.class,()->notes.save(null,0,token,"GOAL","Powtórzenie","",null,false,List.of(),true));assertEquals(a,notes.save(null,0,token,"GOAL","Cel A","",null,false,List.of(),true));assertEquals(b,notes.mainGoal().id());
         notes.save(b,1,notes.get(b).token(),"GOAL","Cel po edycji","",null,true,List.of());assertTrue(notes.get(b).mainGoal());assertNull(notes.mainGoalView().percent());
         notes.save(b,2,notes.get(b).token(),"GOAL","Cel po edycji","",null,true,List.of(),false);assertNull(notes.mainGoal());
         long task=notes.save(null,0,UUID.randomUUID(),"TASK","Zadanie","",null,false,List.of());
@@ -1332,7 +1336,7 @@ class CalendarPostgresIT {
         old.update("INSERT INTO memo_entry(request_token,kind,title,completed) VALUES (?,'GOAL','Historyczny cel',true)",UUID.randomUUID());
         var before=old.queryForList("SELECT * FROM booking ORDER BY id");var goal=old.queryForMap("SELECT * FROM memo_entry");
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();
-        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->{assertNull(row.remove("removed_at"));assertEquals(false,row.remove("historical"));assertEquals("UNKNOWN",row.remove("customer_type"));});assertEquals(before,after);var afterGoal=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterGoal.remove("main_goal"));assertEquals(false,afterGoal.remove("today_pinned"));assertNull(afterGoal.remove("due_time"));assertEquals(goal,afterGoal);
+        var after=old.queryForList("SELECT * FROM booking ORDER BY id");after.forEach(row->{assertNull(row.remove("removed_at"));assertEquals(false,row.remove("historical"));assertEquals("UNKNOWN",row.remove("customer_type"));assertEquals(0L,row.remove("timer_seconds"));});assertEquals(before,after);var afterGoal=old.queryForMap("SELECT * FROM memo_entry");assertEquals(false,afterGoal.remove("main_goal"));assertEquals(false,afterGoal.remove("today_pinned"));assertNull(afterGoal.remove("due_time"));assertEquals(goal,afterGoal);
         assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE origin='HISTORY' AND notified_at IS NOT NULL",Integer.class));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM tycoon_award WHERE code='FIRST_DAY'",Integer.class));
         Flyway.configure().dataSource(source).schemas(schema).defaultSchema(schema).load().migrate();assertEquals(4,old.queryForObject("SELECT count(*) FROM tycoon_award",Integer.class));

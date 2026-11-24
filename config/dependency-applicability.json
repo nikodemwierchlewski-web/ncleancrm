@@ -1,0 +1,7 @@
+{
+  "forbiddenFeatures": ["XsltView", "SseEmitter", "ServerSentEvent", "FragmentsRendering", "text/event-stream"],
+  "exceptions": [
+    {"id":"GHSA-j9f9-w8pj-32f8","package":"org.springframework:spring-webmvc","version":"6.2.19","reviewBy":"2026-12-24","reason":"Requires SSE view fragments. CRM uses Thymeleaf HTML responses; these APIs are prohibited by this scan. Maven Central has no fixed Spring 6.2 release as of 2026-11-24."},
+    {"id":"GHSA-pc63-qcmh-9cmg","package":"org.springframework:spring-webmvc","version":"6.2.19","reviewBy":"2026-12-24","reason":"Requires XsltView and implicit wildcard view mapping. CRM uses explicitly named Thymeleaf views. XSLT is prohibited by this scan. No compatible 6.2 patch is published; reassess rather than upgrade Spring alone to 7."}
+  ]
+}

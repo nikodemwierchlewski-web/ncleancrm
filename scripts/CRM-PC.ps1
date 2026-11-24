@@ -21,8 +21,22 @@ function Assert-Secrets {
     foreach ($name in @('postgres-admin-password','postgres-password','application-local.properties')) {
         $path = Join-Path $root ('.local/' + $name)
         if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-Item -LiteralPath $path).Length -eq 0) {
-            throw 'Local secrets are missing. Run CRM-PC.ps1 -Action Init. Never regenerate secrets for an existing database.'
+            throw 'Local secrets are missing. Restore the original .local files for the existing database. Do not run Init or regenerate passwords.'
         }
+    }
+}
+
+function Assert-ExistingDatabaseMount {
+    $databaseId = (& docker @composeArgs ps -a -q postgres)
+    if ($LASTEXITCODE -ne 0 -or -not $databaseId -or @($databaseId).Count -ne 1) {
+        throw 'Cannot identify the existing PostgreSQL container. Check its real data attachment; no update was started.'
+    }
+    $mountJson = (& docker inspect --format '{{json .Mounts}}' $databaseId)
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing database mount.' }
+    $mounts = ConvertFrom-Json -InputObject ($mountJson -join [Environment]::NewLine)
+    $dataMount = @($mounts | Where-Object { $_.Destination -eq '/var/lib/postgresql/data' })
+    if ($dataMount.Count -ne 1 -or $dataMount[0].Type -ne 'volume' -or $dataMount[0].Name -ne 'ncleancrm-pc-data') {
+        throw 'Existing database is not attached to ncleancrm-pc-data. Preserve it and establish the correct update procedure; no containers were changed.'
     }
 }
 
@@ -64,10 +78,26 @@ try {
         'Logs' { Invoke-Compose -Arguments @('logs','--tail','100','app','postgres') }
         'Backup' { Invoke-Compose -Arguments @('--profile','tools','run','--rm','ops','backup') }
         'Update' {
-            Invoke-Compose -Arguments @('stop','app')
-            Invoke-Compose -Arguments @('--profile','tools','run','--rm','ops','backup')
+            Assert-ExistingDatabaseMount
+            # Build failures leave the running installation available. The old container keeps its image ID.
             Invoke-Compose -Arguments @('build','app','postgres')
-            Invoke-Compose -Arguments @('up','-d','--no-build','--wait','--wait-timeout','180')
+            $previousAppId = (& docker @composeArgs ps -q app)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot determine the currently running app.' }
+            $upgradeStarted = $false
+            try {
+                Invoke-Compose -Arguments @('stop','app')
+                Invoke-Compose -Arguments @('--profile','tools','run','--rm','ops','backup')
+                $upgradeStarted = $true
+                Invoke-Compose -Arguments @('up','-d','--no-build','--wait','--wait-timeout','180')
+            } catch {
+                if (-not $upgradeStarted -and $previousAppId) {
+                    Write-Host 'Update failed before migration. Restarting the previous container without recreation.'
+                    & docker start $previousAppId
+                    if ($LASTEXITCODE -ne 0) { Write-Warning 'Previous app could not be restarted. Data was not removed.' }
+                }
+                if ($upgradeStarted) { Write-Warning 'Startup/migration began. No automatic rollback of code or schema was attempted.' }
+                throw
+            }
             Write-Host 'Update completed. Verify login and your saved orders; copy the backup to another drive.'
         }
         { $_ -in 'RestoreTest','ImportEmpty' } {

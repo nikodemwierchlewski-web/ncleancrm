@@ -32,9 +32,9 @@ public class RecordsController {
  }
  @PostMapping("/settings/services/{id}/suggestion") String applySuggestion(@PathVariable long id,@RequestParam Map<String,String> p){actualUsage.apply(id,Long.parseLong(required(p,"chemical")),version(p));return "redirect:/settings/services";}
  @PostMapping(value="/orders/{id}/items/{position}/actual",produces="application/json") @ResponseBody
- Map<String,Boolean> actual(@PathVariable long id,@PathVariable int position,@RequestParam Map<String,String> p){
+ Map<String,Boolean> actual(@PathVariable long id,@PathVariable int position,@RequestParam Map<String,String> p,java.security.Principal actor){
   var amounts=new LinkedHashMap<Long,BigDecimal>();p.forEach((key,value)->{if(key.startsWith("actual_")&&!value.isBlank())amounts.put(Long.valueOf(key.substring(7)),ChemistryService.quantity(value,false));});
-  actualUsage.record(id,position,version(p),amounts);return Map.of("saved",true);
+  actualUsage.record(id,position,version(p),amounts,actor.getName());return Map.of("saved",true);
  }
  @PostMapping("/settings/services/category") String category(@RequestParam Map<String,String> p){data.category(id(p,"id"),p.get("name"));return "redirect:/settings/services";}
  @PostMapping("/settings/services") String service(@RequestParam Map<String,String> p){data.service(id(p,"id"),version(p),Long.parseLong(p.get("category")),p.get("name"),p.get("unit"),p.get("price"),Integer.parseInt(p.get("minutes")),p.containsKey("active"));return "redirect:/settings/services";}
@@ -72,5 +72,5 @@ public class RecordsController {
  @PostMapping("/orders/{id}") String update(@PathVariable long id,@RequestParam Map<String,String> p,org.springframework.web.servlet.mvc.support.RedirectAttributes redirect){reschedule(id,p);redirect.addFlashAttribute("tycoonSignal",Map.of("kind",p.get("status").equals("DONE")?"completed":"updated","id",id));return "redirect:/orders?day="+p.get("day");}
  private void reschedule(long id,Map<String,String> p){data.reschedule(id,version(p),LocalDate.parse(required(p,"day")),LocalTime.parse(required(p,"starts")),p.get("status"));}
  @ExceptionHandler({IllegalArgumentException.class,DateTimeException.class,DataIntegrityViolationException.class}) @ResponseStatus(HttpStatus.BAD_REQUEST)
- Object invalid(Exception ex,Model model,jakarta.servlet.http.HttpServletRequest request){model.addAttribute("message",ex instanceof NumberFormatException||ex instanceof DateTimeException?"Sprawdź daty i wartości liczbowe.":ex instanceof DataIntegrityViolationException?"Zapis nie powiódł się. Sprawdź listę przed ponownym dodaniem.":ex.getMessage());if(request.getParameter("calendar")!=null)return org.springframework.http.ResponseEntity.badRequest().body(Map.of("message",model.getAttribute("message")));return "records/error";}
+ Object invalid(Exception ex,Model model,jakarta.servlet.http.HttpServletRequest request){if(ex instanceof pl.nclean.crm.persistence.RequestReplay.Conflict conflict)return org.springframework.http.ResponseEntity.status(409).header("X-Nclean-Replay",conflict.href()).body(Map.of("message",conflict.getMessage(),"href",conflict.href()));model.addAttribute("message",ex instanceof NumberFormatException||ex instanceof DateTimeException?"Sprawdź daty i wartości liczbowe.":ex instanceof DataIntegrityViolationException?"Zapis nie powiódł się. Sprawdź listę przed ponownym dodaniem.":ex.getMessage());if(request.getParameter("calendar")!=null)return org.springframework.http.ResponseEntity.badRequest().body(Map.of("message",model.getAttribute("message")));return "records/error";}
 }

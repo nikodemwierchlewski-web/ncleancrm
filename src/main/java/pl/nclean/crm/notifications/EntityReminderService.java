@@ -51,23 +51,39 @@ public class EntityReminderService {
     /** Called within the entity transaction to prevent silently losing a relative deadline. */
     public void validateAnchor(String type,long id){var p=plan(type,id);if(p.source().anchor()==null&&p.reminders().stream().anyMatch(r->r.offsetMinutes()!=null))throw new IllegalArgumentException("Wpis ma przypomnienia przed terminem. Podaj też godzinę albo usuń te przypomnienia.");}
     private void reconcileLocked(){
-        db.update("UPDATE notification_occurrence SET valid=FALSE WHERE valid");
-        for(var owner:db.queryForList("SELECT booking_id,memo_id FROM reminder_owner")){
-            boolean booking=owner.get("booking_id")!=null;var p=plan(booking?"BOOKING":"MEMO",((Number)owner.get(booking?"booking_id":"memo_id")).longValue());
-            if(!p.source().active())continue;
-            for(var r:p.reminders()){
-                var at=r.scheduled(p.source().anchor());if(at==null)continue;
-                db.update("INSERT INTO notification_occurrence(id,reminder_id,scheduled_at) VALUES (?,?,?) ON CONFLICT(reminder_id,scheduled_at) DO UPDATE SET valid=TRUE",UUID.randomUUID(),r.id(),stamp(at));
-            }
+        // A single joined read filters completed/archived sources before building schedules.
+        var rows=db.queryForList("""
+            SELECT r.id,r.offset_minutes,r.absolute_at,p.booking_id,p.memo_id,
+              CASE WHEN p.booking_id IS NOT NULL THEN b.day ELSE m.due END anchor_day,
+              CASE WHEN p.booking_id IS NOT NULL THEN b.starts ELSE m.due_time END anchor_time
+            FROM entity_reminder r JOIN reminder_owner p ON p.source_key=r.source_key
+            LEFT JOIN booking b ON b.id=p.booking_id LEFT JOIN memo_entry m ON m.id=p.memo_id
+            WHERE r.enabled AND ((p.booking_id IS NOT NULL AND b.removed_at IS NULL AND b.status='PLANNED')
+              OR (p.memo_id IS NOT NULL AND NOT m.completed AND NOT m.archived))
+            """);
+        record Key(UUID reminder,Instant at){}
+        var desired=new HashSet<Key>();var inserts=new ArrayList<Object[]>();
+        for(var row:rows){
+            Instant anchor=row.get("anchor_day")==null||row.get("anchor_time")==null?null:
+                ((java.sql.Date)row.get("anchor_day")).toLocalDate().atTime(((java.sql.Time)row.get("anchor_time")).toLocalTime()).atZone(BusinessDates.WARSAW).toInstant();
+            var spec=new ReminderPlan.Spec((UUID)row.get("id"),(Long)row.get("offset_minutes"),instant(row.get("absolute_at")));
+            var at=spec.scheduled(anchor);if(at==null)continue;
+            desired.add(new Key(spec.id(),at));inserts.add(new Object[]{UUID.randomUUID(),spec.id(),stamp(at)});
         }
+        var invalid=new ArrayList<Object[]>();
+        for(var row:db.queryForList("SELECT id,reminder_id,scheduled_at FROM notification_occurrence WHERE valid")){
+            if(!desired.contains(new Key((UUID)row.get("reminder_id"),instant(row.get("scheduled_at")))))invalid.add(new Object[]{row.get("id")});
+        }
+        if(!invalid.isEmpty())db.batchUpdate("UPDATE notification_occurrence SET valid=FALSE WHERE id=?",invalid);
+        if(!inserts.isEmpty())db.batchUpdate("INSERT INTO notification_occurrence(id,reminder_id,scheduled_at) VALUES (?,?,?) ON CONFLICT(reminder_id,scheduled_at) DO UPDATE SET valid=TRUE WHERE NOT notification_occurrence.valid",inserts);
     }
     @Transactional public List<Notification> due(){return due(Instant.now());}
     @Transactional public List<Notification> due(Instant now){lock();reconcileLocked();return dueLocked(now);}
     private List<Notification> dueLocked(Instant now){
         var result=new ArrayList<Notification>();
-        for(var r:db.queryForList("SELECT o.*,r.source_key,p.booking_id,p.memo_id FROM notification_occurrence o JOIN entity_reminder r ON r.id=o.reminder_id JOIN reminder_owner p ON p.source_key=r.source_key WHERE o.valid AND o.state<>'READ' AND GREATEST(o.scheduled_at,COALESCE(o.snoozed_until,o.scheduled_at))<=? ORDER BY GREATEST(o.scheduled_at,COALESCE(o.snoozed_until,o.scheduled_at)),o.id LIMIT 100",stamp(now))){
-            boolean booking=r.get("booking_id")!=null;var s=source(booking?"BOOKING":"MEMO",((Number)r.get(booking?"booking_id":"memo_id")).longValue());
-            result.add(new Notification((UUID)r.get("id"),s.type(),s.id(),s.title(),s.href(),instant(r.get("scheduled_at")),r.get("snoozed_until")==null?instant(r.get("scheduled_at")):instant(r.get("snoozed_until")),((Number)r.get("version")).longValue(),r.get("displayed_at")!=null));
+        for(var r:db.queryForList("SELECT o.*,r.source_key,p.booking_id,p.memo_id,CASE WHEN p.booking_id IS NOT NULL THEN b.customer_name ELSE m.title END source_title FROM notification_occurrence o JOIN entity_reminder r ON r.id=o.reminder_id JOIN reminder_owner p ON p.source_key=r.source_key LEFT JOIN booking b ON b.id=p.booking_id LEFT JOIN memo_entry m ON m.id=p.memo_id WHERE o.valid AND o.state<>'READ' AND GREATEST(o.scheduled_at,COALESCE(o.snoozed_until,o.scheduled_at))<=? ORDER BY GREATEST(o.scheduled_at,COALESCE(o.snoozed_until,o.scheduled_at)),o.id LIMIT 100",stamp(now))){
+            boolean booking=r.get("booking_id")!=null;long sourceId=((Number)r.get(booking?"booking_id":"memo_id")).longValue();
+            result.add(new Notification((UUID)r.get("id"),booking?"BOOKING":"MEMO",sourceId,(String)r.get("source_title"),booking?"/work/"+sourceId:"/notes?entry="+sourceId,instant(r.get("scheduled_at")),r.get("snoozed_until")==null?instant(r.get("scheduled_at")):instant(r.get("snoozed_until")),((Number)r.get("version")).longValue(),r.get("displayed_at")!=null));
         }
         return List.copyOf(result);
     }

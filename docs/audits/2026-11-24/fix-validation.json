@@ -1,0 +1,382 @@
+{
+  "baseCommit": "1c5f28a689f6310ad9482381595c077f8894de95",
+  "applicationBase": "c1a2a9ba134ac5d3b5eedd86c227069f907c0376",
+  "branch": "fix/audit-test6",
+  "fullMavenVerify": {
+    "surefire": {
+      "totals": {
+        "tests": 76,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      "classes": [
+        {
+          "name": "pl.nclean.crm.help.GuideServiceTest",
+          "tests": "5",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.fuel.ImageOrientationTest",
+          "tests": "3",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EquipmentSecurityTest",
+          "tests": "4",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.ContextSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.shared.SharedConventionsTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EconomicDepreciationTest",
+          "tests": "4",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.PhotoNameTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.help.GuideSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.TodaySecurityTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.CalendarSecurityTest",
+          "tests": "12",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DashboardTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.architecture.ArchitectureTest",
+          "tests": "7",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.FuelSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CostSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.WorkSecurityTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.RecordsSecurityTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.FinanceWindowTest",
+          "tests": "3",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DayReviewSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notifications.NotificationSecurityTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.RemovalSecurityTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerInsightMathTest",
+          "tests": "2",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.TycoonSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.removal.RemovalServiceTest",
+          "tests": "3",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notifications.ReminderPlanTest",
+          "tests": "4",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.notes.ReminderScheduleTest",
+          "tests": "5",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.NoteSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.DashboardSecurityTest",
+          "tests": "1",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        }
+      ]
+    },
+    "failsafe": {
+      "totals": {
+        "tests": 182,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      "classes": [
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerInsightsPostgresIT",
+          "tests": "13",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.EquipmentPostgresIT",
+          "tests": "11",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.audit.AuditFixPostgresIT",
+          "tests": "8",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.dashboard.CustomerSourcePostgresIT",
+          "tests": "8",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.costs.JobDefaultsPostgresIT",
+          "tests": "15",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        },
+        {
+          "name": "pl.nclean.crm.calendar.CalendarPostgresIT",
+          "tests": "127",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0"
+        }
+      ]
+    }
+  },
+  "expandedAuditRegression": {
+    "name": "pl.nclean.crm.audit.AuditFixPostgresIT",
+    "tests": "10",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0"
+  },
+  "uniquePassingTests": 260,
+  "testCountExplanation": "Full verify: 76 unit/MVC/architecture + 182 PostgreSQL = 258. Then expanded the 8-case audit class to 10 and reran it successfully: 260 unique tests, no failures/errors/skips. Stale audit-characterization XML is excluded.",
+  "productionAccess": false,
+  "dockerVolumesChanged": false,
+  "migrationsPreserved": "V1-V24 unchanged; additive V25",
+  "browser": [
+    {
+      "run": "fix-browser-crm",
+      "messages": [
+        "PASS audit fixes: lost-response -> edited fields rejected with 409 and a context-aware recovery link; original retry creates no duplicate; chemistry history retains 8->9, author and standard; note replay conflict; 8 responsive views.",
+        "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+      ]
+    },
+    {
+      "run": "fix-browser-root",
+      "messages": [
+        "PASS audit fixes: lost-response -> edited fields rejected with 409 and a context-aware recovery link; original retry creates no duplicate; chemistry history retains 8->9, author and standard; note replay conflict; 8 responsive views.",
+        "PASS no JS errors; context path /; Java 17; synthetic isolated PostgreSQL"
+      ]
+    },
+    {
+      "run": "fix-jobs-crm",
+      "messages": [
+        "PASS job standards, lost-response retry, phone-only customer, required creation note and preserved rejected fields, standard chemistry/time without photos, custom measurements, equipment completion/correction/zero/reset, offline values, stale version, 28 responsive views, keyboard, reduced motion, CSRF.",
+        "PASS no JS errors; context path /crm; Java 17; synthetic isolated PostgreSQL"
+      ]
+    },
+    {
+      "run": "fix-insights-root",
+      "messages": [
+        "PASS customer insights: UI business/private selection and repeat prefill, lost-response retry, immutable visit type, category average/median and explicit split, new/returning history, local type/period filters, stale profile preserves fields, 20 responsive views, reduced motion and no-JS read.",
+        "PASS no JS errors; context path /; Java 17; synthetic isolated PostgreSQL"
+      ]
+    },
+    {
+      "run": "fix-sources-performance",
+      "messages": [
+        "PASS customer sources: repeated visits, clients/orders/revenue, missing source/identity/price, actual/plan, day/week/month and period navigation, profile correction, 36 responsive chart views, keyboard, reduced motion, no-JS fallback and login protection.",
+        "PASS no JS errors; context path /; Java 17; synthetic isolated PostgreSQL"
+      ]
+    }
+  ],
+  "pcUpdate": {
+    "runtime": "PowerShell 7.4.13 on Linux, fake Docker CLI; no real Windows installation",
+    "scenarios": [
+      {
+        "scenario": "success",
+        "pass": true,
+        "oldContainerResumed": false,
+        "migrationStartAttempted": true
+      },
+      {
+        "scenario": "wrong-mount",
+        "pass": true,
+        "oldContainerResumed": false,
+        "migrationStartAttempted": false
+      },
+      {
+        "scenario": "build-fail",
+        "pass": true,
+        "oldContainerResumed": false,
+        "migrationStartAttempted": false
+      },
+      {
+        "scenario": "backup-fail",
+        "pass": true,
+        "oldContainerResumed": true,
+        "migrationStartAttempted": false
+      },
+      {
+        "scenario": "stopped-backup-fail",
+        "pass": true,
+        "oldContainerResumed": false,
+        "migrationStartAttempted": false
+      },
+      {
+        "scenario": "up-fail",
+        "pass": true,
+        "oldContainerResumed": false,
+        "migrationStartAttempted": true
+      }
+    ]
+  },
+  "dependencies": {
+    "checkedOn": "2026-11-24",
+    "dependencies": 79,
+    "unresolved": [],
+    "documentedNotApplicable": [
+      {
+        "package": {
+          "ecosystem": "Maven",
+          "name": "org.springframework:spring-webmvc"
+        },
+        "version": "6.2.19",
+        "advisory": "GHSA-j9f9-w8pj-32f8"
+      },
+      {
+        "package": {
+          "ecosystem": "Maven",
+          "name": "org.springframework:spring-webmvc"
+        },
+        "version": "6.2.19",
+        "advisory": "GHSA-pc63-qcmh-9cmg"
+      }
+    ]
+  },
+  "dockerImage": {
+    "basePinned": true,
+    "localBuild": "Not repeated: prior rootless VFS build exhausted this 7.9 GiB environment",
+    "ciBuild": "Added to workflow; not yet observed"
+  },
+  "staticChecks": [
+    "node scripts/test-web-boundaries.cjs PASS",
+    "node --check src/main/resources/static/js/session.js PASS",
+    "Changed Python scripts compile PASS",
+    "git diff --check PASS"
+  ]
+}

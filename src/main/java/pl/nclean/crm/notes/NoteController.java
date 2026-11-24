@@ -27,6 +27,6 @@ public class NoteController {
         int days=0;for(int day=1;day<=7;day++)if(p.containsKey("reminder_weekday_"+day))days|=1<<(day-1);
         return new ReminderSchedule.Config(frequency,LocalDate.parse(p.get("reminder_starts")),LocalTime.parse(p.get("reminder_time")),frequency.equals("WEEKDAYS")?days:0,frequency.equals("INTERVAL")?Integer.parseInt(p.get("reminder_interval")):1);
     }
-    private static ResponseEntity<?> error(Exception ex){return ResponseEntity.badRequest().body(Map.of("message",ex.getMessage()==null?"Sprawdź dane wpisu.":ex.getMessage()));}
+    private static ResponseEntity<?> error(Exception ex){if(ex instanceof pl.nclean.crm.persistence.RequestReplay.Conflict conflict)return ResponseEntity.status(409).header("X-Nclean-Replay",conflict.href()).body(Map.of("message",conflict.getMessage(),"href",conflict.href()));return ResponseEntity.badRequest().body(Map.of("message",ex.getMessage()==null?"Sprawdź dane wpisu.":ex.getMessage()));}
     @ExceptionHandler({IllegalArgumentException.class,DateTimeException.class}) @ResponseStatus(org.springframework.http.HttpStatus.BAD_REQUEST) String invalid(Model m){m.addAttribute("message","Sprawdź filtr, datę lub identyfikator wpisu.");return "records/error";}
 }

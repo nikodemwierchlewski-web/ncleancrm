@@ -11,6 +11,7 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--work-dir',type=Path,required=True)
 parser.add_argument('--java',default='java')
 parser.add_argument('--chromium',default='/usr/bin/chromium')
+parser.add_argument('--audit-fixes-only',action='store_true')
 parser.add_argument('--depreciation-only',action='store_true')
 parser.add_argument('--job-defaults-only',action='store_true')
 parser.add_argument('--customer-sources-only',action='store_true')
@@ -21,6 +22,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import bcrypt
 from playwright.sync_api import sync_playwright
 from browser_equipment_checks import verify_equipment
+from browser_audit_fix_checks import verify_audit_fixes
 from browser_depreciation_checks import verify_depreciation
 from browser_job_defaults_checks import verify_job_defaults
 from browser_customer_sources_checks import verify_customer_sources
@@ -52,7 +54,8 @@ try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=args.chromium,args=['--no-sandbox']);context=browser.new_context();page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(base+'/login');page.locator('[name=username]').fill(owner);page.locator('[name=password]').fill(password);page.locator('button[type=submit]').click();page.wait_for_url('**/calendar')
-  if args.customer_insights_only:verify_customer_insights(page,base,out)
+  if args.audit_fixes_only:verify_audit_fixes(page,base,out)
+  elif args.customer_insights_only:verify_customer_insights(page,base,out)
   elif args.customer_sources_only:verify_customer_sources(page,base,out)
   elif args.job_defaults_only:verify_job_defaults(page,base,out)
   elif args.depreciation_only:verify_depreciation(page,base,out)

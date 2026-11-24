@@ -35,13 +35,14 @@ public class DayReviewService {
         var fingerprint=fingerprint(day);var saved=db.queryForList("SELECT * FROM day_review WHERE day=?",day);boolean closed=!saved.isEmpty()&&fingerprint.equals(saved.get(0).get("fingerprint"))&&complete==orders.size();
         return new Review(day,orders,moves,complete,fingerprint,closed,!saved.isEmpty()&&!closed);
     }
+    // Frozen v1 field set: added metadata must not reopen days. Business-field changes need an explicit signature migration.
     private static final String FINGERPRINT_SQL="""
         SELECT md5(jsonb_build_array(
-          (SELECT COALESCE(jsonb_agg(to_jsonb(b)-'removed_at'-'historical'-'customer_type' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
-          (SELECT COALESCE(jsonb_agg(to_jsonb(i) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
-          (SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
+          (SELECT COALESCE(jsonb_agg((SELECT jsonb_object_agg(k,v) FROM jsonb_each(to_jsonb(b)) e(k,v) WHERE k IN ('id','version','request_token','customer_id','day','starts','customer_name','phone','address','status','total','chemical_cost','final_total','work_minutes','timer_started','work_note','work_time_source','work_started_at','work_finished_at','review_reason','completion_note','completion_no_notes','photo_before_exception','photo_after_exception'))-'removed_at'-'historical'-'customer_type' ORDER BY id),'[]') FROM booking b WHERE b.removed_at IS NULL AND day=?),
+          (SELECT COALESCE(jsonb_agg((SELECT jsonb_object_agg(k,v) FROM jsonb_each(to_jsonb(i)) e(k,v) WHERE k IN ('booking_id','position','service_id','name','unit','quantity','price','amount','suggested_price','forecast_defined','chemical_cost','actual_defined','actual_version','final_amount','work_minutes','actual_no_chem')) ORDER BY booking_id,position),'[]') FROM booking_item i WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
+          (SELECT COALESCE(jsonb_agg((SELECT jsonb_object_agg(k,v) FROM jsonb_each(to_jsonb(a)) e(k,v) WHERE k IN ('booking_id','item_position','chemical_id','name','unit','quantity','unit_cost','amount')) ORDER BY booking_id,item_position,chemical_id),'[]') FROM booking_actual_chemical a WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('id',p.id,'booking_id',p.booking_id,'stage',p.stage,'name',p.original_name,'time',p.captured_at) ORDER BY p.id),'[]') FROM booking_photo p WHERE booking_id IN (SELECT id FROM booking WHERE removed_at IS NULL AND day=?)),
-          (SELECT COALESCE(jsonb_agg(to_jsonb(m) ORDER BY id),'[]') FROM booking_move m WHERE from_day=?)
+          (SELECT COALESCE(jsonb_agg((SELECT jsonb_object_agg(k,v) FROM jsonb_each(to_jsonb(m)) e(k,v) WHERE k IN ('id','booking_id','from_day','to_day','reason','moved_at')) ORDER BY id),'[]') FROM booking_move m WHERE from_day=?)
         )::text)
         """;
     private static final String REGULAR_FINGERPRINT_SQL=FINGERPRINT_SQL
@@ -106,8 +107,8 @@ public class DayReviewService {
                 for(var item:records.items(id)){int pos=((Number)item.get("position")).intValue();String amount=p.get("amount_"+pos),minutes=p.get("time_"+pos);if(amount!=null&&!amount.isBlank())prices.put(pos,WorkService.money(amount));if(minutes!=null&&!minutes.isBlank())times.put(pos,WorkService.minutes(minutes));}
             }else if(b.get("final_total")==null||WorkService.money(p.get("final_total")).compareTo((BigDecimal)b.get("final_total"))!=0)prices.clear();
             work.complete(id,version,p.get("final_total"),b.get("timer_started")!=null?null:p.getOrDefault("minutes",Objects.toString(b.get("work_minutes"),"")),note,prices,times,measured,actor,java.util.stream.Stream.concat(zero.stream(),standard.stream()).map(z->z[0]).collect(java.util.stream.Collectors.toSet()));
-            for(var z:zero)actual.zero(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])));
-            for(var z:standard)actual.standard(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])),true);
+            for(var z:zero)actual.zero(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])),actor);
+            for(var z:standard)actual.standard(id,z[0],Long.parseLong(p.get("actualVersion_"+z[0])),true,actor);
             db.update("UPDATE booking SET completion_no_notes=?,photo_before_exception=?,photo_after_exception=? WHERE id=?",noNotes,before,after,id);
         }else{
             var target=day;var starts=((java.sql.Time)b.get("starts")).toLocalTime();

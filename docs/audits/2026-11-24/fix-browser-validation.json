@@ -1,0 +1,97 @@
+{
+  "routes": [
+    "/calendar",
+    "/today",
+    "/orders",
+    "/customers",
+    "/dashboard",
+    "/dashboard?range=month",
+    "/day-closeout",
+    "/notes",
+    "/notes/editor",
+    "/equipment",
+    "/equipment/standards",
+    "/costs",
+    "/costs/editor",
+    "/fuel",
+    "/fuel/legacy",
+    "/settings",
+    "/settings/services",
+    "/settings/areas",
+    "/settings/costs",
+    "/more",
+    "/search?q=QA",
+    "/callbacks"
+  ],
+  "responsiveViews": 88,
+  "overflows": [],
+  "anonymousProtectedRoutes": [
+    "/api/v1/notifications",
+    "/api/v1/reminders",
+    "/calendar",
+    "/callbacks",
+    "/costs",
+    "/costs/editor",
+    "/costs/equipment/1",
+    "/customers",
+    "/customers/1",
+    "/dashboard",
+    "/day-closeout",
+    "/equipment",
+    "/equipment/1",
+    "/equipment/editor",
+    "/equipment/jobs/1",
+    "/equipment/standards",
+    "/export/customers.csv",
+    "/export/orders.csv",
+    "/fuel",
+    "/fuel/legacy",
+    "/fuel/receipts/00000000-0000-0000-0000-000000000001",
+    "/help/context",
+    "/more",
+    "/notes",
+    "/notes/editor",
+    "/notes/main-goal",
+    "/notes/reminders",
+    "/orders",
+    "/photos/00000000-0000-0000-0000-000000000001",
+    "/search",
+    "/session",
+    "/settings",
+    "/settings/costs",
+    "/settings/services",
+    "/today",
+    "/tycoon/progress",
+    "/work/1"
+  ],
+  "csrfLogout": "PASS",
+  "notificationScaling": [
+    {
+      "archivedReminderOwners": 0,
+      "milliseconds": [
+        53.0,
+        15.0,
+        19.2
+      ],
+      "median": 19.2
+    },
+    {
+      "archivedReminderOwners": 100,
+      "milliseconds": [
+        23.4,
+        19.1,
+        47.0
+      ],
+      "median": 23.4
+    },
+    {
+      "archivedReminderOwners": 1000,
+      "milliseconds": [
+        47.8,
+        8.4,
+        8.9
+      ],
+      "median": 8.9
+    }
+  ]
+}

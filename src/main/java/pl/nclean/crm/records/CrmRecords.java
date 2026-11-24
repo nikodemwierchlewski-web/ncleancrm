@@ -1,6 +1,7 @@
 package pl.nclean.crm.records;
 
 import pl.nclean.crm.shared.BusinessDates;
+import pl.nclean.crm.persistence.RequestReplay;
 import java.math.*;
 import java.time.*;
 import java.util.*;
@@ -12,10 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class CrmRecords {
  private final JdbcTemplate db;
+ private final RequestReplay replay;
  private final ChemistryService chemistry;
  private final pl.nclean.crm.costs.EquipmentUsageService equipmentUsage;
  private final pl.nclean.crm.tycoon.AchievementService achievements;
- public CrmRecords(JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements,pl.nclean.crm.costs.EquipmentUsageService equipmentUsage){this.equipmentUsage=equipmentUsage;this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
+ public CrmRecords(RequestReplay replay,JdbcTemplate db,ChemistryService chemistry,pl.nclean.crm.tycoon.AchievementService achievements,pl.nclean.crm.costs.EquipmentUsageService equipmentUsage){this.replay=replay;this.equipmentUsage=equipmentUsage;this.db=db;this.chemistry=chemistry;this.achievements=achievements;}
  public List<ChemistryService.Material> materials(){return chemistry.materials();}
  public List<ChemistryService.Material> materialsForBooking(long id){return chemistry.materialsForBooking(id);}
  public Map<Long,ChemistryService.Recipe> recipes(){return chemistry.recipes();}
@@ -113,7 +115,8 @@ public class CrmRecords {
  @Transactional public long book(UUID token,LocalDate day,LocalTime starts,Long customer,String name,String number,String address,Map<Long,BigDecimal> quantities,Map<Long,BigDecimal> prices,Map<Long,ChemistryService.Forecast> forecasts,String source,String referral,String note,boolean historical,CustomerType.Choice typeChoice){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||token==null)throw new IllegalArgumentException("Wybierz poprawny dzień i godzinę.");
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return ((Number)existing.get(0).get("id")).longValue();}
+  String requestPayload=replay.payload(Arrays.asList(day,starts,customer,name,number,address,quantities,prices,forecasts,source,referral,note,historical,typeChoice));
+  var existing=db.queryForList("SELECT id,removed_at FROM booking WHERE request_token=?",token);if(!existing.isEmpty()){if(existing.get(0).get("removed_at")!=null)throw new IllegalArgumentException("Zlecenie z tego formularza zostało usunięte. Przywróć je lub otwórz nowy formularz.");return replay.existing("BOOKING",token,requestPayload,((Number)existing.get(0).get("id")).longValue());}
   if(historical && !day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny wymaga daty wcześniejszej niż dzisiaj.");
   address=text(address,240,!historical);source=CustomerAcquisitionSource.normalize(source);referral=source.equals("REFERRAL")?text(referral,200,false):"";if(note==null||note.isBlank())throw new IllegalArgumentException("Dodaj notatkę do zlecenia — wpisz ustalenia lub znane informacje o usłudze.");note=text(note,2000,true);
   if(quantities==null||quantities.isEmpty()||quantities.size()>30)throw new IllegalArgumentException("Wybierz od 1 do 30 usług.");
@@ -158,17 +161,23 @@ public class CrmRecords {
   }
   db.update("UPDATE booking SET chemical_cost=? WHERE id=?",allDefined?chemistryTotal:null,id);
   equipmentUsage.snapshotNewJob(id);
+  replay.remember("BOOKING",token,requestPayload,id);
   return id;
  }
  @Transactional public void reschedule(long id,long version,LocalDate day,LocalTime starts,String status){
   if(day==null||day.getYear()<2000||day.getYear()>2100||starts==null||status==null||!Set.of("PLANNED","DONE","CANCELLED").contains(status))throw new IllegalArgumentException("Niepoprawny termin lub status.");
   if("DONE".equals(status))validateCompletionDay(day);
   db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
-  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.day,b.work_time_source,b.historical FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
+  var before=db.queryForList("SELECT to_jsonb(b)::text snapshot,b.timer_started,b.timer_seconds,b.day,b.work_time_source,b.historical FROM booking b WHERE b.removed_at IS NULL AND id=? FOR UPDATE",id);if(before.isEmpty())throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND);
   if(Boolean.TRUE.equals(before.get(0).get("historical"))&&!day.isBefore(BusinessDates.today()))throw new IllegalArgumentException("Wpis historyczny musi pozostać w przeszłości.");
-  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_minutes=CASE WHEN timer_started IS NOT NULL AND ?<>'PLANNED' THEN LEAST(10080,COALESCE(work_minutes,0)+GREATEST(0,CEIL(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP-timer_started))/60))::integer) ELSE work_minutes END,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,status,id,version));
-  boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
   boolean stopped=before.get(0).get("timer_started")!=null&&!status.equals("PLANNED");
+  if(stopped){
+   long seconds=((Number)before.get(0).get("timer_seconds")).longValue()+Math.max(0,Duration.between(((java.sql.Timestamp)before.get(0).get("timer_started")).toInstant(),Instant.now()).getSeconds());
+   if(seconds>604800)throw new IllegalArgumentException("Czas przekracza 7 dni. Popraw go w panelu zakończenia.");
+   db.update("UPDATE booking SET timer_seconds=?,work_minutes=? WHERE id=?",seconds,(seconds+59)/60,id);
+  }
+  changed(db.update("UPDATE booking SET day=?,starts=?,status=?,work_time_source=CASE WHEN timer_started IS NOT NULL THEN 'TIMER' ELSE work_time_source END,timer_started=CASE WHEN ?<>'PLANNED' THEN NULL ELSE timer_started END,version=version+1 WHERE id=? AND version=?",day,starts,status,status,id,version));
+  boolean photoMoved="PHOTO".equals(before.get(0).get("work_time_source"))&&!((java.sql.Date)before.get(0).get("day")).toLocalDate().equals(day);
   if(photoMoved)db.update("UPDATE booking SET work_minutes=NULL,work_started_at=NULL,work_finished_at=NULL,work_time_source='UNKNOWN' WHERE id=?",id);
   if(photoMoved||stopped){db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);if(stopped&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE removed_at IS NULL AND id=?) WHERE booking_id=?",id,id);}
   db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),'OWNER' FROM booking b WHERE b.removed_at IS NULL AND id=?",id,before.get(0).get("snapshot"),id);

@@ -150,6 +150,6 @@ class CustomerInsightsPostgresIT {
         old.update("INSERT INTO day_review(day,fingerprint,closed_by) VALUES (?,?,'qa')",today,fingerprint);
         Flyway.configure().dataSource(ds).schemas(schema).defaultSchema(schema).load().migrate();
         assertEquals(fingerprint,old.queryForObject(fingerprintSql,String.class,today,today,today,today,today));assertEquals(fingerprint,old.queryForObject("SELECT fingerprint FROM day_review WHERE day=?",String.class,today));
-        var afterCustomer=old.queryForMap("SELECT * FROM crm_customer WHERE id=?",c);var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",b);assertEquals("UNKNOWN",afterCustomer.remove("customer_type"));assertEquals("UNKNOWN",afterBooking.remove("customer_type"));assertEquals(beforeCustomer,afterCustomer);assertEquals(beforeBooking,afterBooking);assertEquals(checksums,old.queryForList("SELECT version,checksum FROM flyway_schema_history WHERE type='SQL' AND version<>'24' ORDER BY installed_rank"));
+        var afterCustomer=old.queryForMap("SELECT * FROM crm_customer WHERE id=?",c);var afterBooking=old.queryForMap("SELECT * FROM booking WHERE id=?",b);assertEquals("UNKNOWN",afterCustomer.remove("customer_type"));assertEquals("UNKNOWN",afterBooking.remove("customer_type"));assertEquals(0L,afterBooking.remove("timer_seconds"));assertEquals(beforeCustomer,afterCustomer);assertEquals(beforeBooking,afterBooking);assertEquals(checksums,old.queryForList("SELECT version,checksum FROM flyway_schema_history WHERE type='SQL' AND version::integer<24 ORDER BY installed_rank"));
     }
 }

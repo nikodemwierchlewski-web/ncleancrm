@@ -2,6 +2,7 @@ package pl.nclean.crm.fuel;
 
 import pl.nclean.crm.shared.DecimalInput;
 import pl.nclean.crm.shared.BusinessDates;
+import pl.nclean.crm.persistence.RequestReplay;
 import java.math.*;
 import java.time.*;
 import java.util.*;
@@ -13,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly=true)
 public class FuelJournalService {
     private final JdbcTemplate db;
-    public FuelJournalService(JdbcTemplate db){this.db=db;}
+    private final RequestReplay replay;
+    public FuelJournalService(RequestReplay replay,JdbcTemplate db){this.replay=replay;this.db=db;}
     public static BigDecimal decimal(String value,int scale,String max,boolean optional){return DecimalInput.parse(value,scale,new BigDecimal(max),optional);}
     public static BigDecimal rounded(BigDecimal value){return value.setScale(2,RoundingMode.HALF_UP);}
     private static BigDecimal n(Map<String,Object> row,String key){return (BigDecimal)row.get(key);}
@@ -133,12 +135,15 @@ public class FuelJournalService {
         if(p.full()&&!("CAR".equals(p.target())&&odo!=null)&&!("GENERATOR".equals(p.target())&&generator!=null))throw new IllegalArgumentException("Tankowanie do pełna wymaga odczytu licznika samochodu lub motogodzin agregatu.");
         if(p.meteredFull()&&(!p.full()||!p.complete()||litres==null||!("CAR".equals(p.target())&&"DIESEL".equals(p.fuel())&&odo!=null||"GENERATOR".equals(p.target())&&"PETROL".equals(p.fuel())&&generator!=null)))throw new IllegalArgumentException("Wybierz samochód — diesel lub agregat — benzyna i podaj licznik oraz litry.");
         if(p.note()==null||p.note().length()>1000)throw new IllegalArgumentException("Notatka może mieć do 1000 znaków.");
+        String requestPayload=replay.payload(Arrays.asList(p.time(),p.target(),p.fuel(),amount,litres,price,p.full(),odo,p.complete(),p.note().strip(),p.receipt(),generator,p.meteredFull()));
         lock();if(p.id()==null){var replay=db.queryForList("SELECT * FROM fuel_purchase WHERE request_token=?",p.token());if(!replay.isEmpty()){
             var saved=replay.get(0);
-            if(p.meteredFull()&&(!p.target().equals(saved.get("target"))||!p.fuel().equals(saved.get("fuel_type"))||!p.time().equals(((java.sql.Timestamp)saved.get("purchased_at")).toLocalDateTime())||!sameNumber(saved.get("amount"),amount)||!sameNumber(saved.get("litres"),litres)||!sameNumber(saved.get("odometer"),odo)||!sameNumber(saved.get("generator_meter"),generator)||!Objects.equals(p.receipt(),saved.get("receipt_id"))||!p.note().strip().equals(saved.get("note"))))throw new IllegalArgumentException("Ten formularz został już zapisany z innymi danymi. Odśwież historię przed kolejną zmianą.");
-            return ((Number)saved.get("id")).longValue();
+            return this.replay.existing("FUEL",p.token(),requestPayload,((Number)saved.get("id")).longValue());
         }}
-        var old=p.id()==null?null:purchase(p.id());if(old!=null&&(Boolean)old.get("cancelled"))throw new IllegalArgumentException("Tankowanie jest anulowane i pozostaje w historii.");if(old!=null&&((Number)old.get("version")).longValue()!=p.version())throw new IllegalArgumentException("Tankowanie zmieniło się w innym oknie. Odśwież formularz.");
+        var old=p.id()==null?null:purchase(p.id());
+        boolean wrongFuel="CAR".equals(p.target())&&!"DIESEL".equals(p.fuel())||"GENERATOR".equals(p.target())&&!"PETROL".equals(p.fuel());
+        if(wrongFuel&&(old==null||!p.target().equals(old.get("target"))||!p.fuel().equals(old.get("fuel_type"))))throw new IllegalArgumentException("Samochód wymaga diesla, a agregat benzyny. Historyczna para pozostaje zachowana tylko przy korekcie innych pól.");
+        if(old!=null&&(Boolean)old.get("cancelled"))throw new IllegalArgumentException("Tankowanie jest anulowane i pozostaje w historii.");if(old!=null&&((Number)old.get("version")).longValue()!=p.version())throw new IllegalArgumentException("Tankowanie zmieniło się w innym oknie. Odśwież formularz.");
         if(p.receipt()!=null&&db.queryForObject("SELECT count(*) FROM fuel_receipt WHERE id=?",Integer.class,p.receipt())!=1)throw new IllegalArgumentException("Zdjęcie wygasło lub nie istnieje. Prześlij je ponownie.");
         if(p.receipt()!=null&&db.queryForObject("SELECT (SELECT count(*) FROM fuel_purchase WHERE receipt_id=? AND id<>?)+(SELECT count(*) FROM cost_entry WHERE receipt_id=?)",Integer.class,p.receipt(),p.id()==null?-1:p.id(),p.receipt())>0)throw new IllegalArgumentException("Zdjęcie jest już przypisane do innego rachunku.");
         if("CAR".equals(p.target())&&odo!=null){
@@ -156,7 +161,7 @@ public class FuelJournalService {
         if(old==null)id=db.queryForObject("INSERT INTO fuel_purchase(request_token,purchased_at,target,fuel_type,amount,litres,litre_price,full_tank,odometer,records_complete,note,receipt_id,generator_meter,metered_full) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,p.token(),p.time(),p.target(),p.fuel(),amount,litres,price,p.full(),odo,p.complete(),p.note().strip(),p.receipt(),generator,p.meteredFull());
         else{changed(db.update("UPDATE fuel_purchase SET purchased_at=?,target=?,fuel_type=?,amount=?,litres=?,litre_price=?,full_tank=?,odometer=?,records_complete=?,note=?,receipt_id=?,generator_meter=?,metered_full=?,version=version+1 WHERE id=? AND version=?",p.time(),p.target(),p.fuel(),amount,litres,price,p.full(),odo,p.complete(),p.note().strip(),p.receipt(),generator,p.meteredFull(),p.id(),p.version()));id=p.id();}
         db.update("INSERT INTO fuel_audit(kind,record_key,before_data,after_data,actor) SELECT 'PURCHASE',?,?::jsonb,to_jsonb(p),? FROM fuel_purchase p WHERE id=?",Long.toString(id),beforeJson,actor,id);
-        return id;
+        if(old==null)replay.remember("FUEL",p.token(),requestPayload,id);return id;
     }
     private static boolean sameNumber(Object saved,BigDecimal value){return saved==null?value==null:value!=null&&((BigDecimal)saved).compareTo(value)==0;}
     private void validateCounter(Purchase p,BigDecimal reading,String column){

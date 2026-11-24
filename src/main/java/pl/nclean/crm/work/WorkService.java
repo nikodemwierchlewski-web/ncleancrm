@@ -23,15 +23,26 @@ public class WorkService {
     private Map<String,Object> locked(long id,long version){var b=db.queryForList("SELECT * FROM booking WHERE removed_at IS NULL AND id=? FOR UPDATE",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));if(((Number)b.get("version")).longValue()!=version)throw new IllegalArgumentException("Zlecenie zmieniło się w innym oknie. Zachowano dane; odśwież przed ponowną edycją.");return b;}
     private String before(long id){return db.queryForObject("SELECT to_jsonb(b)::text FROM booking b WHERE b.removed_at IS NULL AND id=?",String.class,id);}
     private void audit(long id,String before,String actor){db.update("INSERT INTO booking_audit(booking_id,before_data,after_data,actor) SELECT ?,?::jsonb,to_jsonb(b),? FROM booking b WHERE b.removed_at IS NULL AND id=?",id,before,actor,id);}
-    private static int elapsed(Map<String,Object> b){if(b.get("timer_started")==null)return 0;long seconds=Duration.between(((java.sql.Timestamp)b.get("timer_started")).toInstant(),Instant.now()).getSeconds();return (int)Math.max(0,Math.min(10080,(seconds+59)/60));}
+    private static long elapsedSeconds(Map<String,Object> b){
+        if(b.get("timer_started")==null)return 0;
+        return Math.max(0,Math.min(604801,Duration.between(((java.sql.Timestamp)b.get("timer_started")).toInstant(),Instant.now()).getSeconds()));
+    }
+    private static long timerSeconds(Map<String,Object> b){return ((Number)b.get("timer_seconds")).longValue()+elapsedSeconds(b);}
+    private static int roundedMinutes(long seconds){
+        if(seconds>604800)throw new IllegalArgumentException("Czas przekracza 7 dni. Popraw go ręcznie w panelu zakończenia.");
+        return (int)((seconds+59)/60);
+    }
+
     public Map<String,Object> order(long id){return db.queryForList("SELECT b.*,CASE WHEN b.status='DONE' THEN COALESCE(b.final_total,b.total) ELSE 0 END paid FROM booking b WHERE b.removed_at IS NULL AND id=?",id).stream().findFirst().orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));}
     public List<Map<String,Object>> orders(LocalDate date){return db.queryForList("SELECT b.*,CASE WHEN b.status='DONE' THEN COALESCE(b.final_total,b.total) ELSE 0 END paid,COALESCE((SELECT string_agg(name,', ' ORDER BY position) FROM booking_item WHERE booking_id=b.id),'') service_label,EXISTS(SELECT 1 FROM booking_item i WHERE i.booking_id=b.id AND (NOT actual_defined OR EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position AND a.amount IS NULL) OR EXISTS(SELECT 1 FROM booking_chemical c WHERE c.booking_id=i.booking_id AND c.item_position=i.position AND c.quantity>0 AND NOT EXISTS(SELECT 1 FROM booking_actual_chemical a WHERE a.booking_id=c.booking_id AND a.item_position=c.item_position AND a.chemical_id=c.chemical_id AND a.unit=c.unit)))) missing_chem FROM booking b WHERE b.removed_at IS NULL AND day=? ORDER BY starts,id",date);}
     public List<Map<String,Object>> payments(long id){return db.queryForList("SELECT p.*,EXISTS(SELECT 1 FROM booking_payment r WHERE r.reverses=p.id) reversed FROM booking_payment p WHERE booking_id=? ORDER BY id DESC",id);}
     public Map<String,Object> active(){return db.queryForList("SELECT id,customer_name,timer_started FROM booking WHERE removed_at IS NULL AND timer_started IS NOT NULL").stream().findFirst().orElse(Map.of());}
+    public List<Map<String,Object>> chemistryHistory(long id){return actual.history(id);}
     public List<Map<String,Object>> history(long id){return db.queryForList("SELECT created_at,after_data->>'status' status,after_data->>'final_total' final_total,after_data->>'work_minutes' work_minutes FROM booking_audit WHERE booking_id=? ORDER BY id DESC LIMIT 20",id);}
     @Transactional public void timer(long id,long version,boolean start,String actor){guard();var b=locked(id,version);if(!"PLANNED".equals(b.get("status")))throw new IllegalArgumentException("Pomiar czasu dotyczy niezakończonego zlecenia.");String before=before(id);
-        if(start){if(!active().isEmpty())throw new IllegalArgumentException("Najpierw zakończ aktywny pomiar czasu.");db.update("UPDATE booking SET timer_started=CURRENT_TIMESTAMP,work_started_at=NULL,work_finished_at=NULL,work_minutes=CASE WHEN work_time_source IN ('PHOTO','STANDARD') THEN NULL ELSE work_minutes END,work_time_source='TIMER',version=version+1 WHERE id=?",id);}
-        else {if(b.get("timer_started")==null)throw new IllegalArgumentException("Pomiar nie jest uruchomiony.");int total=(b.get("work_minutes")==null?0:((Number)b.get("work_minutes")).intValue())+elapsed(b);if(total>10080)throw new IllegalArgumentException("Czas przekracza 7 dni. Popraw go ręcznie w panelu zakończenia.");db.update("UPDATE booking SET work_minutes=?,work_time_source='TIMER',timer_started=NULL,version=version+1 WHERE id=?",total,id);}
+        if(start){if(!active().isEmpty())throw new IllegalArgumentException("Najpierw zakończ aktywny pomiar czasu.");db.update("UPDATE booking SET timer_seconds=CASE WHEN work_time_source='TIMER' THEN timer_seconds WHEN work_time_source IN ('PHOTO','STANDARD') THEN 0 ELSE COALESCE(work_minutes,0)*60 END,timer_started=CURRENT_TIMESTAMP,work_started_at=NULL,work_finished_at=NULL,work_minutes=CASE WHEN work_time_source IN ('PHOTO','STANDARD') THEN NULL ELSE work_minutes END,work_time_source='TIMER',version=version+1 WHERE id=?",id);}
+        else {if(b.get("timer_started")==null)throw new IllegalArgumentException("Pomiar nie jest uruchomiony.");long seconds=timerSeconds(b);int total=roundedMinutes(seconds);db.update("UPDATE booking SET timer_seconds=?,work_minutes=?,work_time_source='TIMER',timer_started=NULL,version=version+1 WHERE id=?",seconds,total,id);}
+
         db.update("UPDATE booking_item SET work_minutes=NULL WHERE booking_id=?",id);
         if(!start&&db.queryForObject("SELECT count(*) FROM booking_item WHERE booking_id=?",Integer.class,id)==1)db.update("UPDATE booking_item SET work_minutes=(SELECT work_minutes FROM booking WHERE removed_at IS NULL AND id=?) WHERE booking_id=?",id,id);
         audit(id,before,actor);
@@ -42,7 +53,7 @@ public class WorkService {
     }
     @Transactional public void complete(long id,long version,String finalPrice,String duration,String note,Map<Integer,BigDecimal> allocations,Map<Integer,Integer> times,List<Measurement> measured,String actor,Set<Integer> skipStandards){
         guard();var b=locked(id,version);pl.nclean.crm.records.CrmRecords.validateCompletionDay(((java.sql.Date)b.get("day")).toLocalDate());if("CANCELLED".equals(b.get("status")))throw new IllegalArgumentException("Najpierw przywróć anulowane zlecenie do planu.");var price=money(finalPrice);Integer mins=minutes(duration);if(note==null||note.length()>2000)throw new IllegalArgumentException("Notatka może mieć do 2000 znaków.");
-        if(mins==null&&b.get("timer_started")!=null)mins=(b.get("work_minutes")==null?0:((Number)b.get("work_minutes")).intValue())+elapsed(b);if(mins!=null&&mins>10080)throw new IllegalArgumentException("Sprawdź czas pracy.");
+        if(mins==null&&b.get("timer_started")!=null)mins=roundedMinutes(timerSeconds(b));if(mins!=null&&mins>10080)throw new IllegalArgumentException("Sprawdź czas pracy.");
         boolean standardTime=false;
         if(mins==null && b.get("work_minutes")!=null && Set.of("PHOTO","TIMER").contains((String)b.get("work_time_source")))mins=((Number)b.get("work_minutes")).intValue();
         if(mins==null){mins=defaults.captureTime(id);standardTime=mins!=null;}
@@ -51,12 +62,13 @@ public class WorkService {
         if(!allocations.isEmpty()&&(!allocations.keySet().equals(positions)||allocations.values().stream().anyMatch(v->v==null||v.signum()<0||v.scale()>2)||allocations.values().stream().reduce(BigDecimal.ZERO,BigDecimal::add).compareTo(price)!=0))throw new IllegalArgumentException("Podaj kwoty wszystkich pozycji sumujące się do ceny końcowej albo pozostaw cały podział pusty.");
         if(!times.isEmpty()&&(!times.keySet().equals(positions)||mins==null||times.values().stream().anyMatch(v->v==null||v<0)||times.values().stream().mapToInt(Integer::intValue).sum()!=mins))throw new IllegalArgumentException("Czasy pozycji muszą sumować się do łącznego czasu. Możesz pozostawić cały podział pusty.");
         String timeSource=standardTime?"STANDARD":b.get("timer_started")!=null?"TIMER":(Objects.equals(mins,b.get("work_minutes"))?(String)b.get("work_time_source"):mins==null?"UNKNOWN":"MANUAL");
-        String before=before(id);if(!"PHOTO".equals(timeSource)&&!Objects.equals(mins,b.get("work_minutes")))db.update("UPDATE booking SET work_started_at=NULL,work_finished_at=NULL WHERE id=?",id);db.update("UPDATE booking SET work_time_source=? WHERE id=?",timeSource,id);db.update("UPDATE booking SET status='DONE',final_total=?,work_minutes=?,completion_note=?,completion_no_notes=CASE WHEN ?='' THEN completion_no_notes ELSE FALSE END,timer_started=NULL,version=version+1 WHERE id=?",price,mins,note.strip(),note.strip(),id);
+        long preciseSeconds="TIMER".equals(timeSource)?((b.get("timer_started")!=null&&(duration==null||duration.isBlank()))?timerSeconds(b):Objects.equals(mins,b.get("work_minutes"))?((Number)b.get("timer_seconds")).longValue():mins*60L):0;
+        String before=before(id);db.update("UPDATE booking SET timer_seconds=? WHERE id=?",preciseSeconds,id);if(!"PHOTO".equals(timeSource)&&!Objects.equals(mins,b.get("work_minutes")))db.update("UPDATE booking SET work_started_at=NULL,work_finished_at=NULL WHERE id=?",id);db.update("UPDATE booking SET work_time_source=? WHERE id=?",timeSource,id);db.update("UPDATE booking SET status='DONE',final_total=?,work_minutes=?,completion_note=?,completion_no_notes=CASE WHEN ?='' THEN completion_no_notes ELSE FALSE END,timer_started=NULL,version=version+1 WHERE id=?",price,mins,note.strip(),note.strip(),id);
         db.update("UPDATE booking_item SET final_amount=NULL,work_minutes=NULL WHERE booking_id=?",id);
         for(var e:allocations.entrySet())db.update("UPDATE booking_item SET final_amount=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
         for(var e:times.entrySet())db.update("UPDATE booking_item SET work_minutes=? WHERE booking_id=? AND position=?",e.getValue(),id,e.getKey());
-        for(var m:measured)actual.record(id,m.position(),m.version(),m.values());
-        for(var item:items){int position=((Number)item.get("position")).intValue();if(!skipStandards.contains(position))actual.standard(id,position,null,false);}
+        for(var m:measured)actual.record(id,m.position(),m.version(),m.values(),actor);
+        for(var item:items){int position=((Number)item.get("position")).intValue();if(!skipStandards.contains(position))actual.standard(id,position,null,false,actor);}
         audit(id,before,actor);achievements.performed(id);
     }
     /** Current settlement follows service status; legacy payment rows are read-only history. */

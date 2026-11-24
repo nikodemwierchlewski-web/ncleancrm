@@ -3,7 +3,10 @@ on:
   pull_request:
   workflow_dispatch:
   push:
-    branches: [main, 'refactor/**', 'audit/**']
+    branches: ['**']
+    tags: ['nclean-v*-test.*', 'nclean-v*-final.*']
+  schedule:
+    - cron: '25 7 * * 1'
 permissions:
   contents: read
 jobs:
@@ -21,6 +24,22 @@ jobs:
         run: node scripts/test-web-boundaries.cjs
       - name: Unit, MVC and isolated PostgreSQL integration tests
         run: ./mvnw -B -ntp verify
+      - name: Known vulnerability checks with documented applicability
+        run: |
+          ./mvnw -B -ntp dependency:list -DincludeScope=runtime -DoutputFile=target/runtime-dependencies.txt
+          python3 scripts/check-dependencies.py target/runtime-dependencies.txt
+      - name: Browser regression on a disposable database
+        run: |
+          python3 -m pip install playwright==1.58.0 bcrypt==5.0.0
+          python3 -m playwright install --with-deps chromium
+          crm_chromium="$(python3 -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+          python3 scripts/verify-equipment-live.py --work-dir "$RUNNER_TEMP/crm-audit" --chromium "$crm_chromium" --audit-fixes-only
+          python3 scripts/verify-equipment-live.py --work-dir "$RUNNER_TEMP/crm-jobs" --chromium "$crm_chromium" --job-defaults-only
+          python3 scripts/verify-equipment-live.py --work-dir "$RUNNER_TEMP/crm-insights" --chromium "$crm_chromium" --customer-insights-only --context-path ''
+      - name: PowerShell update recovery scenarios without a real installation
+        run: python3 scripts/test-pc-update.py --pwsh pwsh --work-dir "$RUNNER_TEMP/crm-pc-update"
+      - name: Build the exact application image
+        run: docker build --tag ncleancrm-ci:${{ github.sha }} .
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -28,4 +47,5 @@ jobs:
           path: |
             target/surefire-reports/*.xml
             target/failsafe-reports/*.xml
+            target/dependency-security.json
           retention-days: 7

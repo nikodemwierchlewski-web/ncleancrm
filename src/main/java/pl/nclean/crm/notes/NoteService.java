@@ -1,6 +1,7 @@
 package pl.nclean.crm.notes;
 
 import pl.nclean.crm.shared.BusinessDates;
+import pl.nclean.crm.persistence.RequestReplay;
 import java.time.*;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,10 +20,11 @@ public class NoteService {
     }
     public record Page(List<Entry> entries,long total,int page){public boolean more(){return (page+1L)*50<total;}}
     private final JdbcTemplate db;
+    private final RequestReplay replay;
     private final pl.nclean.crm.tycoon.AchievementService achievements;
     private final ReminderService reminders;
     private final pl.nclean.crm.notifications.EntityReminderService entityReminders;
-    public NoteService(JdbcTemplate db,pl.nclean.crm.tycoon.AchievementService achievements,ReminderService reminders,pl.nclean.crm.notifications.EntityReminderService entityReminders){this.db=db;this.achievements=achievements;this.reminders=reminders;this.entityReminders=entityReminders;}
+    public NoteService(RequestReplay replay,JdbcTemplate db,pl.nclean.crm.tycoon.AchievementService achievements,ReminderService reminders,pl.nclean.crm.notifications.EntityReminderService entityReminders){this.replay=replay;this.db=db;this.achievements=achievements;this.reminders=reminders;this.entityReminders=entityReminders;}
     public ReminderSchedule.Config reminderConfiguration(Long id){return reminders.configuration(id);}
     public record Options(Boolean todayPinned,ReminderSchedule.Config reminder,LocalTime dueTime,boolean timePresent,pl.nclean.crm.notifications.ReminderPlan.Edit entityReminders){
         public Options(Boolean todayPinned,ReminderSchedule.Config reminder){this(todayPinned,reminder,null,false,null);}
@@ -73,8 +75,10 @@ public class NoteService {
         if(steps==null||steps.size()>30||(!kind.equals("GOAL")&&!steps.isEmpty()))throw new IllegalArgumentException("Do celu dodaj maksymalnie 30 kroków. Usuń kroki przed zmianą rodzaju wpisu.");
         var ids=new HashSet<UUID>();for(var step:steps)if(step.id==null||!ids.add(step.id)||step.text==null||step.text.isBlank()||step.text.length()>300)throw new IllegalArgumentException("Kroki muszą mieć różne identyfikatory i tekst od 1 do 300 znaków.");
         lock();
+        boolean creating=id==null;
+        String requestPayload=replay.payload(Arrays.asList(kind,title,content,due,pinned,steps,mainChoice,options));
         Entry current=null;
-        if(id==null){var existing=db.queryForList("SELECT id FROM memo_entry WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return existing.get(0);}
+        if(id==null){var existing=db.queryForList("SELECT id FROM memo_entry WHERE request_token=?",Long.class,token);if(!existing.isEmpty())return replay.existing("NOTE",token,requestPayload,existing.get(0));}
         else {current=get(id);if(current.version!=version)throw conflict();}
         if(Boolean.TRUE.equals(mainChoice))eligibleMain(kind,current!=null&&current.archived,current!=null&&current.completed,steps);
         boolean main="GOAL".equals(kind)&&(current==null||!current.archived)&&(mainChoice==null?current!=null&&current.mainGoal:mainChoice);
@@ -86,7 +90,7 @@ public class NoteService {
         db.update("DELETE FROM memo_step WHERE entry_id=?",id);for(int i=0;i<steps.size();i++){var step=steps.get(i);db.update("INSERT INTO memo_step(entry_id,id,position,text,done) VALUES (?,?,?,?,?)",id,step.id,i,step.text.strip(),step.done);}reminders.configure(id,options==null?null:options.reminder);
         if(options!=null&&options.timePresent){if(due==null&&options.dueTime!=null)throw new IllegalArgumentException("Podaj datę dla godziny terminu.");db.update("UPDATE memo_entry SET due_time=? WHERE id=?",options.dueTime,id);}
         if(options!=null&&options.entityReminders!=null)entityReminders.save("MEMO",id,options.entityReminders);
-        entityReminders.validateAnchor("MEMO",id);return id;
+        entityReminders.validateAnchor("MEMO",id);if(creating)replay.remember("NOTE",token,requestPayload,id);return id;
     }
     @Transactional public boolean action(long id,long version,String action,UUID step,boolean checked){
         if(!Set.of("pin","unpin","done","reopen","archive","restore","step","main","unmain","today-pin","today-unpin").contains(Objects.toString(action,"")))throw new IllegalArgumentException("Nieznana czynność.");

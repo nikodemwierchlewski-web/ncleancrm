@@ -38,6 +38,14 @@
    // A logout racing the preflight still requires a deliberate retry.
    return new Response(JSON.stringify({message:'Sesja lub CSRF zmieniły się. Zaloguj się w nowej karcie i ponów zapis. Pola zachowano.',error:'Sprawdź sesję i ponów zapis.'}),{status:403,headers:{'content-type':'application/json'}});
   }
+  const replay=response.headers.get('X-Nclean-Replay');
+  if(response.status===409&&replay&&/^\/(work\/\d+|notes\?entry=\d+|costs\/editor\?id=\d+|fuel\?purchase=\d+)$/.test(replay)){
+   document.querySelector('#replay-recovery')?.remove();
+   const notice=document.createElement('aside');notice.id='replay-recovery';notice.className='notice';notice.setAttribute('role','alert');
+   const text=document.createElement('p');text.textContent='Wcześniejszy zapis już istnieje. Twoje zmienione pola pozostają w formularzu.';
+   const link=document.createElement('a');link.href=Nclean.url(replay);link.target='_blank';link.rel='noopener';link.textContent='Otwórz zapisany wpis w nowej karcie';
+   notice.append(text,link);(document.querySelector('dialog[open]')||document.querySelector('main')||document.body).prepend(notice);
+  }else if(response.ok)document.querySelector('#replay-recovery')?.remove();
   return response;
  };
 })();

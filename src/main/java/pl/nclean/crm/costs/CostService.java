@@ -2,6 +2,7 @@ package pl.nclean.crm.costs;
 
 import pl.nclean.crm.shared.DecimalInput;
 import pl.nclean.crm.shared.BusinessDates;
+import pl.nclean.crm.persistence.RequestReplay;
 import java.math.*;
 import java.time.*;
 import java.util.*;
@@ -15,7 +16,8 @@ public class CostService {
     public static final Map<String,String> CATEGORIES;
     static{var m=new LinkedHashMap<String,String>();m.put("CAR_REPAIR","Samochód — naprawa");m.put("CAR_SERVICE","Samochód — serwis / przegląd");m.put("CAR_PARTS","Samochód — części / akcesoria");m.put("CAR_OTHER","Samochód — ubezpieczenie / inne");m.put("EQUIPMENT_PURCHASE","Zakup sprzętu");m.put("EQUIPMENT_SERVICE","Serwis sprzętu");m.put("MATERIAL","Materiały eksploatacyjne");m.put("CHEMISTRY","Zakup chemii");m.put("MARKETING","Marketing jednorazowy");m.put("OTHER","Inny wydatek");CATEGORIES=Collections.unmodifiableMap(m);}
     private final JdbcTemplate db;
-    public CostService(JdbcTemplate db){this.db=db;}
+    private final RequestReplay replay;
+    public CostService(RequestReplay replay,JdbcTemplate db){this.replay=replay;this.db=db;}
     private void lock(){db.queryForObject("SELECT id FROM fuel_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
     private static String text(Map<String,String> p,String key,int max,boolean required){String v=p.getOrDefault(key,"").strip();if(v.length()>max||required&&v.isBlank())throw new IllegalArgumentException("Sprawdź opis i długość pól.");return v;}
     private static Long id(Map<String,String> p,String key){String v=p.get(key);return v==null||v.isBlank()?null:Long.valueOf(v);}
@@ -62,7 +64,8 @@ public class CostService {
         Long id=id(p,"id"),asset=id(p,"asset_id"),chemical=id(p,"chemical_id");long version=Long.parseLong(p.getOrDefault("version","0"));UUID token=UUID.fromString(Objects.toString(p.get("token"),""));UUID receipt=p.getOrDefault("receipt_id","").isBlank()?null:UUID.fromString(p.get("receipt_id"));
         String effect=category.equals("EQUIPMENT_PURCHASE")?"INVESTMENT":category.equals("CHEMISTRY")?"PURCHASE_ONLY":"OPERATING";LocalDate month=null;String covered=null;
         if(p.containsKey("covered")){if(!effect.equals("OPERATING"))throw new IllegalArgumentException("Ten zakup nie jest kosztem miesięcznym.");month=YearMonth.parse(p.get("covered_month")).atDay(1);BusinessDates.period(month,"day");covered=text(p,"covered_category",20,true);effect="COVERED";}
-        lock();if(id==null){var replay=db.queryForList("SELECT id FROM cost_entry WHERE request_token=?",Long.class,token);if(!replay.isEmpty())return replay.get(0);}
+        String requestPayload=replay.payload(Arrays.asList(day,category,title,supplier,note,amount,quantity,odo,asset,chemical,receipt,effect,month,covered,p.get("asset_category"),p.get("model"),p.get("serial_number"),p.get("warranty_until")));
+        lock();if(id==null){var replay=db.queryForList("SELECT id FROM cost_entry WHERE request_token=?",Long.class,token);if(!replay.isEmpty())return this.replay.existing("COST",token,requestPayload,replay.get(0));}
         var old=id==null?null:entry(id);if(old!=null&&(((Number)old.get("version")).longValue()!=version||(Boolean)old.get("cancelled")))throw new IllegalArgumentException("Wpis zmienił się lub jest anulowany. Zachowaj pola i sprawdź aktualny stan.");
         if(month!=null&&db.queryForObject("SELECT count(*) FROM dashboard_month m JOIN dashboard_month_cost c ON c.month=m.month WHERE m.month=? AND m.configured AND c.category=?",Integer.class,month,covered)==0)throw new IllegalArgumentException("Wybierz skonfigurowany koszt miesięczny tego rodzaju. Nie tworzymy drugiego kosztu.");
         String chemicalName=null;if(category.equals("CHEMISTRY")){if(chemical==null)throw new IllegalArgumentException("Wybierz środek z katalogu.");chemicalName=db.queryForList("SELECT name FROM chemical WHERE id=?",String.class,chemical).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznany środek."));}else if(chemical!=null)throw new IllegalArgumentException("Środek dotyczy zakupu chemii.");
@@ -75,7 +78,7 @@ public class CostService {
         String before=old==null?null:db.queryForObject("SELECT to_jsonb(e)::text FROM cost_entry e WHERE id=?",String.class,id);
         if(old==null)id=db.queryForObject("INSERT INTO cost_entry(request_token,spent_on,category,title,amount,effect,quantity,supplier,note,odometer,asset_id,chemical_id,chemical_name,covered_month,covered_category,receipt_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",Long.class,token,day,category,title,amount,effect,quantity,supplier,note,odo,asset,chemical,chemicalName,month,covered,receipt);
         else changed(db.update("UPDATE cost_entry SET spent_on=?,category=?,title=?,amount=?,effect=?,quantity=?,supplier=?,note=?,odometer=?,asset_id=?,chemical_id=?,chemical_name=?,covered_month=?,covered_category=?,receipt_id=?,version=version+1 WHERE id=? AND version=?",day,category,title,amount,effect,quantity,supplier,note,odo,asset,chemical,chemicalName,month,covered,receipt,id,version));
-        audit(id,null,before,actor);return id;
+        audit(id,null,before,actor);if(old==null)replay.remember("COST",token,requestPayload,id);return id;
     }
     @Transactional public void cancel(long id,long version,String reason,String actor){lock();var old=entry(id);if(((Number)old.get("version")).longValue()!=version||(Boolean)old.get("cancelled"))throw conflict();reason=reason==null?"":reason.strip();if(reason.isBlank()||reason.length()>300)throw new IllegalArgumentException("Podaj powód anulowania do 300 znaków.");String before=db.queryForObject("SELECT to_jsonb(e)::text FROM cost_entry e WHERE id=?",String.class,id);changed(db.update("UPDATE cost_entry SET cancelled=TRUE,cancel_reason=?,version=version+1 WHERE id=? AND version=?",reason,id,version));audit(id,null,before,actor);}
     @Transactional public void restore(long id,long version,String actor){

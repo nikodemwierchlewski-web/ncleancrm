@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk AS build
+FROM eclipse-temurin:17-jdk@sha256:7a0b2bc7e1372bb05ee361fb79e8a9e822df47343b8716253b3bbaa75060653e AS build
 WORKDIR /build
 # The Wrapper pins the ZIP checksum. Without unzip it switches to tar.gz,
 # whose different checksum must not be mistaken for a broken download.
@@ -16,7 +16,7 @@ RUN chmod +x mvnw && ./mvnw -B -ntp -DskipTests package \
     && cp BOOT-INF/lib/spring-security-crypto-*.jar BOOT-INF/lib/spring-jcl-*.jar /build/tools/lib/ \
     && javac -cp '/build/tools/lib/*' -d /build/tools /build/tools/*.java
 
-FROM eclipse-temurin:17-jdk AS runtime
+FROM eclipse-temurin:17-jdk@sha256:7a0b2bc7e1372bb05ee361fb79e8a9e822df47343b8716253b3bbaa75060653e AS runtime
 WORKDIR /app
 RUN mkdir /workspace
 COPY --from=build /build/target/nclean-crm-0.0.1-SNAPSHOT.jar /app/app.jar

@@ -16,18 +16,34 @@ public class ActualUsageService {
     private final JdbcTemplate db;
     private final ChemistryService chemistry;
     public ActualUsageService(JdbcTemplate db,ChemistryService chemistry){this.db=db;this.chemistry=chemistry;}
-    @Transactional
-    public void zero(long booking,int position,long version){
-        record(booking,position,version,Map.of());
-        // Historical units remain valid for explicit zeros, even after catalogue changes.
+    @Transactional public void zero(long booking,int position,long version){ zero(booking,position,version,"system"); }
+    @Transactional public void zero(long booking,int position,long version,String actor){
+        lock();String before=snapshot(booking,position);
+        replaceQuantities(booking,position,version,Map.of());
         db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) SELECT booking_id,item_position,chemical_id,name,unit,0,unit_cost,0 FROM booking_chemical WHERE booking_id=? AND item_position=?",booking,position);
         db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=TRUE,actual_source='NONE' WHERE booking_id=? AND position=?",booking,position);
+        audit(booking,position,"ZERO",before,actor);
+    }
+    private void lock(){db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);}
+    private String snapshot(long booking,int position){
+        return db.queryForList("SELECT jsonb_build_object('defined',actual_defined,'noChem',actual_no_chem,'version',actual_version,'source',actual_source,'chemicals',(SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY chemical_id),'[]') FROM booking_actual_chemical a WHERE a.booking_id=i.booking_id AND a.item_position=i.position))::text FROM booking_item i WHERE booking_id=? AND position=?",String.class,booking,position).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznana pozycja zlecenia."));
+    }
+    private void audit(long booking,int position,String action,String before,String actor){
+        db.update("INSERT INTO chemical_usage_audit(booking_id,item_position,action,before_data,after_data,actor) VALUES (?,?,?,?::jsonb,?::jsonb,?)",booking,position,action,before,snapshot(booking,position),actor);
+    }
+    public List<Map<String,Object>> history(long booking){
+        return db.queryForList("SELECT a.created_at,a.actor,a.action,a.before_data->>'source' before_source,a.after_data->>'source' after_source,(SELECT string_agg(x->>'name'||': '||(x->>'quantity')||' '||(x->>'unit')||' ('||COALESCE(x->>'amount','brak ceny')||' zł)',', ' ORDER BY x->>'name') FROM jsonb_array_elements(a.before_data->'chemicals') x) before_usage,(SELECT string_agg(x->>'name'||': '||(x->>'quantity')||' '||(x->>'unit')||' ('||COALESCE(x->>'amount','brak ceny')||' zł)',', ' ORDER BY x->>'name') FROM jsonb_array_elements(a.after_data->'chemicals') x) after_usage FROM chemical_usage_audit a WHERE booking_id=? ORDER BY a.id DESC LIMIT 50",booking);
     }
     public record Suggestion(long serviceId,long chemicalId,String name,String unit,BigDecimal quantity,
                              int samples,BigDecimal minimum,BigDecimal maximum,LocalDate lastDate) {}
 
-    @Transactional
-    public void record(long booking,int position,long version,Map<Long,BigDecimal> quantities){
+    @Transactional public void record(long booking,int position,long version,Map<Long,BigDecimal> quantities){record(booking,position,version,quantities,"system");}
+    @Transactional public void record(long booking,int position,long version,Map<Long,BigDecimal> quantities,String actor){
+        lock();String before=snapshot(booking,position);
+        replaceQuantities(booking,position,version,quantities);
+        audit(booking,position,"MEASURED",before,actor);
+    }
+    private void replaceQuantities(long booking,int position,long version,Map<Long,BigDecimal> quantities){
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
         var items=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.removed_at IS NULL AND i.booking_id=? AND i.position=? FOR UPDATE OF b,i",booking,position);
         if(items.isEmpty())throw new IllegalArgumentException("Nieznana pozycja zlecenia.");
@@ -54,7 +70,8 @@ public class ActualUsageService {
     }
 
     /** Copies immutable booking forecast prices, not today's catalogue prices. */
-    @Transactional public void standard(long booking,int position,Long expectedVersion,boolean force) {
+    @Transactional public void standard(long booking,int position,Long expectedVersion,boolean force) {standard(booking,position,expectedVersion,force,"system");}
+    @Transactional public void standard(long booking,int position,Long expectedVersion,boolean force,String actor) {
         db.queryForObject("SELECT id FROM work_write_guard WHERE id=1 FOR UPDATE",Integer.class);
         var row=db.queryForList("SELECT i.*,b.status FROM booking_item i JOIN booking b ON b.id=i.booking_id WHERE b.id=? AND i.position=? AND b.removed_at IS NULL",booking,position).stream().findFirst().orElseThrow(()->new IllegalArgumentException("Nieznana pozycja."));
         if(!"DONE".equals(row.get("status")))throw new IllegalArgumentException("Standard zużycia przyjmujemy po wykonaniu zlecenia.");
@@ -64,9 +81,11 @@ public class ActualUsageService {
             if(force)throw new IllegalArgumentException("Brak standardu zapisanego w tym zleceniu. Podaj własne ilości.");
             return;
         }
+        String before=snapshot(booking,position);
         db.update("DELETE FROM booking_actual_chemical WHERE booking_id=? AND item_position=?",booking,position);
         db.update("INSERT INTO booking_actual_chemical(booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount) SELECT booking_id,item_position,chemical_id,name,unit,quantity,unit_cost,amount FROM booking_chemical WHERE booking_id=? AND item_position=?",booking,position);
         db.update("UPDATE booking_item SET actual_defined=TRUE,actual_no_chem=FALSE,actual_source='STANDARD',actual_version=actual_version+1 WHERE booking_id=? AND position=?",booking,position);
+        audit(booking,position,"STANDARD",before,actor);
     }
 
     public Map<Long,List<Suggestion>> suggestions(){
